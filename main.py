@@ -1,5 +1,5 @@
 import argparse
-import portfolio as pf
+import lib.portfolio as pf
 
 def main():
     parser = argparse.ArgumentParser(description="📊 Portfolio Manager CLI")

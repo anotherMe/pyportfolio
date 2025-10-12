@@ -1,4 +1,4 @@
-from db import (
+from lib.db import (
     get_session,
     init_db,
     add_instrument,

@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, func, case
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
-from models import Base, Instrument, Trade, MarketPrice, Transaction
+from lib.models import Base, Instrument, Trade, MarketPrice, Transaction
 
 DB_PATH = "sqlite:///portfolio.db"
 engine = create_engine(DB_PATH, echo=False)
