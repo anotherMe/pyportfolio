@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, func, case
+from sqlalchemy import create_engine, func, case, desc
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 from lib.models import Base, Instrument, Trade, MarketPrice, Transaction
@@ -35,6 +35,10 @@ def add_instrument(session, isin, name, ticker=None, category=None, currency="EU
 def get_instrument_by_isin(session, isin):
     return session.query(Instrument).filter_by(isin=isin).first()
 
+def get_all_instruments(session):
+    return session.query(Instrument).all()
+
+
 # ----------------------------------------------------------
 # Trades
 # ----------------------------------------------------------
@@ -67,11 +71,21 @@ def get_position(session, instrument_id):
 # ----------------------------------------------------------
 # Market Prices
 # ----------------------------------------------------------
+
 def add_market_price(session, instrument, price):
     mp = MarketPrice(instrument_id=instrument.id, date=datetime.now(), price=to_cents(price))
     session.add(mp)
     session.commit()
     print(f"💰 Added market price for {instrument.name}: {price:.2f}")
+
+def get_latest_market_price(session, instrument_id):
+    last_price_row = (
+        session.query(MarketPrice)
+        .filter(MarketPrice.instrument_id == instrument_id)
+        .order_by(desc(MarketPrice.date))
+        .first()
+    )
+    return from_cents(last_price_row.price) if last_price_row else None
 
 # ----------------------------------------------------------
 # Transactions
