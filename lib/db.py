@@ -29,7 +29,6 @@ def from_cents(cents: int) -> float:
 def add_instrument(session, isin, name, ticker=None, category=None, currency="EUR"):
     instrument = Instrument(isin=isin, name=name, ticker=ticker, category=category, currency=currency)
     session.add(instrument)
-    session.commit()
     print(f"➕ Added instrument: {name} ({isin})")
 
 def get_instrument_by_isin(session, isin):
@@ -42,18 +41,19 @@ def get_all_instruments(session):
 # ----------------------------------------------------------
 # Trades
 # ----------------------------------------------------------
-def add_trade(session, instrument, trade_type, quantity, price, fees=0.0, description=None):
+def add_trade(session, instrument, trade_type, quantity, price, fees, tax_rate, description=None):
+    
     trade = Trade(
         instrument_id=instrument.id,
         date=datetime.now(),
         type=trade_type,
         quantity=int(quantity),
         price=to_cents(price),
-        fees=to_cents(fees),
+        taxes=to_cents(quantity*price*tax_rate/100),
         description=description,
     )
     session.add(trade)
-    session.commit()
+
     print(f"📈 Recorded trade: {trade_type.upper()} {quantity}x {instrument.ticker or instrument.name} @ {price:.2f}")
 
 def get_position(session, instrument_id):
@@ -75,7 +75,6 @@ def get_position(session, instrument_id):
 def add_market_price(session, instrument, price):
     mp = MarketPrice(instrument_id=instrument.id, date=datetime.now(), price=to_cents(price))
     session.add(mp)
-    session.commit()
     print(f"💰 Added market price for {instrument.name}: {price:.2f}")
 
 def get_latest_market_price(session, instrument_id):
@@ -99,7 +98,6 @@ def add_transaction(session, trans_type, amount, instrument=None, description=No
         description=description,
     )
     session.add(tr)
-    session.commit()
     scope = "portfolio" if instrument is None else instrument.name
     print(f"💵 Added {trans_type}: {amount:.2f} ({scope})")
 

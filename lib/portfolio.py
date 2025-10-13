@@ -19,11 +19,11 @@ def handle_init_db():
     init_db()
 
 def handle_add_instrument(args):
-    with get_session() as session:
+    with get_session() as session, session.begin():
         add_instrument(session, args.isin, args.name, args.ticker, args.category, args.currency)
 
 def handle_trade(args):
-    with get_session() as session:
+    with get_session() as session, session.begin():
         inst = get_instrument_by_isin(session, args.isin)
         if not inst:
             print(f"❌ Instrument with ISIN {args.isin} not found.")
@@ -31,15 +31,16 @@ def handle_trade(args):
         add_trade(session, inst, args.command, int(args.qty), args.price, args.fees, args.tax_rate, args.description)
 
 def handle_transaction(args):
-    with get_session() as session:
+    with get_session() as session, session.begin():
         inst = get_instrument_by_isin(session, args.isin) if args.isin else None
         if args.isin and not inst:
             print(f"❌ Instrument with ISIN {args.isin} not found.")
             return
+        
         add_transaction(session, args.type, args.amount, inst, args.description)
 
 def handle_add_price(args):
-    with get_session() as session:
+    with get_session() as session, session.begin():
         inst = get_instrument_by_isin(session, args.isin)
         if not inst:
             print(f"❌ Instrument with ISIN {args.isin} not found.")
