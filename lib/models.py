@@ -6,22 +6,24 @@ from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
+
 # ==========================================================
 #  Market Data
 # ==========================================================
-class OHLCV(Base):
-    __tablename__ = 'ohlcv'
-    symbol = Column(String, primary_key=True)
-    timestamp = Column(DateTime, primary_key=True)
-    granularity = Column(String, nullable=False)
-    open = Column(Integer)   # in cents
-    high = Column(Integer)
-    low = Column(Integer)
-    close = Column(Integer)
-    volume = Column(Integer)
-    __table_args__ = (
-        UniqueConstraint('symbol', 'timestamp', name='_symbol_timestamp_uc'),
-    )
+# class OHLCV(Base):
+#     __tablename__ = 'ohlcv'
+#     symbol = Column(String, primary_key=True)
+#     timestamp = Column(DateTime, primary_key=True)
+#     granularity = Column(String, nullable=False)
+#     open = Column(Integer)   # in cents
+#     high = Column(Integer)
+#     low = Column(Integer)
+#     close = Column(Integer)
+#     volume = Column(Integer)
+#     __table_args__ = (
+#         UniqueConstraint('symbol', 'timestamp', name='_symbol_timestamp_uc'),
+#     )
+
 
 # ==========================================================
 #  Instruments
@@ -39,6 +41,7 @@ class Instrument(Base):
     prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="instrument", cascade="all, delete-orphan")
 
+
 # ==========================================================
 #  Trades (Buy/Sell)
 # ==========================================================
@@ -54,6 +57,7 @@ class Trade(Base):
     description = Column(Text)
     instrument = relationship("Instrument", back_populates="trades")
 
+
 # ==========================================================
 #  Market Prices
 # ==========================================================
@@ -65,6 +69,7 @@ class MarketPrice(Base):
     price = Column(Integer, nullable=False)   # in cents
     instrument = relationship("Instrument", back_populates="prices")
     __table_args__ = (UniqueConstraint('instrument_id', 'date', name='_instrument_date_uc'),)
+
 
 # ==========================================================
 #  Transactions (Dividends, Taxes, Fees)
