@@ -39,7 +39,7 @@ class Instrument(Base):
 
     trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
     prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
-    transactions = relationship("Transaction", back_populates="instrument", cascade="all, delete-orphan")
+    # transactions = relationship("Transaction", back_populates="instrument", cascade="all, delete-orphan")
 
 
 # ==========================================================
@@ -53,9 +53,10 @@ class Trade(Base):
     type = Column(String, nullable=False)  # 'buy' or 'sell'
     quantity = Column(Integer, nullable=False)  # integer shares
     price = Column(Integer, nullable=False)     # in cents
-    fees = Column(Integer, default=0)           # in cents
     description = Column(Text)
+
     instrument = relationship("Instrument", back_populates="trades")
+    transactions = relationship("Transaction", back_populates="trade", cascade="all, delete-orphan")
 
 
 # ==========================================================
@@ -77,9 +78,12 @@ class MarketPrice(Base):
 class Transaction(Base):
     __tablename__ = "transactions"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=True)
+    # instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=True)
+    trade_id = Column(Integer, ForeignKey("trades.id", ondelete="CASCADE"), nullable=True)
     date = Column(DateTime, nullable=False)
     type = Column(String, nullable=False)  # 'dividend', 'tax', 'fee', 'global_tax'
     amount = Column(Integer, nullable=False)  # in cents
     description = Column(Text)
-    instrument = relationship("Instrument", back_populates="transactions")
+
+    # instrument = relationship("Instrument", back_populates="transactions")
+    trade = relationship("Trade", back_populates="transactions")
