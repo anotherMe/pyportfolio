@@ -3,9 +3,9 @@ from datetime import date
 from lib.db import get_session, to_cents, from_cents
 from lib.models import Transaction, Instrument
 
-st.title("💰 Dividends & Taxes")
+st.title("💰 Transactions")
 
-tab1, tab2 = st.tabs(["📈 Dividends", "💸 Taxes"])
+tab1, tab2, tab3 = st.tabs(["📈 Dividends", "💸 Taxes", "➕ Add New"])
 
 session = get_session()
 
@@ -16,6 +16,41 @@ isin_options = list(isin_map.keys())
 
 # --- DIVIDENDS TAB ---
 with tab1:
+
+    st.subheader("Dividend History")
+
+    dividends = session.query(Transaction).where(Transaction.type == 'div').order_by(Transaction.date.desc()).all()
+    if dividends:
+        st.table([
+            {
+                "Instrument": d.trade.instrument_id,
+                "Date": d.date.strftime("%Y-%m-%d"),
+                "Amount (€)": from_cents(d.amount)
+            } for d in dividends
+        ])
+    else:
+        st.info("No dividends recorded yet.")
+
+
+# --- TAXES TAB ---
+with tab2:
+
+    st.subheader("Tax History")
+
+    taxes = session.query(Transaction).where(Transaction.type == 'tax').order_by(Transaction.date.desc()).all()
+    if taxes:
+        st.table([
+            {
+                "Description": t.description,
+                "Date": t.date.strftime("%Y-%m-%d"),
+                "Amount (€)": t.amount / 100
+            } for t in taxes
+        ])
+    else:
+        st.info("No taxes recorded yet.")
+
+with tab3:
+
     st.subheader("Add Dividend")
 
     with st.form("add_dividend_form"):
@@ -41,24 +76,6 @@ with tab1:
             session.commit()
             st.success(f"Dividend for {instrument_id} added successfully!")
 
-    st.divider()
-    st.subheader("Dividend History")
-
-    dividends = session.query(Transaction).where(Transaction.type == 'div').order_by(Transaction.date.desc()).all()
-    if dividends:
-        st.table([
-            {
-                "Instrument": d.trade.instrument_id,
-                "Date": d.date.strftime("%Y-%m-%d"),
-                "Amount (€)": from_cents(d.amount)
-            } for d in dividends
-        ])
-    else:
-        st.info("No dividends recorded yet.")
-
-
-# --- TAXES TAB ---
-with tab2:
     st.subheader("Add Tax")
 
     with st.form("add_tax_form"):
@@ -75,19 +92,4 @@ with tab2:
         #     )
         #     session.add(tax)
         #     session.commit()
-        #     st.success("Tax added successfully!")
-
-    st.divider()
-    st.subheader("Tax History")
-
-    taxes = session.query(Transaction).where(Transaction.type == 'tax').order_by(Transaction.date.desc()).all()
-    if taxes:
-        st.table([
-            {
-                "Description": t.description,
-                "Date": t.date.strftime("%Y-%m-%d"),
-                "Amount (€)": t.amount / 100
-            } for t in taxes
-        ])
-    else:
-        st.info("No taxes recorded yet.")
+        #     st.success("Tax added successfully!")            
