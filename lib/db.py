@@ -1,3 +1,4 @@
+
 from sqlalchemy import create_engine, func, case, desc
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -29,7 +30,9 @@ def from_cents(cents: int) -> float:
 def add_instrument(session, isin, name, ticker=None, category=None, currency="EUR"):
     instrument = Instrument(isin=isin, name=name, ticker=ticker, category=category, currency=currency)
     session.add(instrument)
+    session.flush()  # ensures IDs and defaults are populated
     print(f"➕ Added instrument: {name} ({isin})")
+    return instrument
 
 def get_instrument_by_isin(session, isin):
     return session.query(Instrument).filter_by(isin=isin).first()
@@ -49,24 +52,69 @@ def add_trade(session, instrument, trade_type, quantity, price, fees, tax_rate, 
         type=trade_type,
         quantity=int(quantity),
         price=to_cents(price),
-        taxes=to_cents(quantity*price*tax_rate/100),
         description=description,
     )
     session.add(trade)
+    session.flush()  # ensures IDs and defaults are populated
 
     print(f"📈 Recorded trade: {trade_type.upper()} {quantity}x {instrument.ticker or instrument.name} @ {price:.2f}")
 
+    return trade
+
+def get_current_quantity(session, instrument_id):
+    buys = (
+        session.query(Trade)
+        .filter(Trade.instrument_id == instrument_id, Trade.type == "buy")
+        .with_entities(func.sum(Trade.quantity))
+        .scalar() or 0.0
+    )
+    sells = (
+        session.query(Trade)
+        .filter(Trade.instrument_id == instrument_id, Trade.type == "sell")
+        .with_entities(func.sum(Trade.quantity))
+        .scalar() or 0.0
+    )
+    return buys - sells
+
 def get_position(session, instrument_id):
-    """Compute net quantity and average price on the fly."""
-    buy_qty = session.query(func.sum(case((Trade.type=="buy", Trade.quantity), else_=0))).filter(Trade.instrument_id==instrument_id).scalar() or 0
-    sell_qty = session.query(func.sum(case((Trade.type=="sell", Trade.quantity), else_=0))).filter(Trade.instrument_id==instrument_id).scalar() or 0
-    net_qty = buy_qty - sell_qty
+    net_qty = get_current_quantity(session, instrument_id)
     if net_qty <= 0:
         return 0, 0.0
 
-    total_cost_cents = session.query(func.sum(case((Trade.type=="buy", Trade.quantity * Trade.price + Trade.fees), else_=0))).filter(Trade.instrument_id==instrument_id).scalar() or 0
-    avg_price_cents = total_cost_cents // buy_qty if buy_qty else 0
-    return net_qty, from_cents(avg_price_cents)
+    avg_price_cents = get_average_buy_price(session, instrument_id)
+    return net_qty, avg_price_cents
+
+def get_average_buy_price(session, instrument_id):
+    """
+    Compute FIFO-based average buy price for the currently owned quantity of an instrument.
+    """
+
+    # Retrieve trades in chronological order
+    trades = (
+        session.query(Trade)
+        .filter(Trade.instrument_id == instrument_id)
+        .order_by(Trade.date)
+        .all()
+    )
+
+    inventory = []  # list of [qty_remaining, price_per_unit]
+    for trade in trades:
+        if trade.type == "buy":
+            inventory.append([trade.quantity, trade.price])
+        elif trade.type == "sell":
+            qty_to_sell = trade.quantity
+            while qty_to_sell > 0 and inventory:
+                first_lot = inventory[0]
+                if first_lot[0] <= qty_to_sell:
+                    qty_to_sell -= first_lot[0]
+                    inventory.pop(0)
+                else:
+                    first_lot[0] -= qty_to_sell
+                    qty_to_sell = 0
+
+    total_qty = sum(q for q, _ in inventory)
+    total_cost = from_cents(sum(q * p for q, p in inventory))
+    return total_cost / total_qty if total_qty > 0 else 0.0
 
 # ----------------------------------------------------------
 # Market Prices
@@ -75,7 +123,9 @@ def get_position(session, instrument_id):
 def add_market_price(session, instrument, price):
     mp = MarketPrice(instrument_id=instrument.id, date=datetime.now(), price=to_cents(price))
     session.add(mp)
+    session.flush() # ensures IDs and defaults are populated
     print(f"💰 Added market price for {instrument.name}: {price:.2f}")
+    return mp
 
 def get_latest_market_price(session, instrument_id):
     last_price_row = (
@@ -89,17 +139,19 @@ def get_latest_market_price(session, instrument_id):
 # ----------------------------------------------------------
 # Transactions
 # ----------------------------------------------------------
-def add_transaction(session, trans_type, amount, instrument=None, description=None):
+def add_transaction(session, trans_type, amount, trade=None, description=None):
     tr = Transaction(
-        instrument_id=instrument.id if instrument else None,
+        trade_id=trade.id if trade else None,
         date=datetime.now(),
         type=trans_type,
         amount=to_cents(amount),
         description=description,
     )
     session.add(tr)
-    scope = "portfolio" if instrument is None else instrument.name
+    session.flush()  # ensures IDs and defaults are populated
+    scope = "portfolio" if trade is None else trade.description or trade.instrument.name
     print(f"💵 Added {trans_type}: {amount:.2f} ({scope})")
+    return tr
 
 # ----------------------------------------------------------
 # Portfolio value

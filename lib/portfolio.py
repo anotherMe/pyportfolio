@@ -2,6 +2,7 @@ from rich.table import Table
 from rich.console import Console
 from lib.db import (
     get_all_instruments,
+    get_average_buy_price,
     get_latest_market_price,
     get_session,
     init_db,
@@ -28,7 +29,23 @@ def handle_trade(args):
         if not inst:
             print(f"❌ Instrument with ISIN {args.isin} not found.")
             return
-        add_trade(session, inst, args.command, int(args.qty), args.price, args.fees, args.tax_rate, args.description)
+        
+        avg_buy_price = get_average_buy_price(session, inst.id)
+        Console().print(f"🔍 Current average buy price for {inst.ticker or inst.name}: {avg_buy_price:.2f} {inst.currency}")
+        trade = add_trade(session, inst, args.command, int(args.qty), args.price, args.fees, args.tax_rate, args.description)
+
+            # Add fees as a transaction
+        if args.fees > 0:
+            add_transaction(session, "fee", args.fees, trade, f"Fees for {args.command.upper()} of {args.qty}x {inst.ticker or inst.name}")
+
+        # If selling, add a tax transaction if there's a profit
+        if args.command == "sell" and avg_buy_price > 0:
+            sell_price = args.price
+            if sell_price > avg_buy_price:
+                profit = (sell_price - avg_buy_price) * args.qty
+                tax_amount = profit * args.tax_rate / 100
+                add_transaction(session, "tax", tax_amount, trade, f"Capital gains tax on sale of {args.qty}x {inst.ticker or inst.name}")
+
 
 def handle_transaction(args):
     with get_session() as session, session.begin():
@@ -88,5 +105,5 @@ def handle_show_positions(args):
             )
 
         console.print(table)
-        console.print(f"\n💰 [bold green]Total portfolio value:[/bold green] {total_value:.2f} EUR")  # FIXME: how to manage currency here ?
+        console.print(f"\n💰 [bold green]Total portfolio value:[/bold green] {total_value:.2f} EUR")  # FIXME: how to manage potentially non homogenous currency here ?
 
