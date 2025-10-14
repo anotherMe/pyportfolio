@@ -1,3 +1,4 @@
+
 import argparse
 import lib.portfolio as pf
 
@@ -10,32 +11,33 @@ def main():
 
     # add-instrument
     p_add = subparsers.add_parser("add-instrument", help="Add a new instrument")
-    p_add.add_argument("--isin", required=True)
-    p_add.add_argument("--name", required=True)
-    p_add.add_argument("--ticker")
-    p_add.add_argument("--category")
-    p_add.add_argument("--currency", default="EUR")
+    p_add.add_argument("-i", "--isin", required=True)
+    p_add.add_argument("-n", "--name", required=True)
+    p_add.add_argument("-t", "--ticker")
+    p_add.add_argument("-c", "--category")
+    p_add.add_argument("-cur", "--currency", default="EUR")
 
     # buy / sell
     for cmd in ["buy", "sell"]:
         p_trade = subparsers.add_parser(cmd, help=f"Record a {cmd} trade")
-        p_trade.add_argument("--isin", required=True)
-        p_trade.add_argument("--qty", type=int, required=True)
-        p_trade.add_argument("--price", type=float, required=True)
-        p_trade.add_argument("--fees", type=float, default=0.0)
+        p_trade.add_argument("-i", "--isin", required=True)
+        p_trade.add_argument("-q", "--qty", type=int, required=True)
+        p_trade.add_argument("-p", "--price", type=float, required=True, help="Price per unit")
+        p_trade.add_argument("-f", "--fees", type=float, default=39.0, help="Total fees for the trade (default: 39.0 €)")
+        p_trade.add_argument("-tr", "--tax_rate", type=float, default=26.0, help="Tax rate in % (default: 26%)")
         p_trade.add_argument("--description")
 
     # add-transaction
     p_trans = subparsers.add_parser("add-transaction", help="Add a tax/dividend/fee")
-    p_trans.add_argument("--type", required=True, choices=["dividend", "tax", "fee", "global_tax"])
-    p_trans.add_argument("--amount", type=float, required=True)
-    p_trans.add_argument("--isin")
-    p_trans.add_argument("--description")
+    p_trans.add_argument("-t", "--type", required=True, choices=["dividend", "tax", "fee", "global_tax"])
+    p_trans.add_argument("-a", "--amount", type=float, required=True)
+    p_trans.add_argument("-i", "--isin")
+    p_trans.add_argument("-d", "--description")
 
     # add-price
     p_price = subparsers.add_parser("add-price", help="Add a market price")
-    p_price.add_argument("--isin", required=True)
-    p_price.add_argument("--price", type=float, required=True)
+    p_price.add_argument("-i", "--isin", required=True)
+    p_price.add_argument("-p", "--price", type=float, required=True)
 
     # portfolio-value
     subparsers.add_parser("portfolio-value", help="Compute portfolio value")
