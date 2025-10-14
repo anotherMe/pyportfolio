@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date
-from lib.db import from_cents, get_session
-from lib.models import Transaction
+from lib.db import get_session, to_cents, from_cents
+from lib.models import Transaction, Instrument
 
 st.title("💰 Dividends & Taxes")
 
@@ -9,25 +9,37 @@ tab1, tab2 = st.tabs(["📈 Dividends", "💸 Taxes"])
 
 session = get_session()
 
+# --- Fetch instruments for autocomplete ---
+instruments = session.query(Instrument).order_by(Instrument.isin).all()
+isin_map = {f"{inst.isin} — {inst.name or inst.ticker or ''}".strip(): inst.id for inst in instruments}
+isin_options = list(isin_map.keys())
+
 # --- DIVIDENDS TAB ---
 with tab1:
     st.subheader("Add Dividend")
 
     with st.form("add_dividend_form"):
-        instrument_id = st.text_input("Instrument ID / ISIN")
-        dividend_date = st.date_input("Payment Date", value=date.today())
+        isin_label = st.selectbox(
+            "Instrument (ISIN)",
+            options=["(none)"] + isin_options,
+            index=0,
+            help="Select the instrument that paid the dividend"
+        )
+        instrument_id = isin_map.get(isin_label) if isin_label != "(none)" else None
+        dividend_date = st.date_input("Payment date", value=date.today())
+        divident_time = st.time_input("Payment time", value="now", step=60)
         amount = st.number_input("Amount (€)", min_value=0.0, step=0.01)
         submitted = st.form_submit_button("Add Dividend")
 
-        # if submitted:
-        #     div = Transaction(
-        #         instrument_id=instrument_id,
-        #         date=dividend_date,
-        #         amount=to_cents(amount)
-        #     )
-        #     session.add(div)
-        #     session.commit()
-        #     st.success(f"Dividend for {instrument_id} added successfully!")
+        if submitted:
+            div = Transaction(
+                instrument_id=instrument_id,
+                date=dividend_date,
+                amount=to_cents(amount)
+            )
+            session.add(div)
+            session.commit()
+            st.success(f"Dividend for {instrument_id} added successfully!")
 
     st.divider()
     st.subheader("Dividend History")
