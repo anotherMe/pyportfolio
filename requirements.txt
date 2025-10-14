@@ -2,3 +2,4 @@
 SQLAlchemy
 rich
 streamlit
+tabulate
