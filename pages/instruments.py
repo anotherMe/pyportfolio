@@ -5,7 +5,7 @@ import pandas as pd
 
 st.title("📜 Instruments")
 
-tab1, tab2 = st.tabs(["List", "Details"])
+tab1, tab2, tab3 = st.tabs(["List", "Details", "Add New"])
 
 session = get_session()
 instruments = session.query(Instrument).order_by(Instrument.name).all()
@@ -44,21 +44,24 @@ with tab1:
     )
 
 with tab2:
+
+    st.subheader("Instrument Details")
     # --- Search input ---
     search_term = st.text_input("🔍 Search by ISIN, Ticker, or Name").strip().lower()
-
     if search_term:
-        instruments = [
+        filtered_instruments = [
             inst for inst in instruments
             if search_term in (inst.isin or "").lower()
             or search_term in (inst.ticker or "").lower()
             or search_term in (inst.name or "").lower()
         ]
+    else:
+        filtered_instruments = instruments
 
-    if not instruments:
+    if not filtered_instruments:
         st.info("No instruments found.")
     else:
-        for inst in instruments:
+        for inst in filtered_instruments:
             with st.container():
                 st.divider()
                 # --- Row 1: Name and Ticker ---
@@ -87,7 +90,6 @@ with tab2:
                     if st.button("✏️ Edit", key=f"edit_{inst.id}"):
                         st.session_state["instrument_id"] = inst.id
                         st.switch_page("pages/edit_instrument.py")
-
 
 # --- Add New Instrument button ---
 st.divider()

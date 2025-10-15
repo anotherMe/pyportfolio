@@ -61,6 +61,17 @@ def add_trade(session, instrument, trade_type, quantity, price, fees, tax_rate, 
 
     return trade
 
+def delete_trade(session, trade_id):
+    trade = session.get(Trade, trade_id)
+    if trade:
+        session.delete(trade)
+        session.flush()
+        print(f"🗑️ Deleted trade ID {trade_id}")
+        return True
+    else:
+        print(f"❌ Trade ID {trade_id} not found.")
+        return False
+
 def get_current_quantity(session, instrument_id):
     buys = (
         session.query(Trade)
