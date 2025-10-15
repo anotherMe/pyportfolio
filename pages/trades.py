@@ -1,9 +1,19 @@
+
 from datetime import datetime
 import streamlit as st
-from lib.db import get_session
-from lib.portfolio import add_trade
+from lib.database import get_session
+from lib.trades_repository import add_trade
 from lib.models import Instrument, Trade
 import pandas as pd
+
+
+st.title("💼 Trades")
+if 'show_editor' not in st.session_state:
+    st.session_state.show_editor = False
+if 'trade_id' not in st.session_state:
+    st.session_state.trade_id = None
+session = get_session()
+
 
 def load_data(session):
     instruments = session.query(Instrument).all()
@@ -11,14 +21,12 @@ def load_data(session):
     latest_trades = session.query(Trade).join(Trade.instrument).order_by(Trade.date.desc()).limit(10).all()
     return instruments, trades, latest_trades
 
-st.title("💼 Trades")
-session = get_session()
-
 # Load data
 instruments, trades, latest_trades = load_data(session)
 instrument_map = {f"{i.name} ({i.ticker})": i for i in instruments}
 
-tab1, tab2, tab3 = st.tabs(["Latest", "Details", "Add New"])
+
+tab1, tab2 = st.tabs(["Latest", "Details"])
 
 with tab1:
     st.subheader("Latest Trades")
@@ -38,7 +46,6 @@ with tab1:
     
 
 with tab2:
-    st.subheader("Trade Details")
 
     # --- Search input ---
     search_term = st.text_input("🔍 Search by Instrument ISIN, Ticker, or Name").strip().lower()
@@ -51,6 +58,44 @@ with tab2:
         ]
     else:
         filtered_trades = trades
+
+    st.divider()
+
+    # --- Edit trade section ---
+
+    if st.session_state.show_editor:
+        with st.container():
+            st.subheader("Edit Trades")
+
+            with st.form("add_trade"):
+                selected_instrument = st.selectbox("Instrument", list(instrument_map.keys()))
+                trade_type = st.selectbox("Type", ["buy", "sell"])
+                qty = st.number_input("Quantity", min_value=1, step=1)
+                price = st.number_input("Price (€)", min_value=0.0, step=0.01)
+                date = st.date_input("Payment date", value=datetime.today())
+                time = st.time_input("Payment time", value="now", step=60)
+                fees = st.number_input("Fees (€)", min_value=0.0, step=0.01)
+                tax_rate = st.number_input("Tax Rate (%)", min_value=0.0, max_value=100.0, step=0.1, value=26.0)
+                notes = st.text_area("Notes", value="")
+                submitted = st.form_submit_button("Save")
+                cancel = st.button("Cancel")
+                if submitted:
+                    with session.begin():
+                        inst = instrument_map[selected_instrument]
+                        try:
+                            add_trade(session, inst, trade_type, qty, price, fees, tax_rate, notes)
+                            st.success(f"Trade added for {inst.name}")
+                            st.session_state.show_editor = False
+                            st.session_state.trade_id = None
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error adding trade: {e}")
+                if cancel:
+                    st.session_state.show_editor = False
+                    st.session_state.trade_id = None
+                    st.rerun()
+
+        st.divider()
 
     if filtered_trades:
         for trade in filtered_trades:
@@ -68,33 +113,16 @@ with tab2:
                 col1, col2, col3 = st.columns([2,1,1])
                 with col2:
                     if st.button("✏️ Edit", key=f"edit_{trade.id}"):
-                        st.session_state["trade_id"] = trade.id
-                        st.switch_page("pages/edit_trade.py")
+                        print(f"Editing trade ID {trade.id}")
+                        st.session_state.trade_id = trade.id
+                        st.session_state.show_editor = True
+                        st.rerun()
                 with col3:
                     if st.button("🗑️ Delete", key=f"delete_{trade.id}"):
                         session.delete(trade)
                         session.commit()
                         st.success("Trade deleted.")
-                        st.experimental_rerun()
                 st.divider()
     else:
         st.info("No trades available.")
-
-with tab3:
-    with st.form("add_trade"):
-        selected_instrument = st.selectbox("Instrument", list(instrument_map.keys()))
-        trade_type = st.selectbox("Type", ["buy", "sell"])
-        qty = st.number_input("Quantity", min_value=1, step=1)
-        price = st.number_input("Price (€)", min_value=0.0, step=0.01)
-        date = st.date_input("Payment date", value=datetime.today())
-        time = st.time_input("Payment time", value="now", step=60)
-        fees = st.number_input("Fees (€)", min_value=0.0, step=0.01)
-        tax_rate = st.number_input("Tax Rate (%)", min_value=0.0, max_value=100.0, step=0.1, value=26.0)
-        notes = st.text_area("Notes", value="")
-        submitted = st.form_submit_button("Add Trade")
-        if submitted:
-            inst = instrument_map[selected_instrument]
-            add_trade(session, inst, trade_type, qty, price, fees, tax_rate, notes)
-            session.commit()
-            st.success(f"Trade added for {inst.name}")
-            instruments, trades, latest_trades = load_data(session) # FIXME: not working
+                    

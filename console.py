@@ -1,6 +1,6 @@
 
 import argparse
-import lib.portfolio as pf
+import lib.console_handlers as c
 
 def main():
     parser = argparse.ArgumentParser(description="📊 Portfolio Manager CLI")
@@ -49,19 +49,19 @@ def main():
 
     match args.command:
         case "init-db":
-            pf.handle_init_db()
+            c.handle_init_db()
         case "add-instrument":
-            pf.handle_add_instrument(args)
+            c.handle_add_instrument(args)
         case "buy" | "sell":
-            pf.handle_trade(args)
+            c.handle_trade(args)
         case "add-transaction":
-            pf.handle_transaction(args)
+            c.handle_transaction(args)
         case "add-price":
-            pf.handle_add_price(args)
+            c.handle_add_price(args)
         case "portfolio-value":
-            pf.handle_portfolio_value(args)
+            c.handle_portfolio_value(args)
         case "show-positions":
-            pf.handle_show_positions(args)
+            c.handle_show_positions(args)
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,6 @@
 import streamlit as st
 from datetime import date
-from lib.db import get_session, to_cents, from_cents
+from lib.database import get_session, to_cents, from_cents
 from lib.models import Transaction, Instrument
 
 st.title("💰 Transactions")

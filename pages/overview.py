@@ -1,6 +1,6 @@
 import streamlit as st
-from lib.db import get_session
-from lib.portfolio import get_position
+from lib.database import get_session
+from lib.portfolio_repository import get_position
 from lib.models import Instrument
 import pandas as pd
 

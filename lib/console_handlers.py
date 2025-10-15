@@ -1,6 +1,9 @@
+
+# Handles CLI commands and user interactions ( see console.py )
+
 from rich.table import Table
 from rich.console import Console
-from lib.db import (
+from lib.database import (
     get_all_instruments,
     get_average_buy_price,
     get_latest_market_price,
