@@ -4,7 +4,7 @@ from datetime import datetime
 from lib.database import to_cents, from_cents
 from lib.models import Trade
 
-def add_trade(session, instrument, trade_type, quantity, price, fees, tax_rate, description=None):
+def add_trade(session, instrument, trade_type, quantity, price, description=None):
     
     trade = Trade(
         instrument_id=instrument.id,

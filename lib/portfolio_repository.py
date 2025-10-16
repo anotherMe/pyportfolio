@@ -27,5 +27,5 @@ def get_position(session, instrument_id):
     if net_qty <= 0:
         return 0, 0.0
 
-    avg_price_cents = get_average_buy_price(session, instrument_id)
-    return net_qty, avg_price_cents
+    avg_price = get_average_buy_price(session, instrument_id)
+    return net_qty, avg_price
