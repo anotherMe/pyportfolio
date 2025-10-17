@@ -2,9 +2,4 @@
 import streamlit as st
 
 
-tab = st.radio("Select view:", ["Overview", "Details"], key="tabs")
-
-if tab == "Overview":
-    st.write("Showing overview content.")
-else:
-    st.write("Showing details content.")
+st.error("This page has been moved. Please use the navigation menu to access the desired page.")

@@ -1,4 +1,5 @@
 
+from math import e
 import streamlit as st
 from lib.database import get_session
 from lib.instruments_repository import get_all_instruments
@@ -7,12 +8,20 @@ import pandas as pd
 
 print("Running instruments list page...")
 
+st.session_state.instrument_id = None  # Always reset selected instrument ID
+
+
 st.title("🔧 Instruments")
 st.subheader("Instrument List")
 
 with get_session() as session, session.begin():
         
     instruments = get_all_instruments(session)
+
+    if not instruments:
+        st.info("No instruments found.")
+        st.stop()
+
 
     data = []
     for inst in instruments:

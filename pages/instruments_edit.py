@@ -15,7 +15,9 @@ if 'instrument_id' not in st.session_state:
 with get_session() as session, session.begin():
     
     if st.session_state.instrument_id:
+
         st.subheader("Edit Instrument")
+
         inst = session.get(Instrument, st.session_state.instrument_id)
         if not inst:
             st.error("Instrument not found.")
@@ -48,7 +50,9 @@ with get_session() as session, session.begin():
             inst.ticker = st.text_input("Ticker", value=inst.ticker or "")
             inst.name = st.text_input("Name", value=inst.name or "")
             inst.currency = st.text_input("Currency", value=inst.currency or "EUR")
-            save = st.form_submit_button("💾 Save")
+            col1, col2 = st.columns([7,1])
+            with col2:
+                save = st.form_submit_button("💾 Save")
 
             if save:
                 if not inst.isin:
@@ -57,10 +61,11 @@ with get_session() as session, session.begin():
                     st.warning("Name cannot be empty.")
                 else:
                     session.add(inst)
+                    st.session_state.instrument_id = None
                     st.success("✅ Instrument saved successfully!")
     
-    col1, col2 = st.columns([9,1])
+    col1, col2 = st.columns([5,1])
     with col2:
-        if st.button("Back"):
-            st.switch_page("pages/instruments_list.py")
+        if st.button("Back to details"):
+            st.switch_page("pages/instruments_details.py")
 

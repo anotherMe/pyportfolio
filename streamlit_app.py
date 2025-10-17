@@ -6,7 +6,7 @@ pages = {
     "🔧 Instruments": [    
         st.Page("pages/instruments_list.py", title="List"),
         st.Page("pages/instruments_details.py", title="Details"),
-        st.Page("pages/instruments_edit.py", title="Edit"),
+        st.Page("pages/instruments_edit.py", title="Add / Edit"),
     ],
     "Other": [
         st.Page("pages/trades.py", title="💼 Trades"),
