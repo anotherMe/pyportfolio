@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Debug streamlit",
+      "program": ".venv/bin/streamlit",
+      "args": ["run", "streamlit_app.py"]
+    },
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Load IEGE.MI",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "justMyCode": true,
+      "args": ["load", "data/IEGE.MI.json"]
+    }
+  ]
+}
