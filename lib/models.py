@@ -17,8 +17,7 @@ class Account(Base):
     description = Column(Text)
 
     transactions = relationship("Transaction", back_populates="account", cascade="all, delete-orphan")
-    trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
-    instruments = relationship("Instrument", back_populates="accounts", cascade="all, delete-orphan")
+    instruments = relationship("Instrument", back_populates="account", cascade="all, delete-orphan")
 
 
 # ==========================================================

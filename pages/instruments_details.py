@@ -12,9 +12,6 @@ if "ok_delete_instrument" not in st.session_state:
 if "show_delete_instrument_confirmation_dialog" not in st.session_state:
     st.session_state.show_delete_instrument_confirmation_dialog = False
 
-st.title("🔧 Instruments")
-st.subheader("Instrument Details")
-
 @st.dialog("Confirm instrument deletion")
 def confirm_delete_dialog():
     st.write("Are you sure you want to delete this instrument ?")
@@ -27,6 +24,10 @@ def confirm_delete_dialog():
         if st.button("❌ No"):
             st.session_state.show_delete_instrument_confirmation_dialog = False
             st.rerun()
+
+
+st.title("🔧 Instruments")
+st.subheader("Instrument Details")
 
 with get_session() as session, session.begin():
 

@@ -1,8 +1,14 @@
+from turtle import position
 import streamlit as st
 
 st.set_page_config(page_title="My Portfolio Dashboard", layout="wide", initial_sidebar_state="collapsed")
 
+
 pages = {
+    "🏦 Accounts": [
+        st.Page("pages/accounts_list.py", title="List"),
+        st.Page("pages/accounts_edit.py", title="Add / Edit"),
+    ],
     "🔧 Instruments": [    
         st.Page("pages/instruments_list.py", title="List"),
         st.Page("pages/instruments_details.py", title="Details"),
