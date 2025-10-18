@@ -5,12 +5,16 @@
 # Do
 
 - introduce Groups, Accounts, or SomethingElse model to manage instruments on different accounts / bank
-- working on Instruments now, align other models too
+
+- clicking on "Delete" button gives error because one too many dialog opened
 
 # Doing
 
-- move away from st.tabs, toward multi-page 
+- working on Instruments now, align other models too
+
 
 # Done
+
+- move away from st.tabs, toward multi-page 
 
 - ask confirmation before *delete* operations

@@ -15,7 +15,7 @@ if "show_delete_instrument_confirmation_dialog" not in st.session_state:
 st.title("🔧 Instruments")
 st.subheader("Instrument Details")
 
-@st.dialog("Confirm deletion")
+@st.dialog("Confirm instrument deletion")
 def confirm_delete_dialog():
     st.write("Are you sure you want to delete this instrument ?")
     col1, col2, col3 = st.columns([3,1,1])
@@ -71,8 +71,6 @@ with get_session() as session, session.begin():
                 # col1, col2, col3 = st.columns([2, 2, 1])
                 # col1.write(f"**Description:** {inst.description or '-'}")
                 # col2.write(f"**Last Price:** {inst.last_price or '-'}")
-
-                st.write("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
 
                 # --- Row 4: Button bar ---
                 col1, col2, col3 = st.columns([6, 1, 1])  # last column small for button

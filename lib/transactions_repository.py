@@ -17,3 +17,23 @@ def add_transaction(session, trans_type, amount, trade=None, description=None):
     scope = "portfolio" if trade is None else trade.description or trade.instrument.name
     print(f"💵 Added {trans_type}: {amount:.2f} ({scope})")
     return tr
+
+def get_all_transactions(session):
+    return session.query(Transaction).all()
+
+def delete_transaction(session, transaction_id):
+    transaction = session.get(Transaction, transaction_id)
+    if transaction:
+        try:
+            # Attempt to delete the transaction
+            session.delete(transaction)
+            session.commit()
+            print(f"🗑️ Deleted transaction ID {transaction_id}")
+        except Exception as e:
+            session.rollback()
+            print(f"⚠️ Cannot delete transaction ID {transaction_id}: {e}")
+            return False    
+        return True
+    else:
+        print(f"⚠️ Transaction ID {transaction_id} not found.")
+        return False

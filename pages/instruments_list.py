@@ -12,7 +12,7 @@ st.session_state.instrument_id = None  # Always reset selected instrument ID
 
 
 st.title("🔧 Instruments")
-st.subheader("Instrument List")
+st.subheader("Instruments list")
 
 with get_session() as session, session.begin():
         

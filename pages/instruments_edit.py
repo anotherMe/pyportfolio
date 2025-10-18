@@ -41,15 +41,18 @@ with get_session() as session, session.begin():
                         st.success("✅ Instrument saved successfully!")
 
     else:
+
         st.subheader("Add New Instrument")
-        inst = Instrument()
         
-        # --- Instrument form ---
         with st.form("instrument_form"):
+
+            inst = Instrument()
+            
             inst.isin = st.text_input("ISIN", value=inst.isin or "")
             inst.ticker = st.text_input("Ticker", value=inst.ticker or "")
             inst.name = st.text_input("Name", value=inst.name or "")
             inst.currency = st.text_input("Currency", value=inst.currency or "EUR")
+
             col1, col2 = st.columns([7,1])
             with col2:
                 save = st.form_submit_button("💾 Save")
