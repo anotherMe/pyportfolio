@@ -8,21 +8,17 @@ Base = declarative_base()
 
 
 # ==========================================================
-#  Market Data
+#  Accounts
 # ==========================================================
-# class OHLCV(Base):
-#     __tablename__ = 'ohlcv'
-#     symbol = Column(String, primary_key=True)
-#     timestamp = Column(DateTime, primary_key=True)
-#     granularity = Column(String, nullable=False)
-#     open = Column(Integer)   # in cents
-#     high = Column(Integer)
-#     low = Column(Integer)
-#     close = Column(Integer)
-#     volume = Column(Integer)
-#     __table_args__ = (
-#         UniqueConstraint('symbol', 'timestamp', name='_symbol_timestamp_uc'),
-#     )
+class Account(Base):
+    __tablename__ = "accounts"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, unique=True, nullable=False)
+    description = Column(Text)
+
+    transactions = relationship("Transaction", back_populates="account", cascade="all, delete-orphan")
+    trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
+    instruments = relationship("Instrument", back_populates="accounts", cascade="all, delete-orphan")
 
 
 # ==========================================================
@@ -31,12 +27,14 @@ Base = declarative_base()
 class Instrument(Base):
     __tablename__ = "instruments"
     id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
     isin = Column(String, unique=True, nullable=False)
     ticker = Column(String)
     name = Column(String, nullable=False)
     category = Column(String) # e.g., stock, bond, etf
     currency = Column(String, default="EUR")
 
+    account = relationship("Account", back_populates="instruments")
     trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
     prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="instrument", cascade="all, delete-orphan")
@@ -78,6 +76,7 @@ class MarketPrice(Base):
 class Transaction(Base):
     __tablename__ = "transactions"
     id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=True)
     trade_id = Column(Integer, ForeignKey("trades.id", ondelete="CASCADE"), nullable=True)
     date = Column(DateTime, nullable=False)
@@ -85,5 +84,25 @@ class Transaction(Base):
     amount = Column(Integer, nullable=False)  # in cents
     description = Column(Text)
 
+    account = relationship("Account", back_populates="transactions")
     instrument = relationship("Instrument", back_populates="transactions")
     trade = relationship("Trade", back_populates="transactions")
+
+
+# ==========================================================
+#  Market Data
+# ==========================================================
+# class OHLCV(Base):
+#     __tablename__ = 'ohlcv'
+#     symbol = Column(String, primary_key=True)
+#     timestamp = Column(DateTime, primary_key=True)
+#     granularity = Column(String, nullable=False)
+#     open = Column(Integer)   # in cents
+#     high = Column(Integer)
+#     low = Column(Integer)
+#     close = Column(Integer)
+#     volume = Column(Integer)
+#     __table_args__ = (
+#         UniqueConstraint('symbol', 'timestamp', name='_symbol_timestamp_uc'),
+#     )
+

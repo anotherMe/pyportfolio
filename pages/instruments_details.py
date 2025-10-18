@@ -73,7 +73,7 @@ with get_session() as session, session.begin():
                 # col2.write(f"**Last Price:** {inst.last_price or '-'}")
 
                 # --- Row 4: Button bar ---
-                col1, col2, col3 = st.columns([6, 1, 1])  # last column small for button
+                col1, col2, col3 = st.columns([5, 1, 1])  # last column small for button
                 with col2:
 
                     if not st.session_state.ok_delete_instrument:
