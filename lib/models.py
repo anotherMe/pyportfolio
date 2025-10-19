@@ -10,6 +10,7 @@ Base = declarative_base()
 # ==========================================================
 #  Accounts
 # ==========================================================
+
 class Account(Base):
     __tablename__ = "accounts"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -17,23 +18,22 @@ class Account(Base):
     description = Column(Text)
 
     transactions = relationship("Transaction", back_populates="account", cascade="all, delete-orphan")
-    instruments = relationship("Instrument", back_populates="account", cascade="all, delete-orphan")
+    trades = relationship("Trade", back_populates="account", cascade="all, delete-orphan")
 
 
 # ==========================================================
 #  Instruments
 # ==========================================================
+
 class Instrument(Base):
     __tablename__ = "instruments"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
-    isin = Column(String, nullable=False)
+    isin = Column(String, unique=True, nullable=False)
     ticker = Column(String)
     name = Column(String, nullable=False)
     category = Column(String) # e.g., stock, bond, etf
     currency = Column(String, default="EUR")
 
-    account = relationship("Account", back_populates="instruments")
     trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
     prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="instrument", cascade="all, delete-orphan")
@@ -42,9 +42,11 @@ class Instrument(Base):
 # ==========================================================
 #  Trades (Buy/Sell)
 # ==========================================================
+
 class Trade(Base):
     __tablename__ = "trades"
     id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
     date = Column(DateTime, nullable=False)
     type = Column(String, nullable=False)  # 'buy' or 'sell'
@@ -59,6 +61,7 @@ class Trade(Base):
 # ==========================================================
 #  Market Prices
 # ==========================================================
+
 class MarketPrice(Base):
     __tablename__ = "market_prices"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -72,6 +75,7 @@ class MarketPrice(Base):
 # ==========================================================
 #  Transactions (Dividends, Taxes, Fees)
 # ==========================================================
+
 class Transaction(Base):
     __tablename__ = "transactions"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -91,6 +95,7 @@ class Transaction(Base):
 # ==========================================================
 #  Market Data
 # ==========================================================
+
 # class OHLCV(Base):
 #     __tablename__ = 'ohlcv'
 #     symbol = Column(String, primary_key=True)
