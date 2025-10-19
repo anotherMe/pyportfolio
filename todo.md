@@ -2,6 +2,9 @@
 
 # Backlog
 
+- add link to JustETF ( for ETFs )
+
+
 # Do
 
 - clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
@@ -10,6 +13,7 @@
 # Doing
 
 - introduce Groups, Accounts, or SomethingElse model to manage instruments on different accounts / bank
+
 
 # Done
 
