@@ -1,9 +1,10 @@
 
 
 from datetime import date
+import datetime
 import streamlit as st
 from lib.accounts_repository import get_all_accounts
-from lib.database import get_session, to_cents
+from lib.database import read_from_db, get_session, save_to_db
 from lib.models import Transaction
 from lib.models import Trade
 from lib.trades_repository import get_all_trades
@@ -45,15 +46,15 @@ with get_session() as session, session.begin():
                 )
                 transaction_date = st.date_input("Transaction date", value=transaction.date)
                 transaction_time = st.time_input("Transaction time", value=transaction.date.time(), step=60)
-                amount = st.number_input("Amount (€)", min_value=0.0, step=0.01, value=transaction.amount / 100)
+                amount = st.number_input("Amount (€)", min_value=0.0, step=0.01, value=read_from_db(transaction.amount))
                 submitted = st.form_submit_button("Save Transaction")
 
                 if submitted:
                     # TODO: add validation
                     transaction.account = accounts_map.get(selected_account)
                     transaction.type = transaction_type
-                    transaction.date = date.combine(transaction_date, transaction_time)
-                    transaction.amount = to_cents(amount)
+                    transaction.date = datetime.combine(transaction_date, transaction_time)
+                    transaction.amount = save_to_db(amount)
                     session.add(transaction)
                     st.success(f"Transaction for {transaction.transaction_id} updated successfully!")
 
@@ -101,9 +102,9 @@ with get_session() as session, session.begin():
                         transaction.account_id = accounts_map.get(selected_account).id
                         if t:
                             transaction.trade_id = t.id
-                        transaction.date = date.combine(transaction_date, transaction_time)
+                        transaction.date = datetime.combine(transaction_date, transaction_time)
                         transaction.type = selected_type
-                        transaction.amount = to_cents(amount)
+                        transaction.amount = save_to_db(amount)
                         transaction.description = description
                         session.add(transaction)
                         st.session_state.transaction_id = None

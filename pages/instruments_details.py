@@ -1,7 +1,7 @@
 
 import pandas as pd
 import streamlit as st
-from lib.database import from_cents, get_session
+from lib.database import read_from_db, get_session
 from lib.instruments_repository import delete_instrument, get_all_instruments
 
 
@@ -110,7 +110,7 @@ with get_session() as session, session.begin():
                         "Type": "📥 Buy" if trade.type.lower() == "buy" else "📤 Sell" if trade.type.lower() == "sell" else trade.type,
                         "Date": trade.date,
                         "Qty": trade.quantity,
-                        "Price": from_cents(trade.price)
+                        "Price": read_from_db(trade.price)
                     } for trade in inst.trades]
                     st.dataframe(data=pd.DataFrame(inst_trades), hide_index=True)
                 else:

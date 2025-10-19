@@ -1,7 +1,7 @@
 
 import streamlit as st
 from lib.accounts_repository import get_account_by_name, get_all_accounts
-from lib.database import get_session
+from lib.database import read_from_db, get_session
 from lib.instruments_repository import get_all_instruments
 import pandas as pd
 
@@ -39,7 +39,7 @@ with get_session() as session:
                                 "Date": t.date.strftime("%Y-%m-%d %H:%M"),
                                 "Type": "➕ BUY" if t.type.lower() == "buy" else "➖ SELL",
                                 "Quantity": t.quantity,
-                                "Price (€)": f"{t.price / 100:.2f}"
+                                "Price (€)": f"{read_from_db(t.price)}"
                             } for t in trades]
         df_latest = pd.DataFrame(latest_trade_details)
         st.dataframe(data=df_latest, hide_index=True)

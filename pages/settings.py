@@ -14,7 +14,7 @@ else:
     settings = {
         "default_currency": "EUR",
         "db_path": "portfolio.db",
-        "decimal_precision": 2
+        "decimal_precision": 6
     }
 
 with st.form("settings_form"):
@@ -27,7 +27,7 @@ with st.form("settings_form"):
         "Database Path", value=settings.get("db_path", "portfolio.db")
     )
     settings["decimal_precision"] = st.number_input(
-        "Decimal Precision", min_value=0, max_value=4, value=settings.get("decimal_precision", 2)
+        "Decimal Precision", min_value=0, max_value=6, value=settings.get("decimal_precision", 6)
     )
 
     submitted = st.form_submit_button("💾 Save Settings")

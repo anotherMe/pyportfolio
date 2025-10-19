@@ -1,7 +1,7 @@
 
 import streamlit as st
 from lib.accounts_repository import get_account_by_name, get_all_accounts
-from lib.database import from_cents, get_session
+from lib.database import read_from_db, get_session
 from lib.models import Instrument
 import pandas as pd
 
@@ -50,14 +50,15 @@ with get_session() as session:
             with st.container(border=True):
 
                 col1, col2, col3 = st.columns([1,1,1])
-                col1.write(f"Instrument: {trade.instrument.name}")
-                col2.write(f"ISIN: {trade.instrument.isin}")
-                col3.write(f"Date: {trade.date.strftime('%Y-%m-%d %H:%M')}")
+                col1.write(f"Account: {trade.account.name}")
+                col2.write(f"Instrument: {trade.instrument.name}")
+                col3.write(f"ISIN: {trade.instrument.isin}")
                 
-                col1, col2, col3 = st.columns([1,1,1])
-                col1.write(trade.type)
-                col2.write(trade.quantity)
-                col3.write(f"{trade.price / 100:.2f} €")
+                col1, col2, col3, col4 = st.columns([3,1,1,1])
+                col1.write(f"Date: {trade.date.strftime('%Y-%m-%d %H:%M')}")
+                col2.write(trade.type)
+                col3.write(trade.quantity)
+                col4.write(f"{read_from_db(trade.price)} €")
 
                 col1, col2, col3 = st.columns([7,1,1])
                 with col2:
@@ -76,7 +77,7 @@ with get_session() as session:
                 if trade.transactions:                        
                     txn_details = [{
                         "Type": txn.type,
-                        "Amount (€)": f"{from_cents(txn.amount):.2f}",
+                        "Amount (€)": f"{read_from_db(txn.amount):.2f}",
                         "Date": txn.date.strftime('%Y-%m-%d')
                     } for txn in trade.transactions]
                     st.dataframe(pd.DataFrame(txn_details))

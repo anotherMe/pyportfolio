@@ -1,7 +1,5 @@
 
-from sqlalchemy import func
-from datetime import datetime
-from lib.database import to_cents, from_cents
+from lib.database import save_to_db
 from lib.models import Trade
 
 
@@ -11,15 +9,15 @@ def get_all_trades(session, account=None):
     else:
         return session.query(Trade).order_by(Trade.date).all()
 
-def add_trade(session, account, instrument, trade_type, quantity, price, description=None):
+def add_trade(session, account, instrument, date, trade_type, quantity, price, description=None):
     
     trade = Trade(
         account_id=account.id,
         instrument_id=instrument.id,
-        date=datetime.now(),
+        date=date,
         type=trade_type,
         quantity=int(quantity),
-        price=to_cents(price),
+        price=save_to_db(price),
         description=description,
     )
     session.add(trade)

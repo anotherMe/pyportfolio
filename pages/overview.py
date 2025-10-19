@@ -1,5 +1,5 @@
 import streamlit as st
-from lib.database import from_cents, get_session
+from lib.database import read_from_db, get_session
 from lib.portfolio_repository import get_position
 from lib.models import Instrument
 import pandas as pd
@@ -29,7 +29,7 @@ with get_session() as session:
                     "Ticker": ticker_display,
                     "Name": inst.name,
                     "Qty": qty,
-                    "Avg Buy Price": f"{avg_price} €"
+                    "Avg Buy Price": f"{avg_price:.2f} €"
                 })
 
         df = pd.DataFrame(data)

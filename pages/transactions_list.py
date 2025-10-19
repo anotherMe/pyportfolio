@@ -1,7 +1,7 @@
 
 import streamlit as st
 from lib.accounts_repository import get_account_by_name, get_all_accounts
-from lib.database import get_session, from_cents
+from lib.database import get_session, read_from_db
 from lib.models import Transaction, Instrument
 from lib.streamlit.utils import account_selector
 from lib.transactions_repository import get_all_transactions
@@ -39,7 +39,7 @@ with get_session() as session:
                     "Type": t.type,
                     "Instrument": t.trade.instrument_id if t.trade else "",
                     "Date": t.date.strftime("%Y-%m-%d"),
-                    "Amount (€)": from_cents(t.amount),
+                    "Amount (€)": read_from_db(t.amount),
                     "Description": t.description or ""
                 } for t in transactions
             ])
@@ -57,7 +57,7 @@ with get_session() as session:
                 {
                     "Instrument": d.trade.instrument_id,
                     "Date": d.date.strftime("%Y-%m-%d"),
-                    "Amount (€)": from_cents(d.amount)
+                    "Amount (€)": read_from_db(d.amount)
                 } for d in dividends
             ])
         else:
@@ -75,7 +75,7 @@ with get_session() as session:
                 {
                     "Description": t.description,
                     "Date": t.date.strftime("%Y-%m-%d"),
-                    "Amount (€)": t.amount / 100
+                    "Amount (€)": read_from_db(t.amount)
                 } for t in taxes
             ])
         else:
@@ -92,7 +92,7 @@ with get_session() as session:
                 {
                     "Description": f.description,
                     "Date": f.date.strftime("%Y-%m-%d"),
-                    "Amount (€)": f.amount / 100
+                    "Amount (€)": read_from_db(f.amount)
                 } for f in fees
             ])
         else:

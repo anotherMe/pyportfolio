@@ -1,6 +1,6 @@
 
 from sqlalchemy import func
-from lib.database import to_cents, from_cents
+from lib.database import save_to_db, read_from_db
 from lib.models import Instrument, MarketPrice, Trade, Transaction
 
 
@@ -17,8 +17,8 @@ def get_portfolio_value(session):
 
     global_cash = session.query(func.sum(Transaction.amount)).filter(Transaction.instrument_id.is_(None)).scalar() or 0
     total_cents += global_cash
-    print(f"📊 Portfolio value (including global transactions): {from_cents(total_cents):.2f}")
-    return from_cents(total_cents)
+    print(f"📊 Portfolio value (including global transactions): {read_from_db(total_cents):.2f}")
+    return read_from_db(total_cents)
 
 
 def get_position(session, instrument_id):
@@ -75,5 +75,5 @@ def get_average_buy_price(session, instrument_id):
                     qty_to_sell = 0
 
     total_qty = sum(q for q, _ in inventory)
-    total_cost = from_cents(sum(q * p for q, p in inventory))
+    total_cost = read_from_db(sum(q * p for q, p in inventory))
     return total_cost / total_qty if total_qty > 0 else 0.0

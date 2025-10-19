@@ -10,6 +10,7 @@
 
 # Do
 
+- increase to six decimal storage of currency
 
 # Doing
 
