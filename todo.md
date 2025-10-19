@@ -13,12 +13,10 @@
 
 # Doing
 
-- add transactions on a trade in the trade_details page
-- add trades on an instrument in the instrument_details page
-
-
 # Done
 
+- add transactions on a trade in the trade_details page
+- add trades on an instrument in the instrument_details page
 - from "list" page go to specific "details" ?
 - introduce Account model
 - working on Instruments now, align other models too
