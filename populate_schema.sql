@@ -14,6 +14,9 @@ INSERT INTO instruments (isin, ticker,name,category,currency) VALUES
 	 ('IE00B3FH7618','IEGE','ISHS EUR GO 0-1  EUR','acc','EUR'),
 	 ('IE00B3VWN179','CSBGU3','ISHARES USD GV 1-3 B','acc','EUR'),
 	 ('IE00B1FZS798','IBTM','ISHARES USD TRSB7-10','dist','EUR');
+INSERT INTO instruments (isin, ticker,name,category,currency) VALUES
+	 ('IE000OJ5TQP4','NATO','HANetf Future of Defence UCITS ETF','acc','EUR'),
+	 ('US70450Y1038','','PAYPAL HOLDINGS INC ','acc','EUR');
 
 INSERT INTO trades (instrument_id,account_id, date,"type",quantity,price,description) VALUES
 	 (1,1,'2025-10-12 19:23:51.458937','buy',191,16385,NULL),
