@@ -1,13 +1,21 @@
 
 import streamlit as st
+from lib.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session, from_cents
 from lib.models import Transaction, Instrument
+from lib.streamlit.utils import account_selector
+from lib.transactions_repository import get_all_transactions
 
 print("Running transactions page...")
 
 st.title("💰 Transactions")
 
 with get_session() as session:
+
+    # --- Account selector ---
+    accounts = get_all_accounts(session)
+    account_selector(accounts) # Show sidebar account selector
+    current_account = get_account_by_name(session, st.session_state.account)
 
     tab1, tab2, tab3, tab4 = st.tabs(["All", "📈 Dividends", "💸 Taxes", "Fees"])
 
@@ -24,7 +32,7 @@ with get_session() as session:
         
         st.subheader("All Transactions")
 
-        transactions = session.query(Transaction).order_by(Transaction.date.desc()).all()
+        transactions = get_all_transactions(session, current_account)
         if transactions:
             st.dataframe(data=[
                 {

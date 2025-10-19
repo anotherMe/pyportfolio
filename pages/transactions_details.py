@@ -1,6 +1,8 @@
 
 import streamlit as st
+from lib.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session
+from lib.streamlit.utils import account_selector
 import lib.transactions_repository as trans_repo
 
 
@@ -30,7 +32,12 @@ def confirm_delete_dialog():
 
 with get_session() as session, session.begin():
 
-    transactions = trans_repo.get_all_transactions(session)
+    # --- Account selector ---
+    accounts = get_all_accounts(session)
+    account_selector(accounts) # Show sidebar account selector
+    current_account = get_account_by_name(session, st.session_state.account)
+
+    transactions = trans_repo.get_all_transactions(session, current_account)
 
     if not transactions:
         st.info("No transactions found.")

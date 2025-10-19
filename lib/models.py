@@ -82,7 +82,7 @@ class Transaction(Base):
     account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
     trade_id = Column(Integer, ForeignKey("trades.id", ondelete="CASCADE"), nullable=True)
     date = Column(DateTime, nullable=False)
-    type = Column(String, nullable=False)  # 'dividend', 'tax', 'fee', 'global_tax'
+    type = Column(String, nullable=False)  # 'div', 'tax', 'fee'
     amount = Column(Integer, nullable=False)  # in cents
     description = Column(Text)
 

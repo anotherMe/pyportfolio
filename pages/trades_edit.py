@@ -4,10 +4,9 @@ from datetime import date
 
 import streamlit as st
 
-from lib.accounts_repository import get_account_by_name, get_all_accounts
+from lib.accounts_repository import get_all_accounts
 from lib.database import from_cents, get_session
 from lib.instruments_repository import get_all_instruments
-from lib.streamlit.utils import account_selector
 from lib.trades_repository import add_trade
 from lib.models import Trade
 

@@ -21,7 +21,7 @@ def add_transaction(session, trans_type, amount, account, trade=None, descriptio
 
 def get_all_transactions(session, account=None):
     if account:
-        return session.get(Transaction).filter_by(account_id=account.id).all()
+        return session.query(Transaction).filter_by(account_id=account.id).order_by(Transaction.date.desc()).all()
     else:
         return session.query(Transaction).all()
 
