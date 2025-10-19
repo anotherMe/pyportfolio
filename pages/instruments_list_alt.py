@@ -28,6 +28,6 @@ with get_session() as session, session.begin():
         cols[2].write(inst.name)
         if cols[3].button("Edit", key=f"edit_{inst.id}"):
             # set the query param (string values)
-            st.query_params["instrument_id"] = str(inst.id)
+            # TODO: set current instrument_id in the st.session_state
             # then programmatically switch page (no new tab)
             st.switch_page("pages/instruments_edit.py")

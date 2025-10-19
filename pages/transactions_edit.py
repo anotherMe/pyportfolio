@@ -5,7 +5,7 @@ import streamlit as st
 from lib.accounts_repository import get_all_accounts
 from lib.database import get_session, to_cents
 from lib.models import Transaction
-from lib.models import Instrument, Trade
+from lib.models import Trade
 from lib.trades_repository import get_all_trades
 
 
@@ -59,10 +59,17 @@ with get_session() as session, session.begin():
 
     else:
 
-        st.subheader("Add generic transaction on account")
+        st.subheader("Add new transaction")
+
+        t = None
+        if st.session_state.trade_id:  # trade ID coming from page trades_details.py
+            t = session.get(Trade, st.session_state.trade_id)
+
         with st.form("add_transaction_form"):
 
             transaction = Transaction()
+            if t:
+                st.text_input(label="Trade", value=f"{t.type} {t.quantity} of {t.instrument.name} on {t.date}", disabled=True)
             selected_account = st.selectbox(
                 "Account",
                 list(accounts_map.keys())
@@ -92,6 +99,8 @@ with get_session() as session, session.begin():
                 else:
                     try:
                         transaction.account_id = accounts_map.get(selected_account).id
+                        if t:
+                            transaction.trade_id = t.id
                         transaction.date = date.combine(transaction_date, transaction_time)
                         transaction.type = selected_type
                         transaction.amount = to_cents(amount)
@@ -105,4 +114,5 @@ with get_session() as session, session.begin():
     col1, col2 = st.columns([5,1])
     with col2:
         if st.button("Back to details"):
+            st.session_state.trade_id = None
             st.switch_page("pages/transactions_details.py")

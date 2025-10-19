@@ -59,7 +59,7 @@ with get_session() as session:
                 col2.write(trade.quantity)
                 col3.write(f"{trade.price / 100:.2f} €")
 
-                col1, col2, col3 = st.columns([5,1,1])
+                col1, col2, col3 = st.columns([7,1,1])
                 with col2:
                     if st.button("✏️ Edit", key=f"edit_{trade.id}"):
                         st.session_state.trade_id = trade.id
@@ -70,17 +70,23 @@ with get_session() as session:
                         # session.delete(trade)
                         # st.success("Trade deleted.")
 
+                # --- Related transactions ---
+                st.divider()
+                st.write("Transactions:")
                 if trade.transactions:                        
-                    st.divider()
-                    st.write("Related Transactions:")
-                    if trade.transactions:
-                        txn_details = [{
-                            "Type": txn.type,
-                            "Amount (€)": f"{from_cents(txn.amount):.2f}",
-                            "Date": txn.date.strftime('%Y-%m-%d')
-                        } for txn in trade.transactions]
-                        st.dataframe(pd.DataFrame(txn_details))
-                        
+                    txn_details = [{
+                        "Type": txn.type,
+                        "Amount (€)": f"{from_cents(txn.amount):.2f}",
+                        "Date": txn.date.strftime('%Y-%m-%d')
+                    } for txn in trade.transactions]
+                    st.dataframe(pd.DataFrame(txn_details))
+                else:
+                    st.info("No transactions available")
+                cols = st.columns([5,1])
+                with cols[1]:
+                    if st.button("Add new transaction", key=f"add_trans_btn_{trade.id}"):
+                        st.session_state.trade_id = trade.id
+                        st.switch_page("pages/transactions_edit.py")
     else:
         st.info("No trades available.")
                 

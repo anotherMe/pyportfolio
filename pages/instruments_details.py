@@ -1,6 +1,7 @@
 
+import pandas as pd
 import streamlit as st
-from lib.database import get_session
+from lib.database import from_cents, get_session
 from lib.instruments_repository import delete_instrument, get_all_instruments
 
 
@@ -50,9 +51,13 @@ with get_session() as session, session.begin():
         filtered_instruments = instruments
 
     if not filtered_instruments:
+
         st.info("No instruments found.")
+
     else:
+
         for inst in filtered_instruments:
+
             with st.container(border=True):
                 
                 # --- Row 1: Name and Ticker ---
@@ -68,13 +73,10 @@ with get_session() as session, session.begin():
                     col2.write("-")
                 col4.write(f"**Currency:** {inst.currency or '-'}")
 
-                # --- Row 3: Additional info (example: description, last price) ---
-                # col1, col2, col3 = st.columns([2, 2, 1])
-                # col1.write(f"**Description:** {inst.description or '-'}")
-                # col2.write(f"**Last Price:** {inst.last_price or '-'}")
+                st.write(" ")  # just an empty row
 
                 # --- Row 4: Button bar ---
-                col1, col2, col3 = st.columns([5, 1, 1])  # last column small for button
+                col1, col2, col3 = st.columns([7, 1, 1])  # last column small for button
                 with col2:
 
                     if not st.session_state.ok_delete_instrument:
@@ -98,3 +100,23 @@ with get_session() as session, session.begin():
                     if st.button("✏️ Edit", key=f"edit_{inst.id}"):
                         st.session_state["instrument_id"] = inst.id
                         st.switch_page("pages/instruments_edit.py")
+
+                # --- Related trades ---
+                st.divider()
+                st.write("Trades:")
+                if inst.trades:
+                    inst_trades = [{
+                        "Account": trade.account.name,
+                        "Type": "📥 Buy" if trade.type.lower() == "buy" else "📤 Sell" if trade.type.lower() == "sell" else trade.type,
+                        "Date": trade.date,
+                        "Qty": trade.quantity,
+                        "Price": from_cents(trade.price)
+                    } for trade in inst.trades]
+                    st.dataframe(data=pd.DataFrame(inst_trades), hide_index=True)
+                else:
+                    st.info("No trades available")
+                cols = st.columns([5,1])
+                with cols[1]:
+                    if st.button("Add new trade", key=f"add_trade_button_{inst.id}"):
+                        st.session_state.instrument_id = inst.id
+                        st.switch_page("pages/trades_edit.py")

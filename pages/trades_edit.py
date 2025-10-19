@@ -8,7 +8,7 @@ from lib.accounts_repository import get_all_accounts
 from lib.database import from_cents, get_session
 from lib.instruments_repository import get_all_instruments
 from lib.trades_repository import add_trade
-from lib.models import Trade
+from lib.models import Instrument, Trade
 
 
 print("Running trades page...")
@@ -32,6 +32,9 @@ with get_session() as session:
 
         with st.form("add_trade"):
 
+            if st.session_state.instrument_id: # from instrument_details.py
+                work_on_instrument = session.get(Instrument, st.session_state.instrument_id)
+
             trade = Trade()
             selected_account = st.selectbox(
                 "Account",
@@ -39,7 +42,8 @@ with get_session() as session:
             )
             selected_instrument = st.selectbox(
                 "Instrument",
-                list(instrument_map.keys())
+                list(instrument_map.keys()),
+                index=list(instrument_map.keys()).index(work_on_instrument.name)
             )
             selected_type = st.selectbox(
                 "Type",
