@@ -30,6 +30,6 @@ INSERT INTO trades (instrument_id,account_id,date,"type",quantity,price,descript
 	 (7,1,'2025-10-13 17:14:40.111039','sell',30,121991,NULL);
 
 
-INSERT INTO transactions (account_id, trade_id, date, "type",amount,description,instrument_id) VALUES
-	 (1, 11,'2025-10-13 17:14:40.112017','fee',3900,'Fees for SELL of 30x ISHARES NASDAQ100',7),
-	 (1, 11,'2025-10-13 17:14:40.112537','tax',113896,'Capital gains tax on sale of 30x ISHARES NASDAQ100',7);
+INSERT INTO transactions (account_id, trade_id, date, "type",amount,description) VALUES
+	 (1, 11,'2025-10-13 17:14:40.112017','fee',3900,'Fees for SELL of 30x ISHARES NASDAQ100'),
+	 (1, 11,'2025-10-13 17:14:40.112537','tax',113896,'Capital gains tax on sale of 30x ISHARES NASDAQ100');
