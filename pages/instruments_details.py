@@ -2,6 +2,7 @@
 import streamlit as st
 from lib.database import get_session
 from lib.instruments_repository import delete_instrument, get_all_instruments
+from lib.streamlit.account_selector import extract_current_account_from_params
 
 
 print("Running instruments details page...")
@@ -31,7 +32,8 @@ st.subheader("Instrument Details")
 
 with get_session() as session, session.begin():
 
-    instruments = get_all_instruments(session)
+    currenct_account = extract_current_account_from_params(session)
+    instruments = get_all_instruments(session, currenct_account)
 
     if not instruments:
         st.info("No instruments found.")

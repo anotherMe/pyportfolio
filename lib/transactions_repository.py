@@ -4,8 +4,9 @@ from lib.models import Transaction
 from lib.database import to_cents
 
 
-def add_transaction(session, trans_type, amount, trade=None, description=None):
+def add_transaction(session, trans_type, amount, account, trade=None, description=None):
     tr = Transaction(
+        account_id = account.id,
         trade_id=trade.id if trade else None,
         date=datetime.now(),
         type=trans_type,
@@ -18,8 +19,11 @@ def add_transaction(session, trans_type, amount, trade=None, description=None):
     print(f"💵 Added {trans_type}: {amount:.2f} ({scope})")
     return tr
 
-def get_all_transactions(session):
-    return session.query(Transaction).all()
+def get_all_transactions(session, account=None):
+    if account:
+        return session.get(Transaction).filter_by(account_id=account.id).all()
+    else:
+        return session.query(Transaction).all()
 
 def delete_transaction(session, transaction_id):
     transaction = session.get(Transaction, transaction_id)

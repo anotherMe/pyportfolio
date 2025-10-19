@@ -18,8 +18,11 @@ def add_account(session, name, description):
         return False    
     return True
 
-def get_all_accounts(session):
-    return session.query(Account).all()
+def get_all_accounts(_session):
+    return _session.query(Account).all()
+
+def get_account_by_name(session, account_name):
+    return session.query(Account).filter_by(name=account_name).first()
 
 def delete_account(session, account_id):
     account = session.get(Account, account_id)

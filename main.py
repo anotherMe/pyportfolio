@@ -1,7 +1,19 @@
 
 import streamlit as st
+from lib.accounts_repository import get_all_accounts
+from lib.database import get_session
+from lib.streamlit.account_selector import account_selector
+from pages import accounts_list
+
 
 st.set_page_config(page_title="My Portfolio Dashboard", layout="wide", initial_sidebar_state="collapsed")
+
+# Setup account selector
+with get_session() as session, session.begin():
+    accounts = get_all_accounts(session)
+    accounts_list = [account.name for account in accounts]
+    accounts_list.append("All")
+account_selector(accounts_list)
 
 
 pages = {

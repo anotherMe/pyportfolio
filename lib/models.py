@@ -27,7 +27,7 @@ class Instrument(Base):
     __tablename__ = "instruments"
     id = Column(Integer, primary_key=True, autoincrement=True)
     account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
-    isin = Column(String, unique=True, nullable=False)
+    isin = Column(String, nullable=False)
     ticker = Column(String)
     name = Column(String, nullable=False)
     category = Column(String) # e.g., stock, bond, etf

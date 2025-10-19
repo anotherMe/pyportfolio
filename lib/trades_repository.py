@@ -4,6 +4,13 @@ from datetime import datetime
 from lib.database import to_cents, from_cents
 from lib.models import Trade
 
+
+def get_all_trades(session, account=None):
+    if account:
+        return session.query(Trade).join(Trade.instrument).filter_by(account_id=account.id).order_by(Trade.date).all()
+    else:
+        return session.query(Trade).join(Trade.instrument).order_by(Trade.date).all()
+
 def add_trade(session, instrument, trade_type, quantity, price, description=None):
     
     trade = Trade(

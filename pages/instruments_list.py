@@ -5,6 +5,8 @@ from lib.database import get_session
 from lib.instruments_repository import get_all_instruments
 import pandas as pd
 
+from lib.streamlit.account_selector import extract_current_account_from_params
+
 
 print("Running instruments list page...")
 
@@ -16,7 +18,8 @@ st.subheader("Instruments list")
 
 with get_session() as session, session.begin():
         
-    instruments = get_all_instruments(session)
+    currenct_account = extract_current_account_from_params(session)
+    instruments = get_all_instruments(session, currenct_account)
 
     if not instruments:
         st.info("No instruments found.")

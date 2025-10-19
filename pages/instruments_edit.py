@@ -3,6 +3,7 @@ import streamlit as st
 from lib import accounts_repository
 from lib.database import get_session
 from lib.models import Instrument
+from lib.streamlit.account_selector import extract_current_account_from_params
 from lib.utils import is_valid_isin
 
 
@@ -16,6 +17,11 @@ if 'instrument_id' not in st.session_state:
 
 with get_session() as session, session.begin():
     
+    currenct_account = extract_current_account_from_params(session)
+
+    accounts = accounts_repository.get_all_accounts(session)
+    account_options = [account.name for account in accounts]
+
     if st.session_state.instrument_id:
 
         st.subheader("Edit Instrument")
@@ -26,6 +32,11 @@ with get_session() as session, session.begin():
         else:
             
             with st.form("instrument_form"):
+                selected_account_name = st.selectbox("Select Account", options=account_options, index=0)
+                inst.account_id = next(
+                    (account.id for account in accounts if account.name == selected_account_name),
+                    None
+                )
                 inst.isin = st.text_input("ISIN", value=inst.isin or "")
                 inst.ticker = st.text_input("Ticker", value=inst.ticker or "")
                 inst.name = st.text_input("Name", value=inst.name or "")
@@ -46,9 +57,6 @@ with get_session() as session, session.begin():
         st.subheader("Add New Instrument")
         
         with st.form("instrument_form"):
-
-            accounts = accounts_repository.get_all_accounts(session)
-            account_options = [account.name for account in accounts]
 
             inst = Instrument()
             selected_account_name = st.selectbox("Account", options=account_options, index=0)

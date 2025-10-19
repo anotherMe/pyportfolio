@@ -4,6 +4,9 @@ from lib.database import from_cents, get_session
 from lib.models import Instrument, Trade
 import pandas as pd
 
+from lib.streamlit.account_selector import extract_current_account_from_params
+from lib.trades_repository import get_all_trades
+
 print("Running trades page...")
 
 st.title("💼 Trades")
@@ -14,11 +17,10 @@ if 'trade_id' not in st.session_state:
 with get_session() as session:
 
     # --- Fetch data ---
+    current_account = extract_current_account_from_params(session)
     instruments = session.query(Instrument).all()
     instrument_map = {inst.name: inst for inst in instruments}
-    trades = session.query(Trade).join(Trade.instrument).order_by(Trade.date).all()
-    latest_trades = session.query(Trade).join(Trade.instrument).order_by(Trade.date.desc()).limit(10).all()
-
+    trades = get_all_trades(session, current_account)
 
     st.subheader("Trade Details")
 
