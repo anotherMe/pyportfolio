@@ -26,10 +26,10 @@ with get_session() as session:
                 )
                 data.append({
                     "ISIN": inst.isin,
-                    "ticker": ticker_display,
+                    "Ticker": ticker_display,
                     "Name": inst.name,
                     "Qty": qty,
-                    "Avg Price": f"{avg_price} €",
+                    "Avg Buy Price": f"{avg_price} €"
                 })
 
         df = pd.DataFrame(data)

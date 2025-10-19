@@ -7,11 +7,9 @@
 - clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
 - add transactions on a trade in the trade_details.page
 - automatically add transactions on a trade insertion ?
-- from "list" page go to specific "details" ( using st.query_params ? )
-
+- add market prices pages ( add it to instruments page ? )
 
 # Do
-
 
 
 # Doing
@@ -19,6 +17,7 @@
 
 # Done
 
+- from "list" page go to specific "details" ( using st.query_params ? )
 - introduce Account model
 - working on Instruments now, align other models too
 - clicking on "Delete" button gives error because one too many dialog opened

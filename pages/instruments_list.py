@@ -30,18 +30,25 @@ with get_session() as session, session.begin():
             "Ticker": inst.ticker,
             "Name": inst.name,
             "Currency": inst.currency or "",
-            # External URL column
-            "Ticker_URL": f"https://finance.yahoo.com/quote/{inst.ticker}" if inst.ticker else ""
+            "Yahoo": f"https://finance.yahoo.com/quote/{inst.ticker}" if inst.ticker else "",
+            "Details": f"/instruments_details/?instrument_id={inst.id}",
         })
 
     df = pd.DataFrame(data)
 
     # --- Configure columns ---
     column_config = {
-        "Ticker_URL": st.column_config.LinkColumn(
-            "Yahoo Finance",
+        "Yahoo": st.column_config.LinkColumn(
+            "Yahoo",
             help="Click ticker to open Yahoo Finance",
-            display_text=":material/table_chart_view:"
+            display_text=":material/table_chart_view:",
+            width=2
+        ),
+        "Details": st.column_config.LinkColumn(
+            "Detail",
+            help="Click to open Instrument detail page",
+            display_text=":material/edit:",
+            width=2
         )
     }
 
