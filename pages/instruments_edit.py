@@ -3,7 +3,7 @@ import streamlit as st
 from lib import accounts_repository
 from lib.database import get_session
 from lib.models import Instrument
-from lib.streamlit.account_selector import extract_current_account_from_params
+from lib.streamlit.utils import extract_current_account_from_params
 from lib.utils import is_valid_isin
 
 

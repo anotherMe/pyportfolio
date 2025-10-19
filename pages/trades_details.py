@@ -1,10 +1,11 @@
 
 import streamlit as st
+from lib.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import from_cents, get_session
-from lib.models import Instrument, Trade
+from lib.models import Instrument
 import pandas as pd
 
-from lib.streamlit.account_selector import extract_current_account_from_params
+from lib.streamlit.utils import account_selector
 from lib.trades_repository import get_all_trades
 
 print("Running trades page...")
@@ -16,11 +17,17 @@ if 'trade_id' not in st.session_state:
 
 with get_session() as session:
 
+    # --- Account selector ---
+    accounts = get_all_accounts(session)
+    account_selector(accounts) # Show sidebar account selector
+    current_account = get_account_by_name(session, st.session_state.account)
+
     # --- Fetch data ---
-    current_account = extract_current_account_from_params(session)
+    
     instruments = session.query(Instrument).all()
     instrument_map = {inst.name: inst for inst in instruments}
     trades = get_all_trades(session, current_account)
+    
 
     st.subheader("Trade Details")
 

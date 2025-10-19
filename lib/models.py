@@ -54,6 +54,7 @@ class Trade(Base):
     price = Column(Integer, nullable=False)     # in cents
     description = Column(Text)
 
+    account = relationship("Account", back_populates="trades")
     instrument = relationship("Instrument", back_populates="trades")
     transactions = relationship("Transaction", back_populates="trade", cascade="all, delete-orphan")
 

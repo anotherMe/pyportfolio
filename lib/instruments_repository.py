@@ -2,9 +2,9 @@
 from lib.models import Instrument
 
 
-def add_instrument(session, isin, name, account, ticker=None, category=None, currency="EUR"):
+def add_instrument(session, isin, name, ticker=None, category=None, currency="EUR"):
 
-    instrument = Instrument(isin=isin, name=name, account_id=account.id, ticker=ticker, category=category, currency=currency)
+    instrument = Instrument(isin=isin, name=name, ticker=ticker, category=category, currency=currency)
     try:
         session.add(instrument)
         session.commit()
@@ -15,14 +15,10 @@ def add_instrument(session, isin, name, account, ticker=None, category=None, cur
         return False    
     return True
 
-def get_instrument_by_isin(session, isin, account=None):
-    if account:
-        return session.query(Instrument).filter_by(isin=isin, account_id=account.id).first()
+def get_instrument_by_isin(session, isin):
     return session.query(Instrument).filter_by(isin=isin).first()
 
-def get_all_instruments(session, account=None):
-    if account:
-        return session.query(Instrument).filter_by(account_id=account.id).all()
+def get_all_instruments(session):
     return session.query(Instrument).all()
 
 def delete_instrument(session, instrument_id):

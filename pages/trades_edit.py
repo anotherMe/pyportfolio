@@ -4,9 +4,10 @@ from datetime import date
 
 import streamlit as st
 
+from lib.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import from_cents, get_session
 from lib.instruments_repository import get_all_instruments
-from lib.streamlit.account_selector import extract_current_account_from_params
+from lib.streamlit.utils import account_selector
 from lib.trades_repository import add_trade
 from lib.models import Trade
 
@@ -21,11 +22,10 @@ if 'trade_id' not in st.session_state:
 
 with get_session() as session:
 
-    current_account = extract_current_account_from_params(session)
-
-    instruments = get_all_instruments(session, current_account)
-    instrument_map_key_format = "{instrument.name} - ({instrument.account.name})"
-    instrument_map = {instrument_map_key_format.format(instrument=inst): inst for inst in instruments}
+    accounts = get_all_accounts(session)
+    accounts_map = {account.name: account for account in accounts}
+    instruments = get_all_instruments(session)
+    instrument_map = {inst.name: inst for inst in instruments}
 
     if st.session_state.trade_id is None:
     
@@ -34,12 +34,15 @@ with get_session() as session:
         with st.form("add_trade"):
 
             trade = Trade()
-
+            selected_account = st.selectbox(
+                "Account",
+                list(accounts_map.keys())
+            )
             selected_instrument = st.selectbox(
                 "Instrument",
                 list(instrument_map.keys())
             )
-            trade_type = st.selectbox(
+            selected_type = st.selectbox(
                 "Type",
                 ["buy", "sell"]
             )
@@ -57,6 +60,9 @@ with get_session() as session:
                 if not selected_instrument:
                     st.warning("Instrument must be selected.")
                 else:
+                    trade.account_id = accounts_map.get(selected_account).id
+                    trade.instrument_id = instrument_map.get(selected_instrument).id
+                    trade.type = selected_type
                     session.add(trade)
                     st.session_state.trade_id = None
                     st.success("✅ Trade saved successfully!")
@@ -65,17 +71,22 @@ with get_session() as session:
 
         with st.container():
 
-            st.subheader("Edit Trade")
             current_trade = session.get(Trade, st.session_state.trade_id)
+
+            st.subheader("Edit Trade")
             with st.form("edit_trade"):
 
+                selected_account = st.selectbox(
+                    "Account",
+                    list(accounts_map.keys()),
+                    index=list(accounts_map.keys()).index(current_trade.account.name), 
+                )
                 selected_instrument = st.selectbox(
                     "Instrument",
                     list(instrument_map.keys()),
-                    index=list(instrument_map.keys()).index(instrument_map_key_format.format(instrument=current_trade.instrument)), 
-                    disabled=False
+                    index=list(instrument_map.keys()).index(current_trade.instrument.name)
                 )
-                trade_type = st.selectbox(
+                selected_type = st.selectbox(
                     "Type",
                     ["buy", "sell"],
                     index=["buy", "sell"].index(current_trade.type) if current_trade and current_trade.type in ["buy", "sell"] else 0
@@ -91,8 +102,10 @@ with get_session() as session:
                     submitted = st.form_submit_button("Save")
                     if submitted:
                         try:
-                            add_trade(session, current_trade.instrument, trade_type, qty, price, notes)
-                            st.success(f"Trade added for {current_trade.instrument.name}")
+                            account = accounts_map.get(selected_account)
+                            instrument = instrument_map.get(selected_instrument)
+                            add_trade(session, account, instrument, selected_type, qty, price, notes)
+                            st.success("Trade added")
                             st.session_state.show_editor = False
                             st.session_state.trade_id = None
                             st.rerun()
