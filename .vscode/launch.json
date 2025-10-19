@@ -7,13 +7,13 @@
       "request": "launch",
       "name": "Debug streamlit",
       "program": ".venv/bin/streamlit",
-      "args": ["run", "streamlit_app.py"]
+      "args": ["run", "main.py"]
     },
     {
       "type": "debugpy",
       "request": "launch",
       "name": "Load IEGE.MI",
-      "program": "${workspaceFolder}/main.py",
+      "program": "${workspaceFolder}/console.py",
       "console": "integratedTerminal",
       "envFile": "${workspaceFolder}/.env",
       "justMyCode": true,
