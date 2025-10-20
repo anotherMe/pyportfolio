@@ -11,8 +11,8 @@
 
 # Do
 
+- sum fee to prices inside all list and views
 - missing "category" in instrument edit
-
 
 # Doing
 

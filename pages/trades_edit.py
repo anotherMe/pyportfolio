@@ -69,15 +69,15 @@ with get_session() as session, session.begin():
                     st.warning("Instrument must be selected.")
                 else:
                     # TODO: add try / except here
-                    instrument = instrument_map.get(selected_instrument).id
+                    instrument_id = instrument_map.get(selected_instrument).id
                     trade.account_id = accounts_map.get(selected_account).id
-                    trade.instrument_id = instrument
+                    trade.instrument_id = instrument_id
                     trade.date = datetime.combine(trade_date, trade_time)
                     trade.quantity = trade_quantity
                     trade.price = save_to_db(trade_price)
                     trade.type = selected_type
                     session.add(trade)
-                    session.flush()
+                    # session.flush()
                     if trade_fee > 0:
                         fee_transaction = Transaction()
                         fee_transaction.account_id = trade.account_id
@@ -88,7 +88,7 @@ with get_session() as session, session.begin():
                         fee_transaction.description = f"Fee for {trade.type}ing {trade.quantity} of {selected_instrument}"
                     session.add(fee_transaction)
                     st.session_state.trade_id = None
-                    st.session_state.instrument_id = instrument.id
+                    st.session_state.instrument_id = instrument_id
                     st.success("✅ Trade saved successfully!")
 
     else:
@@ -127,10 +127,10 @@ with get_session() as session, session.begin():
                     if submitted:
                         try:
                             account = accounts_map.get(selected_account)
-                            instrument = instrument_map.get(selected_instrument)
+                            instrument_id = instrument_map.get(selected_instrument)
 
                             trade.account_id = account.id
-                            trade.instrument_id = instrument.id
+                            trade.instrument_id = instrument_id.id
                             trade.date = datetime.combine(trade_date, trade_time)
                             trade.type = selected_type
                             trade.quantity = qty
@@ -141,7 +141,7 @@ with get_session() as session, session.begin():
                             
                             st.success("Trade updated")
                             st.session_state.trade_id = trade.id
-                            st.session_state.instrument_id = instrument.id
+                            st.session_state.instrument_id = instrument_id.id
                             st.rerun()
 
                         except Exception as e:

@@ -7,7 +7,8 @@ from lib.instruments_repository import delete_instrument, get_all_instruments
 
 print("Running instruments details page...")
 
-st.session_state.instrument_id = None  # Always reset selected instrument ID
+if "instrument_id" not in st.session_state:
+    st.session_state.instrument_id = None
 if "ok_delete_instrument" not in st.session_state:
     st.session_state.ok_delete_instrument = False
 if "show_delete_instrument_confirmation_dialog" not in st.session_state:
@@ -48,6 +49,12 @@ with get_session() as session, session.begin():
             or search_term in (inst.name or "").lower()
             or search_term in (inst.name_long or "").lower()
         ]
+        st.session_state.instrument_id = None  # clear session
+    elif st.session_state.instrument_id:
+        filtered_instruments = [
+            inst for inst in instruments
+            if inst.id == st.session_state.instrument_id
+        ]
     else:
         filtered_instruments = []
 
@@ -60,25 +67,30 @@ with get_session() as session, session.begin():
 
         with st.container(border=True):
             
-            # --- Row 1: Name and Ticker ---
+            # --- Row: Name and Ticker ---
             col1, col2 = st.columns([2,3])
             col1.subheader(inst.name)
 
+            # --- Row: Long name ---
+            if inst.name_long:
+                st.markdown(f"**{inst.name_long}**")
+
+            # --- Row: ISIN and Currency ---
+            col1, col2, col3, col4 = st.columns([2, 1, 5, 2])
+            if inst.isin:
+                col1.write(f"**ISIN:** [{inst.isin}](https://www.justetf.com/en/etf-profile.html?isin={inst.isin})")
+            if inst.ticker:
+                col2.markdown(f"**Ticker**: [{inst.ticker}](https://finance.yahoo.com/quote/{inst.ticker})")
+            col4.write(f"**Currency:** {inst.currency or '-'}")
+
+            # --- Row: Description ---
             if inst.description:
                 st.write(inst.description)
 
-            # --- Row 2: ISIN and Currency ---
-            col1, col2, col3, col4 = st.columns([2, 1, 5, 2])
-            col1.write(f"**ISIN:** {inst.isin}")
-            if inst.ticker:
-                col2.markdown(f"[{inst.ticker}](https://finance.yahoo.com/quote/{inst.ticker})")
-            else:
-                col2.write("-")
-            col4.write(f"**Currency:** {inst.currency or '-'}")
+            # --- Row: empty ---
+            st.write(" ")
 
-            st.write(" ")  # just an empty row
-
-            # --- Row 4: Button bar ---
+            # --- Row: Button bar ---
             col1, col2, col3 = st.columns([7, 1, 1])  # last column small for button
             with col2:
 
