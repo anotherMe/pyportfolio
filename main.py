@@ -19,7 +19,7 @@ pages = {
     ],
     "💼 Trades": [
         st.Page("pages/trades_list.py", title="List"),
-        st.Page("pages/trades_list_alt.py", title="List ALT"),
+        st.Page("pages/trades_list_fifo_pnl.py", title="List FIFO PnL"),
         st.Page("pages/trades_details.py", title="Details"),
         st.Page("pages/trades_edit.py", title="Add / Edit"),
     ],
