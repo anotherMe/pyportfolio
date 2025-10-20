@@ -1,7 +1,6 @@
 
 import pandas as pd
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
 from lib.database import save_to_db, read_from_db
 from lib.models import Instrument, MarketPrice, Trade, Transaction
 
@@ -124,7 +123,7 @@ def get_average_buy_price(session, instrument_id):
     total_cost = read_from_db(sum(q * p for q, p in inventory))
     return total_cost / total_qty if total_qty > 0 else 0.0
 
-def compute_pnl_for_sells(session: Session):
+def compute_pnl_for_sells(session):
     """Compute average buy price and PnL for all sell trades."""
     
     sell_trades = session.scalars(select(Trade).where(Trade.type == "sell").order_by(Trade.date)).all()
@@ -166,21 +165,43 @@ def compute_pnl_for_sells(session: Session):
     return results
 
 
-def compute_fifo_pnl(session: Session):
+def compute_fifo_pnl(session, account=None):
     """Compute FIFO-based average buy price and realized PnL for all sell trades."""
 
     results = []
 
-    # get all instruments
-    instruments = session.execute(select(Trade.instrument_id).distinct()).scalars().all()
+    # --- Get a list of all Instruments involved in at least one trade ---
+    if account:
+            
+        instruments = (
+            session.execute(
+                select(Trade.instrument_id)
+                .where(Trade.account_id == account.id)  # filter by account
+                .distinct()
+            )
+            .scalars()
+            .all()
+        )
+    else:
+
+        instruments = session.execute(select(Trade.instrument_id).distinct()).scalars().all()
+
 
     for inst_id in instruments:
+
         # sort trades for this instrument by date
-        trades = session.scalars(
-            select(Trade)
-            .where(Trade.instrument_id == inst_id)
-            .order_by(Trade.date)
-        ).all()
+        if account:
+            trades = session.scalars(
+                select(Trade)
+                .where(Trade.instrument_id == inst_id, Trade.account_id == account.id)
+                .order_by(Trade.date)
+            ).all()
+        else:
+            trades = session.scalars(
+                select(Trade)
+                .where(Trade.instrument_id == inst_id)
+                .order_by(Trade.date)
+            ).all()
 
         # --- maintain FIFO buy queue ---
         buy_queue = []  # list of dicts: {"remaining_qty": float, "price": float}
