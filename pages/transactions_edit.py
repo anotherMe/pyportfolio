@@ -55,15 +55,22 @@ with get_session() as session, session.begin():
                     transaction.date = datetime.combine(transaction_date, transaction_time)
                     transaction.amount = save_to_db(amount)
                     session.add(transaction)
-                    st.success(f"Transaction for {transaction.transaction_id} updated successfully!")
+                    st.success(f"Transaction for {transaction.id} updated successfully!")
 
     else:
 
         st.subheader("Add new transaction")
 
+        # --- Manage default values if session_state contains trade_id
         t = None
+        selected_account_index = None
+        transaction_date_default = datetime.now()
+        transaction_time_default = transaction_date_default.time()
         if st.session_state.trade_id:  # trade ID coming from page trades_details.py
             t = session.get(Trade, st.session_state.trade_id)
+            selected_account_index = list(accounts_map.keys()).index(t.account.name)
+            transaction_date_default = t.date.date()
+            transaction_time_default = t.date.time()
 
         with st.form("add_transaction_form"):
 
@@ -72,15 +79,15 @@ with get_session() as session, session.begin():
                 st.text_input(label="Trade", value=f"{t.type} {t.quantity} of {t.instrument.name} on {t.date}", disabled=True)
             selected_account = st.selectbox(
                 "Account",
-                list(accounts_map.keys())
+                list(accounts_map.keys()),
+                index=selected_account_index
             )
             selected_type = st.selectbox(
                 "Transaction Type",
-                options=["div", "tax", "fee"],
-                disabled=False
+                options=["fee", "div", "tax"],
             )
-            transaction_date = st.date_input("Transaction date", value=date.today())
-            transaction_time = st.time_input("Transaction time", value="now", step=60)
+            transaction_date = st.date_input("Transaction date", value=transaction_date_default)
+            transaction_time = st.time_input("Transaction time", value=transaction_time_default, step=60)
             amount = st.number_input("Amount (€)", min_value=0.0, step=0.01)
             description = st.text_area("Description")
 

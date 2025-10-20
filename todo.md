@@ -7,15 +7,18 @@
 - clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
 - automatically add transactions on a trade insertion ?
 - add market prices pages ( add it to instruments page ? )
+- in the portfolio_repository.py functions, must add the Account variable ( eg: sell and buy in the same account )
 
 # Do
 
-- increase to six decimal storage of currency
+- add fees when adding transaction
 
 # Doing
 
 # Done
 
+- pre-fill "Add transaction" fields when coming from the "Trade details" page
+- increase to six decimal storage of currency
 - add transactions on a trade in the trade_details page
 - add trades on an instrument in the instrument_details page
 - from "list" page go to specific "details" ?

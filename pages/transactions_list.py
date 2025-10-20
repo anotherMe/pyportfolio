@@ -37,7 +37,7 @@ with get_session() as session:
             st.dataframe(data=[
                 {
                     "Type": t.type,
-                    "Instrument": t.trade.instrument_id if t.trade else "",
+                    "Instrument": t.trade.instrument.name if t.trade else "",
                     "Date": t.date.strftime("%Y-%m-%d"),
                     "Amount (€)": read_from_db(t.amount),
                     "Description": t.description or ""
@@ -55,7 +55,7 @@ with get_session() as session:
         if dividends:
             st.dataframe(data=[
                 {
-                    "Instrument": d.trade.instrument_id,
+                    "Instrument": d.trade.instrument.name,
                     "Date": d.date.strftime("%Y-%m-%d"),
                     "Amount (€)": read_from_db(d.amount)
                 } for d in dividends

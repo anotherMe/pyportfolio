@@ -17,8 +17,8 @@ with get_session() as session:
             "Date": t.date,
             "Type": t.type,
             "Quantity": t.quantity,
-            "Sell Price (€)": read_from_db(t.price),
             "Avg Buy Price (€)": read_from_db(r["avg_buy_price"]),
+            "Sell Price (€)": read_from_db(t.price),
             "PnL (€)": read_from_db(r["pnl"]),
         })
 
