@@ -46,6 +46,7 @@ with get_session() as session, session.begin():
             if search_term in (inst.isin or "").lower()
             or search_term in (inst.ticker or "").lower()
             or search_term in (inst.name or "").lower()
+            or search_term in (inst.name_long or "").lower()
         ]
     else:
         filtered_instruments = []
@@ -62,6 +63,9 @@ with get_session() as session, session.begin():
             # --- Row 1: Name and Ticker ---
             col1, col2 = st.columns([2,3])
             col1.subheader(inst.name)
+
+            if inst.description:
+                st.write(inst.description)
 
             # --- Row 2: ISIN and Currency ---
             col1, col2, col3, col4 = st.columns([2, 1, 5, 2])
@@ -117,5 +121,6 @@ with get_session() as session, session.begin():
             cols = st.columns([5,1])
             with cols[1]:
                 if st.button("Add new trade", key=f"add_trade_button_{inst.id}"):
+                    st.session_state.trade_id = None
                     st.session_state.instrument_id = inst.id
                     st.switch_page("pages/trades_edit.py")

@@ -31,8 +31,10 @@ class Instrument(Base):
     isin = Column(String, unique=True, nullable=False)
     ticker = Column(String)
     name = Column(String, nullable=False)
+    name_long = Column(String)
     category = Column(String) # e.g., stock, bond, etf
     currency = Column(String, default="EUR")
+    description = Column(Text)
 
     trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
     prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")

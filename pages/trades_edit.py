@@ -7,7 +7,7 @@ import streamlit as st
 from lib.accounts_repository import get_all_accounts
 from lib.database import read_from_db, get_session, save_to_db
 from lib.instruments_repository import get_all_instruments
-from lib.models import Instrument, Trade
+from lib.models import Instrument, Trade, Transaction
 
 
 print("Running trades page...")
@@ -55,6 +55,7 @@ with get_session() as session, session.begin():
             )
             trade_quantity = st.number_input("Quantity", min_value=1, step=1, value=1)
             trade_price = st.number_input("Price (€)", min_value=0.0, value=1.0)
+            trade_fee = st.number_input("Fee (€)", min_value=0.0, value=0.0)
             trade_date = st.date_input("Transaction date", value=date.today())
             trade_time = st.time_input("Transaction time", value="now", step=60)
             notes = st.text_area("Notes", value="")
@@ -68,14 +69,26 @@ with get_session() as session, session.begin():
                     st.warning("Instrument must be selected.")
                 else:
                     # TODO: add try / except here
+                    instrument = instrument_map.get(selected_instrument).id
                     trade.account_id = accounts_map.get(selected_account).id
-                    trade.instrument_id = instrument_map.get(selected_instrument).id
+                    trade.instrument_id = instrument
                     trade.date = datetime.combine(trade_date, trade_time)
                     trade.quantity = trade_quantity
                     trade.price = save_to_db(trade_price)
                     trade.type = selected_type
                     session.add(trade)
+                    session.flush()
+                    if trade_fee > 0:
+                        fee_transaction = Transaction()
+                        fee_transaction.account_id = trade.account_id
+                        fee_transaction.trade_id = trade.id
+                        fee_transaction.date = trade.date
+                        fee_transaction.type = 'fee'
+                        fee_transaction.amount = save_to_db(trade_fee)
+                        fee_transaction.description = f"Fee for {trade.type}ing {trade.quantity} of {selected_instrument}"
+                    session.add(fee_transaction)
                     st.session_state.trade_id = None
+                    st.session_state.instrument_id = instrument.id
                     st.success("✅ Trade saved successfully!")
 
     else:
@@ -127,8 +140,8 @@ with get_session() as session, session.begin():
                             session.commit()
                             
                             st.success("Trade updated")
-                            st.session_state.show_editor = False
-                            st.session_state.trade_id = None
+                            st.session_state.trade_id = trade.id
+                            st.session_state.instrument_id = instrument.id
                             st.rerun()
 
                         except Exception as e:
@@ -137,6 +150,4 @@ with get_session() as session, session.begin():
     col1, col2 = st.columns([5,1])
     with col2:
         if st.button("⬅️ Back to details"):
-            st.session_state.show_editor = False
-            st.session_state.trade_id = None
             st.switch_page("pages/trades_details.py")

@@ -28,9 +28,11 @@ with get_session() as session, session.begin():
 
     with st.form("instrument_form"):
 
+        inst.name = st.text_input("Name", value=inst.name or "")
+        inst.name_long = st.text_input("Long name", value=inst.name_long or "")
+        inst.description = st.text_area("Description", value=inst.description or "")
         inst.isin = st.text_input("ISIN", value=inst.isin or "")
         inst.ticker = st.text_input("Ticker", value=inst.ticker or "")
-        inst.name = st.text_input("Name", value=inst.name or "")
         inst.currency = st.text_input("Currency", value=inst.currency or "EUR")
 
         col1, col2 = st.columns([7,1])

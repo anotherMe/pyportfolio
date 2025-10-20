@@ -11,12 +11,14 @@
 
 # Do
 
-- add fees when adding transaction
+- missing "category" in instrument edit
+
 
 # Doing
 
 # Done
 
+- add fee's transaction when adding trade
 - pre-fill "Add transaction" fields when coming from the "Trade details" page
 - increase to six decimal storage of currency
 - add transactions on a trade in the trade_details page
