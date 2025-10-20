@@ -41,22 +41,21 @@ with get_session() as session, session.begin():
         "Yahoo": st.column_config.LinkColumn(
             "Yahoo",
             help="Click ticker to open Yahoo Finance",
-            display_text=":material/table_chart_view:",
-            width=2
+            display_text=":material/table_chart_view:"
         ),
         "Details": st.column_config.LinkColumn(
             "Detail",
             help="Click to open Instrument detail page",
-            display_text=":material/edit:",
-            width=2
+            display_text=":material/edit:"
         )
     }
 
     # --- Display table ---
     st.data_editor(
-        df.drop(columns=["ID"]),
-        hide_index=True,
+        data=df.drop(columns=["ID"]),
+        # data=df,
+        # hide_index=True,
         column_config=column_config,
-        disabled=True  # read-only table
+        disabled=True,  # read-only table
     )
 
