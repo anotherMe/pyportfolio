@@ -29,7 +29,7 @@ pages = {
         st.Page("pages/transactions_edit.py", title="Add / Edit"),
     ],
     "Other": [
-        st.Page("pages/settings.py", title="⚙️ Settings"),
+        # st.Page("pages/settings.py", title="⚙️ Settings"),
         st.Page("pages/backup.py", title="Backup", icon="💾"),
         # st.Page("pages/test.py", title="🧪 Test"),
     ]}
