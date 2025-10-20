@@ -8,6 +8,7 @@
 - automatically add transactions on a trade insertion ?
 - add market prices pages ( add it to instruments page ? )
 - in the portfolio_repository.py functions, must add the Account variable ( eg: sell and buy in the same account )
+- manage sessions locally ( avoid one session for the whole page )
 
 # Do
 
@@ -16,8 +17,11 @@
 
 # Doing
 
+
+
 # Done
 
+- errors on "Trade edit"
 - add fee's transaction when adding trade
 - pre-fill "Add transaction" fields when coming from the "Trade details" page
 - increase to six decimal storage of currency

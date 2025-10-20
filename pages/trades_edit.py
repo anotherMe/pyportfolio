@@ -119,33 +119,32 @@ with get_session() as session, session.begin():
                 price = st.number_input("Price (€)", min_value=0.0, value=read_from_db(getattr(trade, "price", 1)))
                 trade_date = st.date_input("Date", value=getattr(trade, "date", datetime.today()))
                 trade_time = st.time_input("Time", value=getattr(trade, "date", datetime.now()).time())
-                notes = st.text_area("Notes", value="")
+                notes = st.text_area("Notes", value=getattr(trade, "description", ""))
 
                 col1, col2 = st.columns([9,1])
                 with col2:
                     submitted = st.form_submit_button("Save")
-                    if submitted:
-                        try:
-                            account = accounts_map.get(selected_account)
-                            instrument_id = instrument_map.get(selected_instrument)
 
-                            trade.account_id = account.id
-                            trade.instrument_id = instrument_id.id
-                            trade.date = datetime.combine(trade_date, trade_time)
-                            trade.type = selected_type
-                            trade.quantity = qty
-                            trade.price = save_to_db(price)
-                            trade.notes = notes
-                            session.add(trade)
-                            session.commit()
-                            
-                            st.success("Trade updated")
-                            st.session_state.trade_id = trade.id
-                            st.session_state.instrument_id = instrument_id.id
-                            st.rerun()
+                if submitted:
+                    try:
+                        account = accounts_map.get(selected_account)
+                        instrument_id = instrument_map.get(selected_instrument)
 
-                        except Exception as e:
-                            st.error(f"Error updating trade: {e}")
+                        trade.account_id = account.id
+                        trade.instrument_id = instrument_id.id
+                        trade.date = datetime.combine(trade_date, trade_time)
+                        trade.type = selected_type
+                        trade.quantity = qty
+                        trade.price = save_to_db(price)
+                        trade.description = notes
+                        session.add(trade)
+                        
+                        st.success("Trade updated")
+                        st.session_state.trade_id = trade.id
+                        st.session_state.instrument_id = instrument_id.id
+
+                    except Exception as e:
+                        st.error(f"Error updating trade: {e}")
 
     col1, col2 = st.columns([5,1])
     with col2:
