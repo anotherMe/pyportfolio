@@ -1,7 +1,6 @@
 
 
-from datetime import date
-import datetime
+from datetime import date, datetime
 import streamlit as st
 from lib.accounts_repository import get_all_accounts
 from lib.database import read_from_db, get_session, save_to_db
@@ -91,11 +90,11 @@ with get_session() as session, session.begin():
 
             if save:
                 
-                if not transaction.date:
+                if not transaction_date:
                     st.warning("Date cannot be empty.")
-                elif not transaction.type:
-                    st.warning("Type cannot be empty.")
-                elif transaction.amount <= 0:
+                elif not transaction_time:
+                    st.warning("Time cannot be empty.")
+                elif amount <= 0:
                     st.warning("Amount must be greater than zero.")
                 else:
                     try:
@@ -107,6 +106,7 @@ with get_session() as session, session.begin():
                         transaction.amount = save_to_db(amount)
                         transaction.description = description
                         session.add(transaction)
+                        session.commit()
                         st.session_state.transaction_id = None
                         st.success("✅ Transaction saved successfully!")
                     except Exception as e:

@@ -54,7 +54,7 @@ with get_session() as session, session.begin():
                 ["buy", "sell"]
             )
             trade_quantity = st.number_input("Quantity", min_value=1, step=1, value=1)
-            trade_price = st.number_input("Price (€)", min_value=0.0, step=0.01, value=1.0)
+            trade_price = st.number_input("Price (€)", min_value=0.0, value=1.0)
             trade_date = st.date_input("Transaction date", value=date.today())
             trade_time = st.time_input("Transaction time", value="now", step=60)
             notes = st.text_area("Notes", value="")
@@ -103,7 +103,7 @@ with get_session() as session, session.begin():
                     index=["buy", "sell"].index(trade.type) if trade and trade.type in ["buy", "sell"] else 0
                 )
                 qty = st.number_input("Quantity", min_value=1, step=1, value=getattr(trade, "quantity", 1))
-                price = st.number_input("Price (€)", min_value=0.0, step=0.01, value=read_from_db(getattr(trade, "price", 1)))
+                price = st.number_input("Price (€)", min_value=0.0, value=read_from_db(getattr(trade, "price", 1)))
                 trade_date = st.date_input("Date", value=getattr(trade, "date", datetime.today()))
                 trade_time = st.time_input("Time", value=getattr(trade, "date", datetime.now()).time())
                 notes = st.text_area("Notes", value="")
