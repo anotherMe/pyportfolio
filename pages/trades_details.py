@@ -23,11 +23,13 @@ with get_session() as session:
     current_account = get_account_by_name(session, st.session_state.account)
 
     # --- Fetch data ---
-    
     instruments = session.query(Instrument).all()
     instrument_map = {inst.name: inst for inst in instruments}
     trades = get_all_trades(session, current_account)
     
+    if not trades:
+        st.info("No trades available")
+        st.stop()
 
     st.subheader("Trade Details")
 
@@ -41,7 +43,7 @@ with get_session() as session:
             or search_term in (trade.instrument.name or "").lower()
         ]
     else:
-        filtered_trades = trades
+        filtered_trades = []
 
     st.divider()
     
@@ -89,5 +91,5 @@ with get_session() as session:
                         st.session_state.trade_id = trade.id
                         st.switch_page("pages/transactions_edit.py")
     else:
-        st.info("No trades available.")
+        st.info("No trades found for the current search")
                 
