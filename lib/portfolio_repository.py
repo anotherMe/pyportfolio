@@ -1,4 +1,5 @@
 
+import pandas as pd
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from lib.database import save_to_db, read_from_db
@@ -29,6 +30,50 @@ def get_position(session, instrument_id):
 
     avg_price = get_average_buy_price(session, instrument_id)
     return net_qty, avg_price
+
+def get_open_positions(session, account=None):
+
+    trades = []
+    if account:
+        trades = session.query(Trade).filter_by(account_id=account.id).all()
+    else:
+        trades = session.query(Trade).all()
+        
+
+    # Convert to DataFrame for easier grouping
+    df = pd.DataFrame([{
+        "instrument_id": t.instrument_id,
+        "type": t.type.upper(),
+        "qty": t.quantity,
+        "price": t.price / 1_000_000,  # convert if stored as int
+    } for t in trades])
+
+    if df.empty:
+        return pd.DataFrame()
+
+    # Compute net quantity and weighted average cost
+    grouped = df.groupby("instrument_id").apply(lambda x: pd.Series({
+        "total_buys": (x.loc[x.type == "BUY", "qty"].sum()),
+        "total_sells": (x.loc[x.type == "SELL", "qty"].sum()),
+        "net_qty": (x.loc[x.type == "BUY", "qty"].sum() - x.loc[x.type == "SELL", "qty"].sum()),
+        "avg_buy_price": (
+            (x.loc[x.type == "BUY", "qty"] * x.loc[x.type == "BUY", "price"]).sum() /
+            x.loc[x.type == "BUY", "qty"].sum()
+        ) if (x.loc[x.type == "BUY", "qty"].sum() > 0) else None,
+    })).reset_index()
+
+    # Filter only open positions
+    grouped = grouped[grouped.net_qty != 0]
+
+    # Optionally join instrument names
+    instruments = session.query(Instrument).all()
+    id_to_name = {i.id: i.name for i in instruments}
+    grouped["instrument"] = grouped.instrument_id.map(id_to_name)
+
+    # Reorder columns
+    grouped = grouped[["instrument", "net_qty", "avg_buy_price"]]
+    grouped["avg_buy_price"] = grouped["avg_buy_price"].round(2)
+    return grouped
 
 
 def get_current_quantity(session, instrument_id):
