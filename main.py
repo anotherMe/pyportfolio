@@ -5,8 +5,9 @@ import streamlit as st
 st.set_page_config(page_title="My Portfolio Dashboard", layout="wide", initial_sidebar_state="collapsed")
 
 pages = {
-    "": [
-        st.Page("pages/overview.py", title="Overview", icon="📈"),
+    "📈 Overview": [
+        st.Page("pages/overview.py", title="Overview"),
+        st.Page("pages/list_fifo_pnl.py", title="List FIFO PnL"),
     ],
     "🏦 Accounts": [
         st.Page("pages/accounts_list.py", title="List"),
@@ -19,7 +20,6 @@ pages = {
     ],
     "💼 Trades": [
         st.Page("pages/trades_list.py", title="List"),
-        st.Page("pages/trades_list_fifo_pnl.py", title="List FIFO PnL"),
         st.Page("pages/trades_details.py", title="Details"),
         st.Page("pages/trades_edit.py", title="Add / Edit"),
     ],
