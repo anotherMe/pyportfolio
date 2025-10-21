@@ -26,28 +26,37 @@ with get_session() as session, session.begin():
     for inst in instruments:
         data.append({
             "ID": inst.id,
-            "ISIN": inst.isin,
-            "Ticker": inst.ticker,
+            "ISIN": f"https://www.justetf.com/en/etf-profile.html?isin={inst.isin}" if inst.isin else "",
+            "Ticker": f"https://finance.yahoo.com/quote/{inst.ticker}" if inst.ticker else "",
             "Name": inst.name,
             "Currency": inst.currency or "",
-            "Yahoo": f"https://finance.yahoo.com/quote/{inst.ticker}" if inst.ticker else "",
-            "Details": f"/instruments_details/?instrument_id={inst.id}",
+            # "Details": f"/instruments_details/?instrument_id={inst.id}",
         })
 
     df = pd.DataFrame(data)
 
+    # --- Manually create markdown columns 
+    df["Details"] = df["ID"].apply(
+        lambda x: f"[Details](/instruments_details?instrument_id={x})"
+    )
+
     # --- Configure columns ---
     column_config = {
-        "Yahoo": st.column_config.LinkColumn(
-            "Yahoo",
-            help="Click ticker to open Yahoo Finance",
-            display_text=":material/table_chart_view:"
+        "ISIN": st.column_config.LinkColumn(
+            help="Look up ISIN on JustETF site",
+            # display_text=":material/table_chart_view:"
+            display_text=r"[?&]isin=([^&#]+)"
         ),
-        "Details": st.column_config.LinkColumn(
-            "Detail",
-            help="Click to open Instrument detail page",
-            display_text=":material/edit:"
-        )
+        "Ticker": st.column_config.LinkColumn(
+            help="Lookup ticker on Yahoo Finance site",
+            # display_text=":material/table_chart_view:"
+            display_text=r"/quote/([^/?#]+)"
+        ),
+        "Details": st.column_config.TextColumn("Details")
+        # "Details": st.column_config.LinkColumn(
+        #     help="Click to open Instrument detail page",
+        #     display_text=":material/edit:"
+        # )
     }
 
     # --- Display table ---

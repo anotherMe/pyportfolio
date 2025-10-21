@@ -68,12 +68,12 @@ with get_session() as session, session.begin():
         with st.container(border=True):
             
             # --- Row: Name and Ticker ---
-            col1, col2 = st.columns([2,3])
-            col1.subheader(inst.name)
+            st.subheader(inst.name)
 
             # --- Row: Long name ---
             if inst.name_long:
-                st.markdown(f"**{inst.name_long}**")
+                stripped = inst.name_long.strip()
+                st.markdown(f"**{stripped}**")
 
             # --- Row: ISIN and Currency ---
             col1, col2, col3, col4 = st.columns([2, 1, 5, 2])
@@ -93,7 +93,11 @@ with get_session() as session, session.begin():
             # --- Row: Button bar ---
             col1, col2, col3 = st.columns([7, 1, 1])  # last column small for button
             with col2:
+                if st.button("✏️ Edit", key=f"edit_{inst.id}"):
+                    st.session_state["instrument_id"] = inst.id
+                    st.switch_page("pages/instruments_edit.py")
 
+            with col3:
                 if not st.session_state.ok_delete_instrument:
                     if st.button("🗑️ Delete", key=f"delete_{inst.id}"):
                         st.session_state.show_delete_instrument_confirmation_dialog = True
@@ -110,11 +114,6 @@ with get_session() as session, session.begin():
 
                 if st.session_state.show_delete_instrument_confirmation_dialog:
                     confirm_delete_dialog()
-
-            with col3:
-                if st.button("✏️ Edit", key=f"edit_{inst.id}"):
-                    st.session_state["instrument_id"] = inst.id
-                    st.switch_page("pages/instruments_edit.py")
 
             # --- Related trades ---
             st.divider()
