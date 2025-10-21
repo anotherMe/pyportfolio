@@ -34,6 +34,7 @@ with get_session() as session, session.begin():
         inst.isin = st.text_input("ISIN", value=inst.isin or "")
         inst.ticker = st.text_input("Ticker", value=inst.ticker or "")
         inst.currency = st.text_input("Currency", value=inst.currency or "EUR")
+        inst.category = st.selectbox(label="Category", options=["acc", "dist"], index=(0 if not inst.category else ["acc", "dist"].index(inst.category)))
 
         col1, col2 = st.columns([7,1])
         with col2:

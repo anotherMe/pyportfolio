@@ -75,13 +75,19 @@ with get_session() as session, session.begin():
                 stripped = inst.name_long.strip()
                 st.markdown(f"**{stripped}**")
 
-            # --- Row: ISIN and Currency ---
-            col1, col2, col3, col4 = st.columns([2, 1, 5, 2])
+            # --- Row: ISIN and Ticker ---
+            col1, col2, col3 = st.columns([2,1,3])
             if inst.isin:
                 col1.write(f"**ISIN:** [{inst.isin}](https://www.justetf.com/en/etf-profile.html?isin={inst.isin})")
             if inst.ticker:
                 col2.markdown(f"**Ticker**: [{inst.ticker}](https://finance.yahoo.com/quote/{inst.ticker})")
-            col4.write(f"**Currency:** {inst.currency or '-'}")
+
+            # --- Row: Currency and Category ---
+            col1, col2, col3 = st.columns([2,1,3])
+            if inst.currency:
+                col1.write(f"**Currency:** {inst.currency or '-'}")
+            if inst.ticker:
+                col2.markdown(f"**Category**: {inst.category}")
 
             # --- Row: Description ---
             if inst.description:
@@ -91,7 +97,7 @@ with get_session() as session, session.begin():
             st.write(" ")
 
             # --- Row: Button bar ---
-            col1, col2, col3 = st.columns([7, 1, 1])  # last column small for button
+            col1, col2, col3 = st.columns([6, 1, 1])
             with col2:
                 if st.button("✏️ Edit", key=f"edit_{inst.id}"):
                     st.session_state["instrument_id"] = inst.id

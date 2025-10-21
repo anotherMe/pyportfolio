@@ -9,18 +9,18 @@
 - add market prices pages ( add it to instruments page ? )
 - in the portfolio_repository.py functions, must add the Account variable ( eg: sell and buy in the same account )
 - manage sessions locally ( avoid one session for the whole page )
+- sum fee to prices inside all list and views
+
 
 # Do
 
-- sum fee to prices inside all list and views
-- missing "category" in instrument edit
 
 # Doing
 
 
-
 # Done
 
+- missing "category" in instrument edit
 - errors on "Trade edit"
 - add fee's transaction when adding trade
 - pre-fill "Add transaction" fields when coming from the "Trade details" page
