@@ -1,4 +1,6 @@
 import json
+import traceback
+from numpy import divide
 import pandas as pd
 import logging
 
@@ -61,15 +63,37 @@ class Symbol:
             self.ochlvDf = df
 
 
-            # Parse events
+            # Parse events (Dividends)
 
-            df = pd.DataFrame.from_dict(symbol["chart"]["result"][0]["events"]["dividends"], orient="index")
-            df.index.name = "timestamp"
-            df.reset_index(inplace=True)
-            df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
-            df["date"] = pd.to_datetime(df["date"], unit="s")
-            self.eventsDf = df
+            dividends_data = self.safe_get(symbol, ["chart", "result", 0, "events", "dividends"])
+            if dividends_data:
+                df = pd.DataFrame.from_dict(dividends_data, orient="index")
+                df.index.name = "timestamp"
+                df.reset_index(inplace=True)
+                df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
+                df["date"] = pd.to_datetime(df["date"], unit="s")
+                self.eventsDf = df
+
+            # TODO: parse other events
 
         except (Exception) as e:
+            
             logger.error(f"Error parsing JSON: {e}")
+            print(traceback.format_exc())
             return None
+            
+    def safe_get(self, d, path, default=None):
+        """Safely get nested dictionary/list values by following a path list."""
+
+        current = d
+        for p in path:
+            if isinstance(current, dict):
+                current = current.get(p, default)
+            elif isinstance(current, list):
+                try:
+                    current = current[p]
+                except (IndexError, TypeError):
+                    return default
+            else:
+                return default
+        return current

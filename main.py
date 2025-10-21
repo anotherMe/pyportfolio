@@ -5,7 +5,7 @@ import streamlit as st
 st.set_page_config(page_title="My Portfolio Dashboard", layout="wide", initial_sidebar_state="collapsed")
 
 pages = {
-    "📈 Overview": [
+    "📊 Overview": [
         st.Page("pages/overview_fifo_pnl.py", title="FIFO PnL"),
         st.Page("pages/overview_open_positions.py", title="Open positions"),
     ],
@@ -28,10 +28,13 @@ pages = {
         st.Page("pages/transactions_details.py", title="Details"),
         st.Page("pages/transactions_edit.py", title="Add / Edit"),
     ],
-    "Other": [
-        # st.Page("pages/settings.py", title="⚙️ Settings"),
+    "📈 Market prices": [
+        st.Page("pages/marketprices_load_csv.py", title="Load from CSV"),
+    ],
+    "⚙️ Other": [
+        # st.Page("pages/settings.py", title="Settings"),
         st.Page("pages/backup.py", title="Backup", icon="💾"),
-        # st.Page("pages/test.py", title="🧪 Test"),
+        st.Page("pages/test.py", title="🧪 Test"),
     ]}
 
 nav = st.navigation(pages)

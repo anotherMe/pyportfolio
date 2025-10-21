@@ -32,7 +32,7 @@ class Instrument(Base):
     ticker = Column(String)
     name = Column(String, nullable=False)
     name_long = Column(String)
-    category = Column(String) # e.g., stock, bond, etf
+    category = Column(String) # acc or dist
     currency = Column(String, default="EUR")
     description = Column(Text)
 
@@ -52,7 +52,7 @@ class Trade(Base):
     date = Column(DateTime, nullable=False)
     type = Column(String, nullable=False)  # 'buy' or 'sell'
     quantity = Column(Integer, nullable=False)  # integer shares
-    price = Column(Integer, nullable=False)     # in cents
+    price = Column(Integer, nullable=False)
     description = Column(Text)
 
     account = relationship("Account", back_populates="trades")
@@ -69,7 +69,7 @@ class MarketPrice(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
     date = Column(DateTime, nullable=False)
-    price = Column(Integer, nullable=False)   # in cents
+    price = Column(Integer, nullable=False)
     instrument = relationship("Instrument", back_populates="prices")
     __table_args__ = (UniqueConstraint('instrument_id', 'date', name='_instrument_date_uc'),)
 
@@ -85,7 +85,7 @@ class Transaction(Base):
     trade_id = Column(Integer, ForeignKey("trades.id", ondelete="CASCADE"), nullable=True)
     date = Column(DateTime, nullable=False)
     type = Column(String, nullable=False)  # 'div', 'tax', 'fee'
-    amount = Column(Integer, nullable=False)  # in cents
+    amount = Column(Integer, nullable=False)
     description = Column(Text)
 
     account = relationship("Account", back_populates="transactions")
@@ -96,17 +96,17 @@ class Transaction(Base):
 #  Market Data
 # ==========================================================
 
-# class OHLCV(Base):
-#     __tablename__ = 'ohlcv'
-#     symbol = Column(String, primary_key=True)
-#     timestamp = Column(DateTime, primary_key=True)
-#     granularity = Column(String, nullable=False)
-#     open = Column(Integer)   # in cents
-#     high = Column(Integer)
-#     low = Column(Integer)
-#     close = Column(Integer)
-#     volume = Column(Integer)
-#     __table_args__ = (
-#         UniqueConstraint('symbol', 'timestamp', name='_symbol_timestamp_uc'),
-#     )
+class OHLCV(Base):
+    __tablename__ = 'ohlcv'
+    symbol = Column(String, primary_key=True)
+    timestamp = Column(DateTime, primary_key=True)
+    granularity = Column(String, nullable=False)
+    open = Column(Integer)
+    high = Column(Integer)
+    low = Column(Integer)
+    close = Column(Integer)
+    volume = Column(Integer)
+    __table_args__ = (
+        UniqueConstraint('symbol', 'timestamp', name='_symbol_timestamp_uc'),
+    )
 

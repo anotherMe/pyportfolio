@@ -1,7 +1,7 @@
 
 import pandas as pd
 from sqlalchemy import func, select
-from lib.database import save_to_db, read_from_db
+from lib.database import read_from_db
 from lib.models import Instrument, MarketPrice, Trade, Transaction
 
 
@@ -21,6 +21,8 @@ def get_portfolio_value(session):
     print(f"📊 Portfolio value (including global transactions): {read_from_db(total_cents):.2f}")
     return read_from_db(total_cents)
 
+def get_latest_market_price(session, instrument):
+    pass
 
 def get_position(session, instrument_id):
     net_qty = get_current_quantity(session, instrument_id)
@@ -163,7 +165,6 @@ def compute_pnl_for_sells(session):
         })
 
     return results
-
 
 def compute_fifo_pnl(session, account=None):
     """Compute FIFO-based average buy price and realized PnL for all sell trades."""
