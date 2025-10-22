@@ -38,6 +38,7 @@ class Instrument(Base):
 
     trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
     prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
+    ohlcvs = relationship("OHLCV", back_populates="instrument", cascade="all, delete-orphan")
 
 
 # ==========================================================
@@ -61,20 +62,6 @@ class Trade(Base):
 
 
 # ==========================================================
-#  Market Prices
-# ==========================================================
-
-class MarketPrice(Base):
-    __tablename__ = "market_prices"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
-    date = Column(DateTime, nullable=False)
-    price = Column(Integer, nullable=False)
-    instrument = relationship("Instrument", back_populates="prices")
-    __table_args__ = (UniqueConstraint('instrument_id', 'date', name='_instrument_date_uc'),)
-
-
-# ==========================================================
 #  Transactions (Dividends, Taxes, Fees)
 # ==========================================================
 
@@ -93,20 +80,38 @@ class Transaction(Base):
 
 
 # ==========================================================
+#  Market Prices
+# ==========================================================
+
+class MarketPrice(Base):
+    __tablename__ = "market_prices"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
+    date = Column(DateTime, nullable=False)
+    price = Column(Integer, nullable=False)
+
+    instrument = relationship("Instrument", back_populates="prices")
+    __table_args__ = (UniqueConstraint('instrument_id', 'date', name='_instrument_date_uc'),)
+
+
+# ==========================================================
 #  Market OHLCV data
 # ==========================================================
 
 class OHLCV(Base):
     __tablename__ = 'ohlcv'
-    symbol = Column(String, primary_key=True)
-    timestamp = Column(DateTime, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
+    timestamp = Column(DateTime, nullable=False)
     granularity = Column(String, nullable=False)
     open = Column(Integer)
     high = Column(Integer)
     low = Column(Integer)
     close = Column(Integer)
     volume = Column(Integer)
+
+    instrument = relationship("Instrument", back_populates="ohlcvs")
     __table_args__ = (
-        UniqueConstraint('symbol', 'timestamp', name='_symbol_timestamp_uc'),
+        UniqueConstraint('instrument_id', 'timestamp', name='_instrument_timestamp_uc'),
     )
 

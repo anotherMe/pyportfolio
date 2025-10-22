@@ -354,11 +354,16 @@ def load_ohlcv_from_symbol(symbol: Symbol):
     skipped = 0
 
     with get_session() as session, session.begin():
-        
+
+        # Get the Instrument
+        instrument = session.query(Instrument).filter_by(ticker=symbol.name).first()
+        if not instrument:
+            raise Exception(f"Can't retrieve Instrument with ticker: {symbol.name}")
+
         # Pre-fetch existing timestamps for this symbol
         existing_timestamps = set(
             session.scalars(
-                select(OHLCV.timestamp).where(OHLCV.symbol == symbol.name)
+                select(OHLCV.timestamp).where(OHLCV.instrument_id == instrument.id)
             ).all()
         )
 
@@ -369,7 +374,7 @@ def load_ohlcv_from_symbol(symbol: Symbol):
                 continue
 
             entry = OHLCV(
-                symbol=symbol.name,
+                instrument_id=instrument.id,
                 timestamp=ts,
                 granularity=symbol.data_granularity,
                 open=int(row["open"] * 1_000_000),
