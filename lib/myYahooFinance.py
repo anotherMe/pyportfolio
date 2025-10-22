@@ -1,90 +1,156 @@
 import json
 import traceback
-from numpy import divide
 import pandas as pd
 import logging
-
+from dataclasses import dataclass, field
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------------------
+# Symbol Dataclass (with Streamlit helpers)
+# ---------------------------------------------------------------------
+
+@dataclass
 class Symbol:
-    
-    def __init__(self, json_file_path):
+    """Represent a Yahoo Finance symbol with metadata, price data, and events."""
+
+    name: str
+    currency: str
+    data_granularity: str
+    exchange_name: str
+    full_exchange_name: str
+    instrument_type: str
+    gmtoffset: int
+    timezone: str
+    timezone_name: str
+    ochlv_df: pd.DataFrame = field(default_factory=pd.DataFrame)
+    events_df: Optional[pd.DataFrame] = None
+
+    # Streamlit-friendly methods
+    def to_dict(self) -> dict:
+        """Convert the Symbol to a Streamlit-serializable dictionary."""
+        return {
+            "name": self.name,
+            "currency": self.currency,
+            "data_granularity": self.data_granularity,
+            "exchange_name": self.exchange_name,
+            "full_exchange_name": self.full_exchange_name,
+            "instrument_type": self.instrument_type,
+            "gmtoffset": self.gmtoffset,
+            "timezone": self.timezone,
+            "timezone_name": self.timezone_name,
+            "ochlv_df": self.ochlv_df.to_dict(orient="list") if not self.ochlv_df.empty else None,
+            "events_df": self.events_df.to_dict(orient="list") if self.events_df is not None else None,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Symbol":
+        """Rebuild a Symbol object from a dictionary (e.g., from Streamlit session_state)."""
+        ochlv_df = pd.DataFrame(data["ochlv_df"]) if data.get("ochlv_df") else pd.DataFrame()
+        events_df = pd.DataFrame(data["events_df"]) if data.get("events_df") else None
+        return cls(
+            name=data["name"],
+            currency=data["currency"],
+            data_granularity=data["data_granularity"],
+            exchange_name=data["exchange_name"],
+            full_exchange_name=data["full_exchange_name"],
+            instrument_type=data["instrument_type"],
+            gmtoffset=data["gmtoffset"],
+            timezone=data["timezone"],
+            timezone_name=data["timezone_name"],
+            ochlv_df=ochlv_df,
+            events_df=events_df,
+        )
+
+
+# ---------------------------------------------------------------------
+# YahooSymbolParser (auto-loads on init)
+# ---------------------------------------------------------------------
+
+class YahooSymbolParser:
+    """Load and parse a Yahoo Finance JSON file into a Symbol object on initialization."""
+
+    def __init__(self, json_file_path: str):
         self.json_file_path = json_file_path
+        self.symbol: Optional[Symbol] = None
+        self._load()  # <-- auto-load immediately on instantiation
 
-    def load(self):
-
+    def _load(self):
+        """Internal: load and parse the JSON file into a Symbol dataclass."""
         try:
             with open(self.json_file_path, mode="r", encoding="utf-8") as read_file:
-                symbol = json.load(read_file)
+                data = json.load(read_file)
         except FileNotFoundError as e:
             logger.error(f"File not found: {e}")
-            return None
+            return
         except (ValueError, IndexError) as e:
             logger.error(f"Error parsing JSON: {e}")
-            return None
-        
-        if symbol["chart"]["error"] is not None:
-            logger.error(f"Error in response: {symbol['chart']['error']}")
-            return None
+            return
 
-        if len(symbol["chart"]["result"]) != 1:
+        if data["chart"]["error"] is not None:
+            logger.error(f"Error in response: {data['chart']['error']}")
+            return
+
+        results = data["chart"].get("result", [])
+        if len(results) != 1:
             logger.error("Wrong number of results found in the response.")
-            return None
-
+            return
 
         try:
-                
-            # Parse the metadata
+            result = results[0]
+            meta = result["meta"]
 
-            self.currency = symbol["chart"]["result"][0]["meta"]["currency"]
-            self.name = symbol["chart"]["result"][0]["meta"]["symbol"]
-            self.dataGranularity = symbol["chart"]["result"][0]["meta"]["dataGranularity"]
-            self.exchangeName = symbol["chart"]["result"][0]["meta"]["exchangeName"]
-            self.fullExchangeName = symbol["chart"]["result"][0]["meta"]["fullExchangeName"]
-            self.instrumentType = symbol["chart"]["result"][0]["meta"]["instrumentType"]
-            self.gmtoffset = symbol["chart"]["result"][0]["meta"]["gmtoffset"] # in seconds
-            self.timezone = symbol["chart"]["result"][0]["meta"]["timezone"]
-            self.timezoneName = symbol["chart"]["result"][0]["meta"]["exchangeTimezoneName"]
-            
+            # --- Build OCHLV DataFrame ---
+            df = pd.DataFrame({"timestamp": result["timestamp"]})
+            # df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
+            df["timestamp"] = unix_to_datetime(df["timestamp"])
 
-            # Parse timestamp and indicators
+            quote = result["indicators"]["quote"][0]
+            df["open"] = quote["open"]
+            df["high"] = quote["high"]
+            df["low"] = quote["low"]
+            df["close"] = quote["close"]
+            df["volume"] = quote["volume"]
+            df["adjclose"] = result["indicators"]["adjclose"][0]["adjclose"]
 
-            df = pd.DataFrame({'timestamp': symbol["chart"]["result"][0]["timestamp"]})
-            df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
-            df['close'] = symbol["chart"]["result"][0]["indicators"]["quote"][0]["close"]
-            df['open'] = symbol["chart"]["result"][0]["indicators"]["quote"][0]["open"]
-            df['high'] = symbol["chart"]["result"][0]["indicators"]["quote"][0]["high"]
-            df['low'] = symbol["chart"]["result"][0]["indicators"]["quote"][0]["low"]
-            df['volume'] = symbol["chart"]["result"][0]["indicators"]["quote"][0]["volume"]
-            # TODO: verificare a cosa serve l' adjclose: lo sostituisco al close ?
-            df['adjclose'] = symbol["chart"]["result"][0]["indicators"]["adjclose"][0]["adjclose"]
-            self.ochlvDf = df
+            ochlv_df = df
 
-
-            # Parse events (Dividends)
-
-            dividends_data = self.safe_get(symbol, ["chart", "result", 0, "events", "dividends"])
+            # --- Parse events (Dividends) ---
+            events_df = None
+            dividends_data = self.safe_get(result, ["events", "dividends"])
             if dividends_data:
                 df = pd.DataFrame.from_dict(dividends_data, orient="index")
                 df.index.name = "timestamp"
                 df.reset_index(inplace=True)
-                df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
-                df["date"] = pd.to_datetime(df["date"], unit="s")
-                self.eventsDf = df
+                # df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
+                df["timestamp"] = unix_to_datetime(df["timestamp"])
+                # df["date"] = pd.to_datetime(df["date"], unit="s")
+                df["date"] = unix_to_datetime(df["date"])
+                events_df = df
 
-            # TODO: parse other events
+            # --- Store Symbol object ---
+            self.symbol = Symbol(
+                name=meta["symbol"],
+                currency=meta["currency"],
+                data_granularity=meta["dataGranularity"],
+                exchange_name=meta["exchangeName"],
+                full_exchange_name=meta["fullExchangeName"],
+                instrument_type=meta["instrumentType"],
+                gmtoffset=meta["gmtoffset"],
+                timezone=meta["timezone"],
+                timezone_name=meta["exchangeTimezoneName"],
+                ochlv_df=ochlv_df,
+                events_df=events_df,
+            )
 
-        except (Exception) as e:
-            
+        except Exception as e:
             logger.error(f"Error parsing JSON: {e}")
             print(traceback.format_exc())
-            return None
-            
+
     def safe_get(self, d, path, default=None):
         """Safely get nested dictionary/list values by following a path list."""
-
         current = d
         for p in path:
             if isinstance(current, dict):
@@ -97,3 +163,20 @@ class Symbol:
             else:
                 return default
         return current
+
+def unix_to_datetime(series, unit="s"):
+    """
+    Convert a pandas Series to datetime from Unix timestamps.
+    Handles numeric or string representations of timestamps.
+    
+    Parameters:
+        series (pd.Series): The column to convert.
+        unit (str): Time unit of the timestamp ('s', 'ms', etc.).
+        
+    Returns:
+        pd.Series: Datetime-converted Series.
+    """
+    # Ensure numeric type
+    numeric_series = pd.to_numeric(series, errors="coerce")
+    # Convert to datetime
+    return pd.to_datetime(numeric_series, unit=unit)
