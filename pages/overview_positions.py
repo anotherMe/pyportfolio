@@ -3,7 +3,7 @@ import streamlit as st
 
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session
-from lib.repo.portfolio_repository import get_open_positions, get_open_positions_alt
+from lib.repo.portfolio_repository import get_open_positions
 from lib.streamlit.utils import account_selector
 
 # Initialize the session state variable if it doesn't exist
@@ -64,3 +64,15 @@ with get_session() as session:
             },
             hide_index=True,
         )
+
+        # --- Compute totals ---
+        total_value = filtered_positions["value"].sum()
+        total_quantity = filtered_positions["quantity"].sum()
+        avg_value = filtered_positions["value"].mean()
+
+        # --- Totals block ---
+        st.markdown("#### Totals")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Total Quantity", f"{total_quantity:,.0f}")
+        c2.metric("Average Value", f"€{avg_value:,.2f}")
+        c3.metric("Total Value", f"€{total_value:,.2f}")
