@@ -1,6 +1,6 @@
 
 import pandas as pd
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from lib.database import get_session, read_from_db
 from lib.models import Instrument, MarketPrice, Trade, Transaction
 from sqlalchemy.exc import IntegrityError
@@ -36,7 +36,53 @@ def get_position(session, instrument_id):
     avg_price = get_average_buy_price(session, instrument_id)
     return net_qty, avg_price
 
+
 def get_open_positions(session, account=None):
+
+    if account:
+        query = text("""
+                select 
+                    instruments.name, 
+                    sum(case when type = 'buy' then -price else price end * quantity) as value, 
+                    sum(case when type = 'buy' then quantity else -quantity end) as qty_left
+                from trades
+                inner join instruments on instruments.id = trades.instrument_id
+                where account_id = :account_id
+                group by instruments.name;
+            """)
+    else:
+        query = text("""
+                select 
+                    instruments.name, 
+                    sum(case when type = 'buy' then -price else price end * quantity) as value, 
+                    sum(case when type = 'buy' then quantity else -quantity end) as qty_left
+                from trades
+                inner join instruments on instruments.id = trades.instrument_id
+                group by instruments.name;
+            """)
+
+
+    if account:
+        result = session.execute(query, {"account_id": account.id})
+    else:
+        result = session.execute(query)
+
+    rows = result.all()
+
+    # Convert to DataFrame for easier grouping
+    df = pd.DataFrame([{
+        "instrument": row.name,
+        "quantity": row.qty_left,
+        "value": read_from_db(row.value),
+    } for row in rows])
+
+    if df.empty:
+        return pd.DataFrame()
+    else:
+        return df
+
+
+def get_open_positions_OLD(session, account=None):
 
     trades = []
     if account:
@@ -50,7 +96,7 @@ def get_open_positions(session, account=None):
         "instrument_id": t.instrument_id,
         "type": t.type.upper(),
         "qty": t.quantity,
-        "price": t.price / 1_000_000,  # convert if stored as int
+        "price": read_from_db(t.price)
     } for t in trades])
 
     if df.empty:
@@ -82,18 +128,21 @@ def get_open_positions(session, account=None):
 
 
 def get_current_quantity(session, instrument_id):
+
     buys = (
         session.query(Trade)
         .filter(Trade.instrument_id == instrument_id, Trade.type == "buy")
         .with_entities(func.sum(Trade.quantity))
         .scalar() or 0.0
     )
+
     sells = (
         session.query(Trade)
         .filter(Trade.instrument_id == instrument_id, Trade.type == "sell")
         .with_entities(func.sum(Trade.quantity))
         .scalar() or 0.0
     )
+
     return buys - sells
 
 
@@ -129,46 +178,6 @@ def get_average_buy_price(session, instrument_id):
     total_cost = read_from_db(sum(q * p for q, p in inventory))
     return total_cost / total_qty if total_qty > 0 else 0.0
 
-def compute_pnl_for_sells(session):
-    """Compute average buy price and PnL for all sell trades."""
-    
-    sell_trades = session.scalars(select(Trade).where(Trade.type == "sell").order_by(Trade.date)).all()
-
-    results = []
-    for sell in sell_trades:
-        # --- get all previous buys for same instrument ---
-        buys = session.scalars(
-            select(Trade)
-            .where(
-                Trade.instrument_id == sell.instrument_id,
-                Trade.type == "buy",
-                Trade.date < sell.date
-            )
-            .order_by(Trade.date)
-        ).all()
-
-        if not buys:
-            results.append({
-                "trade": sell,
-                "avg_buy_price": None,
-                "pnl": None
-            })
-            continue
-
-        # --- compute weighted average buy price ---
-        total_qty = sum(b.quantity for b in buys)
-        avg_buy_price = sum(b.quantity * b.price for b in buys) / total_qty
-
-        # --- compute PnL ---
-        pnl = (sell.price - avg_buy_price) * sell.quantity
-
-        results.append({
-            "trade": sell,
-            "avg_buy_price": avg_buy_price,
-            "pnl": pnl
-        })
-
-    return results
 
 def compute_fifo_pnl(session, account=None):
     """Compute FIFO-based average buy price and realized PnL for all sell trades."""
@@ -302,7 +311,7 @@ def load_market_prices_from_symbol(symbol: Symbol):
 
     print(f"Inserted {inserted} new prices, skipped {skipped} duplicates.")
 
-
+# currently not used
 def load_ohlcv_from_symbol_bulk(symbol: Symbol):
     """
     Insert the Symbol.ochlv_df into the OHLCV table.

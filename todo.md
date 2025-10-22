@@ -8,10 +8,9 @@
 - automatically add transactions on a trade insertion ?
 - add market prices pages ( add it to instruments page ? )
 - in the portfolio_repository.py functions, must add the Account variable ( eg: sell and buy in the same account )
-
 - sum fee to prices inside all list and views
 - add "Delete" confirmation dialog for Trades and other objects missing
-
+- have a look at [AGGrid](https://www.ag-grid.com/)
 
 # Do
 
