@@ -2,7 +2,7 @@
 import pandas as pd
 import streamlit as st
 from lib.database import read_from_db, get_session
-from lib.instruments_repository import delete_instrument, get_all_instruments
+from lib.repo.instruments_repository import delete_instrument, get_all_instruments
 
 
 print("Running instruments details page...")

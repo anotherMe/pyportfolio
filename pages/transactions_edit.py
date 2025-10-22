@@ -2,11 +2,11 @@
 
 from datetime import date, datetime
 import streamlit as st
-from lib.accounts_repository import get_all_accounts
+from lib.repo.accounts_repository import get_all_accounts
 from lib.database import read_from_db, get_session, save_to_db
 from lib.models import Transaction
 from lib.models import Trade
-from lib.trades_repository import get_all_trades
+from lib.repo.trades_repository import get_all_trades
 
 
 print("Running transactions edit page...")

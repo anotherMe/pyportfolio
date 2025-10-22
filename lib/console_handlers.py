@@ -1,7 +1,7 @@
 
 from lib.database import init_db
 from lib.myYahooFinance import YahooSymbolParser
-from lib.portfolio_repository import load_market_prices_from_symbol
+from lib.repo.portfolio_repository import load_market_prices_from_symbol
 
 
 def handle_init_db():

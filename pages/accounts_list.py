@@ -1,7 +1,7 @@
 
 import streamlit as st
 from lib.database import get_session
-from lib.accounts_repository import get_all_accounts, delete_account
+from lib.repo.accounts_repository import get_all_accounts, delete_account
 
 print("Running accounts list page...")
 

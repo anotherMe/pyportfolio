@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 
-from lib.accounts_repository import get_account_by_name, get_all_accounts
+from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session, read_from_db
-from lib.portfolio_repository import compute_fifo_pnl
+from lib.repo.portfolio_repository import compute_fifo_pnl
 from lib.streamlit.utils import account_selector
 
 st.title("Trades (FIFO PnL)")

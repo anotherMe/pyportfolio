@@ -1,9 +1,9 @@
 
 import streamlit as st
-from lib.accounts_repository import get_account_by_name, get_all_accounts
+from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import read_from_db, get_session
 from lib.streamlit.utils import account_selector
-import lib.transactions_repository as trans_repo
+import lib.repo.transactions_repository as trans_repo
 
 
 print("Running transactions details page...")

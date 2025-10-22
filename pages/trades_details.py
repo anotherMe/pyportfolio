@@ -1,12 +1,12 @@
 
 import streamlit as st
-from lib.accounts_repository import get_account_by_name, get_all_accounts
+from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import read_from_db, get_session
 from lib.models import Instrument
 import pandas as pd
 
 from lib.streamlit.utils import account_selector
-from lib.trades_repository import get_all_trades
+from lib.repo.trades_repository import get_all_trades
 
 print("Running trades page...")
 

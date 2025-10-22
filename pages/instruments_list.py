@@ -1,7 +1,7 @@
 
 import streamlit as st
 from lib.database import get_session
-from lib.instruments_repository import get_all_instruments
+from lib.repo.instruments_repository import get_all_instruments
 import pandas as pd
 
 

@@ -1,9 +1,9 @@
 
 import streamlit as st
 
-from lib.accounts_repository import get_account_by_name, get_all_accounts
+from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session
-from lib.portfolio_repository import get_open_positions
+from lib.repo.portfolio_repository import get_open_positions
 from lib.streamlit.utils import account_selector
 
 
