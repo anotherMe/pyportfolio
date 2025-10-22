@@ -1,13 +1,12 @@
 
 import pandas as pd
 from sqlalchemy import func, select
-from lib.database import read_from_db
+from lib.database import get_session, read_from_db
 from lib.models import Instrument, MarketPrice, Trade, Transaction
 from sqlalchemy.exc import IntegrityError
 from lib.models import OHLCV
 from lib.database import save_to_db
 from lib.myYahooFinance import Symbol
-from sqlalchemy.orm import Session
 
 
 def get_portfolio_value(session):
@@ -250,11 +249,14 @@ def compute_fifo_pnl(session, account=None):
     return results
 
 
-def load_market_prices_from_symbol(session: Session, symbol: Symbol):
+def load_market_prices_from_symbol(symbol: Symbol):
     """
     Given a DataFrame with 'timestamp' and 'close' columns,
     inserts MarketPrice rows for the instrument identified by ticker.
     """
+
+    session = get_session()
+    session.begin()
 
     df = symbol.ochlv_df
     ticker = symbol.name
@@ -301,7 +303,7 @@ def load_market_prices_from_symbol(session: Session, symbol: Symbol):
     print(f"Inserted {inserted} new prices, skipped {skipped} duplicates.")
 
 
-def load_ohlcv_from_symbol(session: Session, symbol: Symbol):
+def load_ohlcv_from_symbol_bulk(symbol: Symbol):
     """
     Insert the Symbol.ochlv_df into the OHLCV table.
 
@@ -329,10 +331,58 @@ def load_ohlcv_from_symbol(session: Session, symbol: Symbol):
             "volume": int(row["volume"] or 0),
         })
 
-    try:
-        session.bulk_insert_mappings(OHLCV, records)
+    with get_session() as session, session.begin():
+        try:
+            session.bulk_insert_mappings(OHLCV, records)
+            session.commit()
+            print(f"Inserted {len(records)} rows for symbol {symbol.name}.")
+        except Exception as e:
+            session.rollback()
+            print(f"Error inserting OHLCV data: {e}")
+
+
+def load_ohlcv_from_symbol(symbol: Symbol):
+    """
+    Insert OHLCV rows, skipping duplicates efficiently.
+    """
+    if symbol.ochlv_df.empty:
+        print("No OHLCV data to insert.")
+        return
+
+    df = symbol.ochlv_df
+    inserted = 0
+    skipped = 0
+
+    with get_session() as session, session.begin():
+        
+        # Pre-fetch existing timestamps for this symbol
+        existing_timestamps = set(
+            session.scalars(
+                select(OHLCV.timestamp).where(OHLCV.symbol == symbol.name)
+            ).all()
+        )
+
+        for _, row in df.iterrows():
+            ts = row["timestamp"]
+            if ts in existing_timestamps:
+                skipped += 1
+                continue
+
+            entry = OHLCV(
+                symbol=symbol.name,
+                timestamp=ts,
+                granularity=symbol.data_granularity,
+                open=int(row["open"] * 1_000_000),
+                high=int(row["high"] * 1_000_000),
+                low=int(row["low"] * 1_000_000),
+                close=int(row["close"] * 1_000_000),
+                volume=int(row["volume"] or 0),
+            )
+
+            session.add(entry)
+            inserted += 1
+
         session.commit()
-        print(f"Inserted {len(records)} rows for symbol {symbol.name}.")
-    except Exception as e:
-        session.rollback()
-        print(f"Error inserting OHLCV data: {e}")
+
+    print(f"Inserted {inserted} new OHLCV rows, skipped {skipped} existing.")
+

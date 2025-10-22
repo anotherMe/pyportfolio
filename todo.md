@@ -20,7 +20,7 @@
 
 # Doing
 
-- manage MarketPrices
+- manage MarketPrices / manage OHLCV
 
 
 # Done

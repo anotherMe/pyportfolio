@@ -4,7 +4,7 @@
     {
       "type": "debugpy",
       "request": "launch",
-      "name": "Debug streamlit",
+      "name": "Debug Streamlit application",
       "program": ".venv/bin/streamlit",
       "args": ["run", "main.py"]
     },
@@ -25,6 +25,15 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "args": ["load-data", "-f", "data/X13E.MI.json"]
+    },
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Console - Load Yahoo data for SGLD.MI",
+      "program": "${workspaceFolder}/console.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": ["load-data", "-f", "data/SGLD.MI.json"]
     }
   ]
 }

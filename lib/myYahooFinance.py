@@ -1,4 +1,4 @@
-import json
+
 import traceback
 import pandas as pd
 import logging
@@ -72,28 +72,20 @@ class Symbol:
 class YahooSymbolParser:
     """Load and parse a Yahoo Finance JSON file into a Symbol object on initialization."""
 
-    def __init__(self, json_file_path: str):
-        self.json_file_path = json_file_path
+    def __init__(self, data: str):
+        self.data = data
         self.symbol: Optional[Symbol] = None
         self._load()  # <-- auto-load immediately on instantiation
 
     def _load(self):
         """Internal: load and parse the JSON file into a Symbol dataclass."""
-        try:
-            with open(self.json_file_path, mode="r", encoding="utf-8") as read_file:
-                data = json.load(read_file)
-        except FileNotFoundError as e:
-            logger.error(f"File not found: {e}")
-            return
-        except (ValueError, IndexError) as e:
-            logger.error(f"Error parsing JSON: {e}")
+
+
+        if self.data["chart"]["error"] is not None:
+            logger.error(f"Error in response: {self.data['chart']['error']}")
             return
 
-        if data["chart"]["error"] is not None:
-            logger.error(f"Error in response: {data['chart']['error']}")
-            return
-
-        results = data["chart"].get("result", [])
+        results = self.data["chart"].get("result", [])
         if len(results) != 1:
             logger.error("Wrong number of results found in the response.")
             return
