@@ -14,7 +14,7 @@
 
 # Do
 
-- manage sessions locally ( avoid one session for the whole page )
+- manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
 
 
 # Doing
@@ -37,3 +37,10 @@
 - clicking on "Delete" button gives error because one too many dialog opened
 - move away from st.tabs, toward multi-page 
 - ask confirmation before *delete* operations
+
+
+# Notes
+
+- closed positions should show plus/minus and date of closing
+- open positions should show estimated plus/minus ( by retrieving the last market price )
+- fees, divs and taxes should be included too ( evaluate if showing not in the same table ) 

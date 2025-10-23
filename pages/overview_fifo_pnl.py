@@ -3,7 +3,7 @@ import pandas as pd
 
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session, read_from_db
-from lib.repo.portfolio_repository import compute_fifo_pnl
+from lib.repo.portfolio_repository import compute_closed_positions
 from lib.streamlit.utils import account_selector
 
 st.title("Trades (FIFO PnL)")
@@ -15,7 +15,7 @@ with get_session() as session:
     account_selector(accounts) # Show sidebar account selector
     current_account = get_account_by_name(session, st.session_state.account)
 
-    results = compute_fifo_pnl(session, current_account)
+    results = compute_closed_positions(session, current_account)
 
     data = []
     for r in results:
