@@ -1,5 +1,5 @@
 
-from lib.database import save_to_db
+from lib.database import write_to_db
 from lib.models import Trade
 
 
@@ -17,7 +17,7 @@ def add_trade(session, account, instrument, date, trade_type, quantity, price, d
         date=date,
         type=trade_type,
         quantity=int(quantity),
-        price=save_to_db(price),
+        price=write_to_db(price),
         description=description,
     )
     session.add(trade)

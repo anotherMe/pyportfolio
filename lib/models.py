@@ -37,7 +37,7 @@ class Instrument(Base):
     description = Column(Text)
 
     trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
-    prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
+    # prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
     ohlcvs = relationship("OHLCV", back_populates="instrument", cascade="all, delete-orphan")
 
 
@@ -83,15 +83,15 @@ class Transaction(Base):
 #  Market Prices
 # ==========================================================
 
-class MarketPrice(Base):
-    __tablename__ = "market_prices"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
-    date = Column(DateTime, nullable=False)
-    price = Column(Integer, nullable=False)
+# class MarketPrice(Base):
+#     __tablename__ = "market_prices"
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
+#     date = Column(DateTime, nullable=False)
+#     price = Column(Integer, nullable=False)
 
-    instrument = relationship("Instrument", back_populates="prices")
-    __table_args__ = (UniqueConstraint('instrument_id', 'date', name='_instrument_date_uc'),)
+#     instrument = relationship("Instrument", back_populates="prices")
+#     __table_args__ = (UniqueConstraint('instrument_id', 'date', name='_instrument_date_uc'),)
 
 
 # ==========================================================

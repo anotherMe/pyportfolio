@@ -3,7 +3,7 @@
 from datetime import date, datetime
 import streamlit as st
 from lib.repo.accounts_repository import get_all_accounts
-from lib.database import read_from_db, get_session, save_to_db
+from lib.database import read_from_db, get_session, write_to_db
 from lib.models import Transaction
 from lib.models import Trade
 from lib.repo.trades_repository import get_all_trades
@@ -53,7 +53,7 @@ with get_session() as session, session.begin():
                     transaction.account = accounts_map.get(selected_account)
                     transaction.type = transaction_type
                     transaction.date = datetime.combine(transaction_date, transaction_time)
-                    transaction.amount = save_to_db(amount)
+                    transaction.amount = write_to_db(amount)
                     session.add(transaction)
                     st.success(f"Transaction for {transaction.id} updated successfully!")
 
@@ -110,7 +110,7 @@ with get_session() as session, session.begin():
                             transaction.trade_id = t.id
                         transaction.date = datetime.combine(transaction_date, transaction_time)
                         transaction.type = selected_type
-                        transaction.amount = save_to_db(amount)
+                        transaction.amount = write_to_db(amount)
                         transaction.description = description
                         session.add(transaction)
                         session.commit()

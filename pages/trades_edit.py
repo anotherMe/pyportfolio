@@ -5,7 +5,7 @@ from datetime import date
 import streamlit as st
 
 from lib.repo.accounts_repository import get_all_accounts
-from lib.database import read_from_db, get_session, save_to_db
+from lib.database import read_from_db, get_session, write_to_db
 from lib.repo.instruments_repository import get_all_instruments
 from lib.models import Instrument, Trade, Transaction
 
@@ -74,7 +74,7 @@ with get_session() as session, session.begin():
                     trade.instrument_id = instrument_id
                     trade.date = datetime.combine(trade_date, trade_time)
                     trade.quantity = trade_quantity
-                    trade.price = save_to_db(trade_price)
+                    trade.price = write_to_db(trade_price)
                     trade.type = selected_type
                     session.add(trade)
                     # session.flush()
@@ -84,7 +84,7 @@ with get_session() as session, session.begin():
                         fee_transaction.trade_id = trade.id
                         fee_transaction.date = trade.date
                         fee_transaction.type = 'fee'
-                        fee_transaction.amount = save_to_db(trade_fee)
+                        fee_transaction.amount = write_to_db(trade_fee)
                         fee_transaction.description = f"Fee for {trade.type}ing {trade.quantity} of {selected_instrument}"
                     session.add(fee_transaction)
                     st.session_state.trade_id = None
@@ -135,7 +135,7 @@ with get_session() as session, session.begin():
                         trade.date = datetime.combine(trade_date, trade_time)
                         trade.type = selected_type
                         trade.quantity = qty
-                        trade.price = save_to_db(price)
+                        trade.price = write_to_db(price)
                         trade.description = notes
                         session.add(trade)
                         

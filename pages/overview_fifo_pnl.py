@@ -33,7 +33,7 @@ with get_session() as session:
     df = pd.DataFrame(data).sort_values("Date")
 
     st.dataframe(
-        df.style.format({
+        data=df.style.format({
             "Sell Price (€)": "{:.2f}",
             "Avg Buy Price (€)": "{:.2f}",
             "PnL (€)": "{:.2f}",
@@ -42,5 +42,6 @@ with get_session() as session:
                 "color: green" if v > 0 else "color: red" if v < 0 else ""
                 for v in s
             ] if s.name == "PnL (€)" else [""] * len(s)
-        )
+        ),
+        hide_index=True
     )

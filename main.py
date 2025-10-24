@@ -29,8 +29,9 @@ pages = {
         st.Page("pages/transactions_edit.py", title="Add / Edit"),
     ],
     "📈 Market prices": [
-        st.Page("pages/marketprices_load_csv.py", title="Load from CSV"),
+        st.Page("pages/marketprices_list.py", title="List"),
         st.Page("pages/marketprices_load_yahoo.py", title="Load from Yahoo"),
+        # st.Page("pages/marketprices_load_csv.py", title="Load from CSV"),
     ],
     "⚙️ Other": [
         # st.Page("pages/settings.py", title="Settings"),

@@ -1,7 +1,7 @@
 
 from datetime import datetime
 from lib.models import Transaction
-from lib.database import save_to_db
+from lib.database import write_to_db
 
 
 def add_transaction(session, trans_type, amount, account, trade=None, description=None):
@@ -10,7 +10,7 @@ def add_transaction(session, trans_type, amount, account, trade=None, descriptio
         trade_id=trade.id if trade else None,
         date=datetime.now(),
         type=trans_type,
-        amount=save_to_db(amount),
+        amount=write_to_db(amount),
         description=description,
     )
     session.add(tr)

@@ -20,7 +20,7 @@ def init_db():
 # Utility functions
 # ----------------------------------------------------------
 
-def save_to_db(amount: float) -> int:
+def write_to_db(amount: float) -> int:
     return int(round(amount * 1000000))
 
 def read_from_db(cents: int) -> float:

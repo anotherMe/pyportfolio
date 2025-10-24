@@ -19,7 +19,7 @@
 
 # Doing
 
-- manage MarketPrices / manage OHLCV
+- manage MarketPrices / manage OHLCV: choose one table, drop the other
 
 
 # Done
