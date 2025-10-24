@@ -3,3 +3,4 @@ SQLAlchemy
 rich
 streamlit
 tabulate
+faker

@@ -1,0 +1,6 @@
+
+{
+    "database": {
+        "url": "sqlite:///example.db"
+    }
+}

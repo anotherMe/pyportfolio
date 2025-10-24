@@ -1,19 +1,45 @@
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from lib.models import Base
+from lib.settings_manager import get_db_path
+
+# ==========================================================
+# Dynamic database manager
+# ==========================================================
+
+_engine = None
+_SessionLocal = None
+_current_path = None
 
 
-DB_PATH = "sqlite:///portfolio.db"
-engine = create_engine(DB_PATH)
-SessionLocal = sessionmaker(bind=engine, )
+def init_engine():
+    """(Re)initialize the SQLAlchemy engine based on current settings."""
+    global _engine, _SessionLocal, _current_path
+
+    db_path = get_db_path()
+
+    # If the database path hasn't changed, don't recreate
+    if db_path == _current_path and _engine is not None:
+        return
+
+    _engine = create_engine(db_path)
+    _SessionLocal = sessionmaker(bind=_engine)
+    _current_path = db_path
+    print(f"✅ Database engine initialized at {db_path}")
+
 
 def get_session():
-    return SessionLocal()
+    """Return a SQLAlchemy session; reinit engine if needed."""
+    if _engine is None:
+        init_engine()
+    return _SessionLocal()
+
 
 def init_db():
-    Base.metadata.create_all(engine)
-    print(f"✅ Database initialized at {DB_PATH}")
+    """Create all tables."""
+    init_engine()
+    Base.metadata.create_all(_engine)
+    print(f"✅ Database schema created for {_current_path}")
 
 
 # ----------------------------------------------------------
@@ -25,5 +51,3 @@ def write_to_db(amount: float) -> int:
 
 def read_from_db(cents: int) -> float:
     return cents / 1000000
-
-

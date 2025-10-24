@@ -2,13 +2,13 @@ import streamlit as st
 import pandas as pd
 
 from lib.database import get_session
-from lib.repo.prices_repository import get_latest_closing_price  # adjust import paths to your project
+from lib.repo.prices_repository import get_latest_closing_prices
 
 st.title("📊 Latest Closing Prices")
 
 # Open a session
 with get_session() as session:
-    results = get_latest_closing_price(session)
+    results = get_latest_closing_prices(session)
 
 
 # Convert to DataFrame
