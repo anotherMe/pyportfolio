@@ -9,3 +9,7 @@ class TransactionType(Enum):
 class TradeType(Enum):
     BUY = "buy"
     SELL = "sell"
+
+class CurrencyType(Enum):
+    EUR = 'EUR'
+    USD = 'USD'

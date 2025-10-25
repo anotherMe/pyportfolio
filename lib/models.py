@@ -1,3 +1,4 @@
+
 from sqlalchemy import (
     Column, String, Integer, DateTime, ForeignKey, Text, UniqueConstraint
 )
@@ -33,11 +34,10 @@ class Instrument(Base):
     name = Column(String, nullable=False)
     name_long = Column(String)
     category = Column(String) # acc or dist
-    currency = Column(String, default="EUR")
     description = Column(Text)
 
     trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
-    # prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
+    prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
     ohlcvs = relationship("OHLCV", back_populates="instrument", cascade="all, delete-orphan")
 
 
@@ -83,15 +83,17 @@ class Transaction(Base):
 #  Market Prices
 # ==========================================================
 
-# class MarketPrice(Base):
-#     __tablename__ = "market_prices"
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
-#     date = Column(DateTime, nullable=False)
-#     price = Column(Integer, nullable=False)
+class MarketPrice(Base):
+    __tablename__ = "prices"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
+    date = Column(DateTime, nullable=False)
+    price = Column(Integer, nullable=False)
+    granularity = Column(String, nullable=False)
+    currency = Column(String, nullable=False)
 
-#     instrument = relationship("Instrument", back_populates="prices")
-#     __table_args__ = (UniqueConstraint('instrument_id', 'date', name='_instrument_date_uc'),)
+    instrument = relationship("Instrument", back_populates="prices")
+    __table_args__ = (UniqueConstraint('instrument_id', 'date', name='_instrument_date_uc'),)
 
 
 # ==========================================================
@@ -99,11 +101,12 @@ class Transaction(Base):
 # ==========================================================
 
 class OHLCV(Base):
-    __tablename__ = 'ohlcv'
+    __tablename__ = 'ohlcvs'
     id = Column(Integer, primary_key=True, autoincrement=True)
     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
     timestamp = Column(DateTime, nullable=False)
     granularity = Column(String, nullable=False)
+    currency = Column(String, nullable=False)
     open = Column(Integer)
     high = Column(Integer)
     low = Column(Integer)
