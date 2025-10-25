@@ -63,7 +63,18 @@ def load_prices_from_symbol(symbol: YahooSymbol, create_instrument: bool):
 
     print(f"Inserted {inserted} new prices, skipped {skipped} duplicates.")
 
-def get_latest_closing_prices(session):
+def get_latest_price(session, inst_id):
+    """Return the latest market price for an instrument, or None."""
+    
+    stmt = (
+        select(Price.price)
+        .where(Price.instrument_id == inst_id)
+        .order_by(Price.date.desc())
+        .limit(1)
+    )
+    return session.scalar(stmt)
+
+def get_latest_prices(session):
         
     # Subquery: get latest timestamp for each instrument
     latest_ts_subq = (

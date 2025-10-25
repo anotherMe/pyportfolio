@@ -83,6 +83,8 @@ with get_session() as session:
         include_open=False
     
     positions = get_positions_summary(session, current_account, include_closed=include_closed, include_open=include_open)
+
+    # --- Show positions
     styled_positions = style_positions(positions)
     st.dataframe(
         data=styled_positions,
@@ -102,14 +104,14 @@ with get_session() as session:
         hide_index=True,
     )
 
+
     st.subheader("Totals")
-    totals = (
-        positions.groupby("type")["pnl"]
-        .sum()
-        .rename("Total PnL")
-        .reset_index()
-    )
-    st.bar_chart(totals.set_index("type"))
 
-
-
+    total_pnl = positions["pnl"].sum()
+    color = "green" if total_pnl > 0 else "red"
+    col1, col2 = st.columns([6,1])
+    with col2:
+        st.markdown(
+            f"<h3>Total PnL: <span style='color:{color}'>{total_pnl:,.2f} €</span></h3>",
+            unsafe_allow_html=True
+        )

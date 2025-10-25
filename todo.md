@@ -6,6 +6,8 @@
 - cache some data; starts with account list ( used in every page )
 - have a look at [AGGrid](https://www.ag-grid.com/)
 - create custom Exceptions in the layer just below the UI
+- try to automate data download from Yahoo Finance ( maybe with [yfinance](https://github.com/ranaroussi/yfinance) ? )
+
 
 # Do
 
@@ -13,18 +15,19 @@
 - add "Delete" confirmation dialog for Trades and other objects that currently miss that feature
 - clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
 - manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
-- manage currency properly ( read the currency from price tables )
-
-- add Enum for currency ?
-    - enforce use of all others Enum
-- add OHLCV dedicated page ? otherwise show Prices and OHLCV on the same "Prices" pages
 
 
 # Doing
 
+- manage currency properly ( read the currency from price tables )
+
+- add Enum for currency ?
+    - enforce use of all others Enum
+
 
 # Done
 
+- fix current market positions using Prices instead of OHLCVs 
 - when showing latest prices, read them from table Price not OHLCV
 - when loading Yahoo prices, load MarketPrice too 
 - add "granularity" to MarketPrice table

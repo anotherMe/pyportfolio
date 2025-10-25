@@ -3,7 +3,7 @@ import pandas as pd
 from sqlalchemy import func, select, text
 from lib.database import read_from_db
 from lib.models import Instrument, Trade, Transaction
-from lib.repo.ohlcvs_repository import get_latest_price
+from lib.repo.prices_repository import get_latest_price
 
 
 # ----------------------------
@@ -77,8 +77,6 @@ def _apply_fifo(trades):
 # ----------------------------
 # 🔸 Public API
 # ----------------------------
-
-
 
 def get_positions_summary(session, account=None, include_closed=True, include_open=True):
     """
@@ -160,7 +158,7 @@ def compute_open_positions(session, account=None):
         total_cost = sum(l["remaining_qty"] * l["price"] for l in open_lots)
         avg_cost = total_cost / total_qty if total_qty else None
 
-        latest_price = get_latest_market_price(session, inst_id)
+        latest_price = get_latest_price(session, inst_id)
         unrealized_pnl = (
             (latest_price - avg_cost) * total_qty
             if latest_price is not None and avg_cost is not None
@@ -199,9 +197,6 @@ def get_portfolio_value(session):
     total_cents += global_cash
     print(f"📊 Portfolio value (including global transactions): {read_from_db(total_cents):.2f}")
     return read_from_db(total_cents)
-
-def get_latest_market_price(session, instrument):
-    pass
 
 def get_position(session, instrument_id):
     net_qty = get_current_quantity(session, instrument_id)
