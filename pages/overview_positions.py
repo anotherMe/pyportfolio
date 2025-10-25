@@ -1,4 +1,5 @@
 
+from operator import pos
 import streamlit as st
 
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
@@ -105,12 +106,19 @@ with get_session() as session:
     )
 
 
-    st.subheader("Totals")
+    # --- Totals --- 
 
+    total_buy_price = (positions["avg_price"] * positions["quantity"]).sum()
     total_pnl = positions["pnl"].sum()
+    total_percent_pnl = 0
+
     color = "green" if total_pnl > 0 else "red"
-    col1, col2 = st.columns([6,1])
+    col1, col2 = st.columns([2,1])
     with col2:
+        st.markdown(
+            f"<h3>Total buy price: <span style='color:{color}'>{total_buy_price:,.2f} €</span></h3>",
+            unsafe_allow_html=True
+        )
         st.markdown(
             f"<h3>Total PnL: <span style='color:{color}'>{total_pnl:,.2f} €</span></h3>",
             unsafe_allow_html=True
