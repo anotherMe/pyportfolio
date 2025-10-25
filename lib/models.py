@@ -35,6 +35,7 @@ class Instrument(Base):
     name_long = Column(String)
     category = Column(String) # acc or dist
     description = Column(Text)
+    currency = Column(String, nullable=False)
 
     trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
     prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
@@ -90,7 +91,6 @@ class MarketPrice(Base):
     date = Column(DateTime, nullable=False)
     price = Column(Integer, nullable=False)
     granularity = Column(String, nullable=False)
-    currency = Column(String, nullable=False)
 
     instrument = relationship("Instrument", back_populates="prices")
     __table_args__ = (UniqueConstraint('instrument_id', 'date', name='_instrument_date_uc'),)
@@ -106,7 +106,6 @@ class OHLCV(Base):
     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
     timestamp = Column(DateTime, nullable=False)
     granularity = Column(String, nullable=False)
-    currency = Column(String, nullable=False)
     open = Column(Integer)
     high = Column(Integer)
     low = Column(Integer)
