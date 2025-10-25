@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 class Symbol:
     """Represent a Yahoo Finance symbol with metadata, price data, and events."""
 
+    ticker: str
     name: str
+    long_name: str
     currency: str
     data_granularity: str
     exchange_name: str
@@ -32,7 +34,9 @@ class Symbol:
     def to_dict(self) -> dict:
         """Convert the Symbol to a Streamlit-serializable dictionary."""
         return {
+            "ticker": self.ticker,
             "name": self.name,
+            "long_name": self.long_name,
             "currency": self.currency,
             "data_granularity": self.data_granularity,
             "exchange_name": self.exchange_name,
@@ -51,7 +55,9 @@ class Symbol:
         ochlv_df = pd.DataFrame(data["ochlv_df"]) if data.get("ochlv_df") else pd.DataFrame()
         events_df = pd.DataFrame(data["events_df"]) if data.get("events_df") else None
         return cls(
+            ticker=data["ticker"],
             name=data["name"],
+            long_name=data["long_name"],
             currency=data["currency"],
             data_granularity=data["data_granularity"],
             exchange_name=data["exchange_name"],
@@ -124,7 +130,9 @@ class YahooSymbolParser:
 
             # --- Store Symbol object ---
             self.symbol = Symbol(
-                name=meta["symbol"],
+                ticker=meta["symbol"],
+                name=meta["shortName"],
+                long_name=["longName"],
                 currency=meta["currency"],
                 data_granularity=meta["dataGranularity"],
                 exchange_name=meta["exchangeName"],

@@ -22,7 +22,33 @@ def add_price(session, instrument, timestamp, granularity, open, close, high=0.0
     print(f"💰 Added OHLCV for {instrument.name}")
     return ohlcv
 
-def get_latest_closing_price_OLD(session, instrument_id):
+def get_latest_prices(session):
+
+    ohlcv_alias = aliased(OHLCV)
+
+    subq = (
+        select(
+            ohlcv_alias.id,
+            ohlcv_alias.instrument_id,
+            ohlcv_alias.timestamp,
+            func.row_number().over(
+                partition_by=ohlcv_alias.instrument_id,
+                order_by=ohlcv_alias.timestamp.desc()
+            ).label("rnk")
+        )
+        .subquery()
+    )
+
+    stmt = (
+        select(OHLCV)
+        .join(subq, OHLCV.id == subq.c.id)
+        .where(subq.c.rnk == 1)
+    )
+
+    return session.scalars(stmt).all()
+
+
+def get_latest_closing_price(session, instrument_id):
     
     last_price_row = (
         session.query(OHLCV)

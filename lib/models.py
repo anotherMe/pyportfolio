@@ -28,7 +28,7 @@ class Account(Base):
 class Instrument(Base):
     __tablename__ = "instruments"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    isin = Column(String, unique=True, nullable=False)
+    isin = Column(String, unique=True)
     ticker = Column(String)
     name = Column(String, nullable=False)
     name_long = Column(String)
@@ -113,5 +113,5 @@ class OHLCV(Base):
     instrument = relationship("Instrument", back_populates="ohlcvs")
     __table_args__ = (
         UniqueConstraint('instrument_id', 'timestamp', name='_instrument_timestamp_uc'),
-    )
+)
 

@@ -1,4 +1,5 @@
 
+from narwhals import Boolean
 import pandas as pd
 from sqlalchemy import func, select, text
 from lib.database import get_session, read_from_db
@@ -438,7 +439,7 @@ def load_ohlcv_from_symbol_bulk(symbol: Symbol):
     records = []
     for _, row in symbol.ochlv_df.iterrows():
         records.append({
-            "symbol": symbol.name,
+            "symbol": symbol.ticker,
             "timestamp": row["timestamp"],
             "granularity": symbol.data_granularity,
             "open": int(row["open"] * 1_000_000),   # optional: store as integer if needed
@@ -452,13 +453,13 @@ def load_ohlcv_from_symbol_bulk(symbol: Symbol):
         try:
             session.bulk_insert_mappings(OHLCV, records)
             session.commit()
-            print(f"Inserted {len(records)} rows for symbol {symbol.name}.")
+            print(f"Inserted {len(records)} rows for symbol {symbol.ticker}.")
         except Exception as e:
             session.rollback()
             print(f"Error inserting OHLCV data: {e}")
 
 
-def load_ohlcv_from_symbol(symbol: Symbol):
+def load_ohlcv_from_symbol(symbol: Symbol, create_instrument: Boolean):
     """
     Insert OHLCV rows, skipping duplicates efficiently.
     """
@@ -473,9 +474,18 @@ def load_ohlcv_from_symbol(symbol: Symbol):
     with get_session() as session, session.begin():
 
         # Get the Instrument
-        instrument = session.query(Instrument).filter_by(ticker=symbol.name).first()
+        instrument = session.query(Instrument).filter_by(ticker=symbol.ticker).first()
         if not instrument:
-            raise Exception(f"Can't retrieve Instrument with ticker: {symbol.name}")
+            if not create_instrument:
+                raise Exception(f"No Instrument found with ticker: {symbol.ticker}")
+            else:
+                i = Instrument()
+                i.ticker = symbol.ticker
+                i.name = symbol.name
+                i.name_long = symbol.long_name
+                i.currency = symbol.currency
+                session.add(i)
+                session.flush()
 
         # Pre-fetch existing timestamps for this symbol
         existing_timestamps = set(

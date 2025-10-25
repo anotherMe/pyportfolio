@@ -36,7 +36,7 @@ pages = {
     "⚙️ Other": [
         # st.Page("pages/settings.py", title="Settings"),
         st.Page("pages/backup.py", title="Backup", icon="💾"),
-        st.Page("pages/demo_seed.py", title="Demo database seed", icon="🌱"),
+        st.Page("pages/demo_seed.py", title="Seed database", icon="🌱"),
         st.Page("pages/test.py", title="🧪 Test"),
     ]}
 

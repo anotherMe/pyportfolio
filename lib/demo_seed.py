@@ -44,6 +44,21 @@ def seed_demo_data(session, reset=False):
     trades = []
     for acc in accounts:
         for instr in instruments:
+
+            # let's start with a loop of buy only trades
+            for _ in range(random.randint(2, 4)):
+                trade = Trade(
+                    account_id=acc.id,
+                    instrument_id=instr.id,
+                    date=fake.date_time_between(start_date="-1y", end_date="now"),
+                    type="buy",
+                    quantity=random.randint(10, 200),
+                    price=write_to_db(random.randint(80, 300)),
+                    description=fake.sentence(),
+                )
+                trades.append(trade)
+
+            # then proceed with buys and sells
             for _ in range(random.randint(2, 4)):
                 trade = Trade(
                     account_id=acc.id,
@@ -55,6 +70,7 @@ def seed_demo_data(session, reset=False):
                     description=fake.sentence(),
                 )
                 trades.append(trade)
+
     session.add_all(trades)
     session.flush()
 

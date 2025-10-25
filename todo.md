@@ -11,19 +11,22 @@
 - sum fee to prices inside all list and views
 - add "Delete" confirmation dialog for Trades and other objects missing
 - have a look at [AGGrid](https://www.ag-grid.com/)
+- manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
+
 
 # Do
 
-- manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
 
 
 # Doing
 
-- manage MarketPrices / manage OHLCV: choose one table, drop the other
+- load prices for all instruments
+- when loading Yahoo data, create Instrument if not existent
 
 
 # Done
 
+- manage MarketPrices / manage OHLCV: choose one table, drop the other
 - missing "category" in instrument edit
 - errors on "Trade edit"
 - add fee's transaction when adding trade
@@ -37,10 +40,3 @@
 - clicking on "Delete" button gives error because one too many dialog opened
 - move away from st.tabs, toward multi-page 
 - ask confirmation before *delete* operations
-
-
-# Notes
-
-- closed positions should show plus/minus and date of closing
-- open positions should show estimated plus/minus ( by retrieving the last market price )
-- fees, divs and taxes should be included too ( evaluate if showing not in the same table ) 
