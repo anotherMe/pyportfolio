@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------
 
 @dataclass
-class Symbol:
+class YahooSymbol:
     """Represent a Yahoo Finance symbol with metadata, price data, and events."""
 
     ticker: str
@@ -50,7 +50,7 @@ class Symbol:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Symbol":
+    def from_dict(cls, data: dict) -> "YahooSymbol":
         """Rebuild a Symbol object from a dictionary (e.g., from Streamlit session_state)."""
         ochlv_df = pd.DataFrame(data["ochlv_df"]) if data.get("ochlv_df") else pd.DataFrame()
         events_df = pd.DataFrame(data["events_df"]) if data.get("events_df") else None
@@ -80,7 +80,7 @@ class YahooSymbolParser:
 
     def __init__(self, data: str):
         self.data = data
-        self.symbol: Optional[Symbol] = None
+        self.symbol: Optional[YahooSymbol] = None
         self._load()  # <-- auto-load immediately on instantiation
 
     def _load(self):
@@ -129,10 +129,10 @@ class YahooSymbolParser:
                 events_df = df
 
             # --- Store Symbol object ---
-            self.symbol = Symbol(
+            self.symbol = YahooSymbol(
                 ticker=meta["symbol"],
                 name=meta["shortName"],
-                long_name=["longName"],
+                long_name=meta["longName"],
                 currency=meta["currency"],
                 data_granularity=meta["dataGranularity"],
                 exchange_name=meta["exchangeName"],

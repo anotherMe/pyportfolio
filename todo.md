@@ -4,35 +4,32 @@
 
 - add a "Link" table ? I mean a FK table to store al current and future links ( JustETF, Yahoo, etc )
 - cache some data; starts with account list ( used in every page )
-- clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
-- automatically add transactions on a trade insertion ?
-- sum fee to prices inside all list and views
-- add "Delete" confirmation dialog for Trades and other objects that currently miss that feature
 - have a look at [AGGrid](https://www.ag-grid.com/)
-- manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
-- manage currency properly ( read the currency from price tables )
-- load prices for all instruments
-
+- create custom Exceptions in the layer just below the UI
 
 # Do
 
+- sum fee to prices inside all list and views
+- add "Delete" confirmation dialog for Trades and other objects that currently miss that feature
+- clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
+- manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
+- manage currency properly ( read the currency from price tables )
 
-- add "currency" to OHLCV table
 - add Enum for currency ?
     - enforce use of all others Enum
-- restore "MarketPrice" table and models
-- add "granularity" to MarketPrice table
-- when loading Yahoo prices, load MarketPrice too 
+- add OHLCV dedicated page ? otherwise show Prices and OHLCV on the same "Prices" pages
 
 
 # Doing
 
-
-
+- when loading Yahoo prices, load MarketPrice too 
 
 
 # Done
 
+- add "granularity" to MarketPrice table
+- restore "Price" table and models
+- automatically add transactions on a trade insertion
 - add market prices pages ( add it to instruments page ? )
 - when loading Yahoo data, create Instrument if not existent
 - manage MarketPrices / manage OHLCV: choose one table, drop the other

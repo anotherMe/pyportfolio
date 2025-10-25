@@ -3,7 +3,8 @@ import json
 import logging
 from lib.database import init_db
 from lib.myYahooFinance import YahooSymbolParser
-from lib.repo.portfolio_repository import load_ohlcv_from_symbol
+from lib.repo.ohlcvs_repository import load_ohlcv_from_symbol
+from lib.repo.prices_repository import load_prices_from_symbol
 
 
 logger = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ def handle_load_data(args):
     try:
         parser = YahooSymbolParser(data)
         load_ohlcv_from_symbol(parser.symbol, True) # FIXME: this boolean parameter should not be fixed in code
-        # load_ohlcv_from_symbol(parser.symbol)
+        load_prices_from_symbol(parser.symbol, True) # FIXME: this boolean parameter should not be fixed in code
     except Exception as ex:
         logger.error("Error while trying to load market prices / OHLCVs")
         logger.error(ex)

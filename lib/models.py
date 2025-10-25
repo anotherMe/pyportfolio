@@ -38,7 +38,7 @@ class Instrument(Base):
     currency = Column(String, nullable=False)
 
     trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
-    prices = relationship("MarketPrice", back_populates="instrument", cascade="all, delete-orphan")
+    prices = relationship("Price", back_populates="instrument", cascade="all, delete-orphan")
     ohlcvs = relationship("OHLCV", back_populates="instrument", cascade="all, delete-orphan")
 
 
@@ -81,10 +81,10 @@ class Transaction(Base):
 
 
 # ==========================================================
-#  Market Prices
+#  Prices
 # ==========================================================
 
-class MarketPrice(Base):
+class Price(Base):
     __tablename__ = "prices"
     id = Column(Integer, primary_key=True, autoincrement=True)
     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
@@ -97,7 +97,7 @@ class MarketPrice(Base):
 
 
 # ==========================================================
-#  Market OHLCV data
+#  OHLCV data
 # ==========================================================
 
 class OHLCV(Base):

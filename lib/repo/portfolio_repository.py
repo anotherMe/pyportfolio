@@ -1,12 +1,9 @@
 
-from narwhals import Boolean
 import pandas as pd
 from sqlalchemy import func, select, text
-from lib.database import get_session, read_from_db
-from lib.models import Instrument, OHLCV, Trade, Transaction
-from sqlalchemy.exc import IntegrityError
-from lib.database import write_to_db
-from lib.myYahooFinance import Symbol
+from lib.database import read_from_db
+from lib.models import Instrument, Trade, Transaction
+from lib.repo.ohlcvs_repository import get_latest_price
 
 
 # ----------------------------
@@ -75,17 +72,6 @@ def _apply_fifo(trades):
                 })
 
     return closed_trades, buy_queue
-
-
-def _get_latest_market_price(session, inst_id):
-    """Return the latest market price for an instrument, or None."""
-    stmt = (
-        select(OHLCV.close)
-        .where(OHLCV.instrument_id == inst_id)
-        .order_by(OHLCV.timestamp.desc())
-        .limit(1)
-    )
-    return session.scalar(stmt)
 
 
 # ----------------------------
@@ -174,7 +160,7 @@ def compute_open_positions(session, account=None):
         total_cost = sum(l["remaining_qty"] * l["price"] for l in open_lots)
         avg_cost = total_cost / total_qty if total_qty else None
 
-        latest_price = _get_latest_market_price(session, inst_id)
+        latest_price = get_latest_market_price(session, inst_id)
         unrealized_pnl = (
             (latest_price - avg_cost) * total_qty
             if latest_price is not None and avg_cost is not None
@@ -205,7 +191,7 @@ def get_portfolio_value(session):
         qty, _ = get_position(session, inst.id)
         if qty <= 0:
             continue
-        last_price = session.query(OHLCV.close).filter_by(instrument_id=inst.id).order_by(OHLCV.timestamp.desc()).first()
+        last_price = get_latest_price(session)
         if last_price:
             total_cents += qty * last_price[0]
 
@@ -365,156 +351,4 @@ def get_average_buy_price(session, instrument_id):
     total_qty = sum(q for q, _ in inventory)
     total_cost = read_from_db(sum(q * p for q, p in inventory))
     return total_cost / total_qty if total_qty > 0 else 0.0
-
-
-# def load_market_prices_from_symbol(symbol: Symbol):
-#     """
-#     Given a DataFrame with 'timestamp' and 'close' columns,
-#     inserts MarketPrice rows for the instrument identified by ticker.
-#     """
-
-#     session = get_session()
-#     session.begin()
-
-#     df = symbol.ochlv_df
-#     ticker = symbol.name
-
-#     # Lookup instrument ID
-#     instrument = session.execute(
-#         select(Instrument).where(Instrument.ticker == ticker)
-#     ).scalar_one_or_none()
-
-#     if instrument is None:
-#         raise ValueError(f"No instrument found for ticker '{ticker}'")
-
-#     instrument_id = instrument.id
-
-#     # Ensure timestamps are datetime
-#     df['timestamp'] = pd.to_datetime(df['timestamp'])
-
-#     # Prepare data
-#     prices = []
-#     for _, row in df.iterrows():
-#         date = row['timestamp']
-#         price_cents = save_to_db(float(row['close']))
-#         prices.append(
-#             MarketPrice(
-#                 instrument_id=instrument_id,
-#                 date=date,
-#                 price=price_cents,
-#             )
-#         )
-
-#     inserted = 0
-#     skipped = 0
-#     for mp in prices:
-#         session.add(mp)
-#         try:
-#             session.flush()  # catch duplicates (violates unique constraint)
-#             inserted += 1
-#         except IntegrityError:
-#             session.rollback()
-#             skipped += 1
-
-#     session.commit()
-
-#     print(f"Inserted {inserted} new prices, skipped {skipped} duplicates.")
-
-
-def load_ohlcv_from_symbol_bulk(symbol: Symbol):
-    """
-    Insert the Symbol.ochlv_df into the OHLCV table.
-
-    Args:
-        session: SQLAlchemy Session
-        symbol_obj: Symbol dataclass instance
-        granularity: str, e.g. "1d", "1h", "1m"
-    """
-
-    if symbol.ochlv_df.empty:
-        print("No OHCLV data to insert.")
-        return
-
-    # Prepare list of dicts for bulk insert
-    records = []
-    for _, row in symbol.ochlv_df.iterrows():
-        records.append({
-            "symbol": symbol.ticker,
-            "timestamp": row["timestamp"],
-            "granularity": symbol.data_granularity,
-            "open": int(row["open"] * 1_000_000),   # optional: store as integer if needed
-            "high": int(row["high"] * 1_000_000),
-            "low": int(row["low"] * 1_000_000),
-            "close": int(row["close"] * 1_000_000),
-            "volume": int(row["volume"] or 0),
-        })
-
-    with get_session() as session, session.begin():
-        try:
-            session.bulk_insert_mappings(OHLCV, records)
-            session.commit()
-            print(f"Inserted {len(records)} rows for symbol {symbol.ticker}.")
-        except Exception as e:
-            session.rollback()
-            print(f"Error inserting OHLCV data: {e}")
-
-
-def load_ohlcv_from_symbol(symbol: Symbol, create_instrument: Boolean):
-    """
-    Insert OHLCV rows, skipping duplicates efficiently.
-    """
-    if symbol.ochlv_df.empty:
-        print("No OHLCV data to insert.")
-        return
-
-    df = symbol.ochlv_df
-    inserted = 0
-    skipped = 0
-
-    with get_session() as session, session.begin():
-
-        # Get the Instrument
-        instrument = session.query(Instrument).filter_by(ticker=symbol.ticker).first()
-        if not instrument:
-            if not create_instrument:
-                raise Exception(f"No Instrument found with ticker: {symbol.ticker}")
-            else:
-                i = Instrument()
-                i.ticker = symbol.ticker
-                i.name = symbol.name
-                i.name_long = symbol.long_name
-                i.currency = symbol.currency
-                session.add(i)
-                session.flush()
-
-        # Pre-fetch existing timestamps for this symbol
-        existing_timestamps = set(
-            session.scalars(
-                select(OHLCV.timestamp).where(OHLCV.instrument_id == instrument.id)
-            ).all()
-        )
-
-        for _, row in df.iterrows():
-            ts = row["timestamp"]
-            if ts in existing_timestamps:
-                skipped += 1
-                continue
-
-            entry = OHLCV(
-                instrument_id=instrument.id,
-                timestamp=ts,
-                granularity=symbol.data_granularity,
-                open=int(row["open"] * 1_000_000),
-                high=int(row["high"] * 1_000_000),
-                low=int(row["low"] * 1_000_000),
-                close=int(row["close"] * 1_000_000),
-                volume=int(row["volume"] or 0),
-            )
-
-            session.add(entry)
-            inserted += 1
-
-        session.commit()
-
-    print(f"Inserted {inserted} new OHLCV rows, skipped {skipped} existing.")
 
