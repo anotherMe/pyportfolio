@@ -22,11 +22,11 @@
 
 # Doing
 
-- when loading Yahoo prices, load MarketPrice too 
-
 
 # Done
 
+- when showing latest prices, read them from table Price not OHLCV
+- when loading Yahoo prices, load MarketPrice too 
 - add "granularity" to MarketPrice table
 - restore "Price" table and models
 - automatically add transactions on a trade insertion

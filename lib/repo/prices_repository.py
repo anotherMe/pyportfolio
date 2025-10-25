@@ -1,10 +1,10 @@
 
-from sqlite3 import IntegrityError
-import pandas as pd
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.orm import aliased
 from lib.database import get_session, write_to_db
 from lib.models import Price, Instrument
 from lib.myYahooFinance import YahooSymbol
+
 
 def load_prices_from_symbol(symbol: YahooSymbol, create_instrument: bool):
     """
@@ -62,3 +62,40 @@ def load_prices_from_symbol(symbol: YahooSymbol, create_instrument: bool):
         session.commit()
 
     print(f"Inserted {inserted} new prices, skipped {skipped} duplicates.")
+
+def get_latest_closing_prices(session):
+        
+    # Subquery: get latest timestamp for each instrument
+    latest_ts_subq = (
+        select(
+            Price.instrument_id,
+            func.max(Price.date).label("latest_ts")
+        )
+        .group_by(Price.instrument_id)
+        .subquery()
+    )
+
+    # Alias OHLCV for joining
+    price_latest = aliased(Price)
+
+    # Main query: left join instruments with latest ohlcv data
+    query = (
+        select(
+            Instrument.name.label("instrument_name"),
+            Instrument.ticker.label("instrument_ticker"),
+            price_latest.price.label("last_close"),
+            price_latest.date.label("timestamp")
+        )
+        .outerjoin(
+            latest_ts_subq,
+            Instrument.id == latest_ts_subq.c.instrument_id
+        )
+        .outerjoin(
+            price_latest,
+            (price_latest.instrument_id == latest_ts_subq.c.instrument_id)
+            & (price_latest.date == latest_ts_subq.c.latest_ts)
+        )
+        .order_by(Instrument.name)
+    )
+
+    return session.execute(query).fetchall()

@@ -71,43 +71,6 @@ def get_latest_closing_price(session, instrument_id):
     
     return read_from_db(last_price_row.close) if last_price_row else None
 
-def get_latest_closing_prices(session):
-        
-    # Subquery: get latest timestamp for each instrument
-    latest_ts_subq = (
-        select(
-            OHLCV.instrument_id,
-            func.max(OHLCV.timestamp).label("latest_ts")
-        )
-        .group_by(OHLCV.instrument_id)
-        .subquery()
-    )
-
-    # Alias OHLCV for joining
-    ohlcv_latest = aliased(OHLCV)
-
-    # Main query: left join instruments with latest ohlcv data
-    query = (
-        select(
-            Instrument.name.label("instrument_name"),
-            Instrument.ticker.label("instrument_ticker"),
-            ohlcv_latest.close.label("last_close"),
-            ohlcv_latest.timestamp.label("timestamp")
-        )
-        .outerjoin(
-            latest_ts_subq,
-            Instrument.id == latest_ts_subq.c.instrument_id
-        )
-        .outerjoin(
-            ohlcv_latest,
-            (ohlcv_latest.instrument_id == latest_ts_subq.c.instrument_id)
-            & (ohlcv_latest.timestamp == latest_ts_subq.c.latest_ts)
-        )
-        .order_by(Instrument.name)
-    )
-
-    return session.execute(query).fetchall()
-
 
 def load_ohlcv_from_symbol_bulk(symbol: YahooSymbol):
     """
