@@ -9,7 +9,6 @@
 
 - manage settings ( use same settings.json file we had before ? ) 
 
-
 # Do
 
 
