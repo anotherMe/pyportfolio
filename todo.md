@@ -7,6 +7,7 @@
 - have a look at [AGGrid](https://www.ag-grid.com/)
 - create custom Exceptions in the layer just below the UI
 - try to automate data download from Yahoo Finance ( maybe with [yfinance](https://github.com/ranaroussi/yfinance) ? )
+- manage currency properly ( read the currency from price tables and enforce use of the related Enum )
 
 
 # Do
@@ -19,10 +20,7 @@
 
 # Doing
 
-- manage currency properly ( read the currency from price tables )
 
-- add Enum for currency ?
-    - enforce use of all others Enum
 
 
 # Done

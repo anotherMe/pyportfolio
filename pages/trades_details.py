@@ -1,5 +1,7 @@
 
+from locale import currency
 import streamlit as st
+from lib.enums import Currency
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import read_from_db, get_session
 from lib.models import Instrument
@@ -50,6 +52,8 @@ with get_session() as session:
     if filtered_trades:
         for trade in filtered_trades:
             with st.container(border=True):
+
+                currency = Currency.from_code(trade.instrument.currency)
 
                 col1, col2, col3 = st.columns([1,1,1])
                 col1.write(f"Account: {trade.account.name}")

@@ -1,5 +1,5 @@
 
-from operator import pos
+import pandas as pd
 import streamlit as st
 
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
@@ -15,7 +15,7 @@ def style_positions(df):
 
     # Create human-friendly display columns
     df["pnl_alt"] = df["pnl"]
-    df["type_alt"] = df["type"]
+    df["trade_date_alt"] = df["trade_date"]
 
     # Define coloring for PnL
     def style_pnl(v):
@@ -26,18 +26,17 @@ def style_positions(df):
     def format_pnl(v):
         return f"€{v:,.2f}"
 
-    # Define icons for type
-    def format_type(v):
+    def format_trade_date(v):
         # 🔓 open | 🔒 closed
         # Alternatives: 🟢 / 🔴, ✅ / ❌, 🟩 / 🟥
-        return "🔒" if v == "closed" else ""
+        return "" if pd.isna(v) else v.strftime('%Y-%m-%d %H:%M:%S')
 
     # Apply styles
     styled = (
         df.style
         .format({
             "pnl_alt": format_pnl,
-            "type_alt": format_type,
+            "trade_date_alt": format_trade_date
         })
         .applymap(style_pnl, subset=["pnl_alt"])
     )
@@ -93,14 +92,16 @@ with get_session() as session:
             "instrument": "Instrument",
             "instrument_id": None,
             "type": None,
-            "type_alt": st.column_config.TextColumn(label="",width=1, help="Show if the position has been closed"),
-            "date": st.column_config.DateColumn("Date"), # st.column_config.DatetimeColumn("Date")
-            "quantity": None, # st.column_config.NumberColumn("Quantity"),
+            # "type_alt": st.column_config.TextColumn(label="",width=1, help="Show if the position has been closed"),
+            "trade_date": None,
+            # "trade_date": st.column_config.DateColumn("Date"), # st.column_config.DatetimeColumn("Date")
+            "quantity": st.column_config.NumberColumn("Quantity"),
             "avg_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
             "market_price": st.column_config.NumberColumn("Market price", format="euro"),
             "pnl": None, # st.column_config.NumberColumn("PNL", format="euro")
             "pnl_alt": "PNL",
             "pnl_type": None,
+            "trade_date_alt": "Closed on"
         },
         hide_index=True,
     )

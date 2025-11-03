@@ -98,10 +98,10 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
                 "instrument": instrument.name if instrument else None,
                 "instrument_id": trade.instrument_id,
                 "type": "closed",
-                "date": trade.date,
-                "quantity": trade.quantity,
+                "trade_date": trade.date,
                 "avg_price": read_from_db(pos["avg_buy_price"]),
                 "market_price": read_from_db(trade.price),  # execution price
+                "quantity": trade.quantity,
                 "pnl": read_from_db(pos["pnl"]),
             })
 
@@ -113,10 +113,10 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
                 "instrument": instrument.name if instrument else None,
                 "instrument_id": pos["instrument_id"],
                 "type": "open",
-                "date": None,
-                "quantity": pos["quantity"],
+                "trade_date": None,
                 "avg_price": read_from_db(pos["avg_cost"]),
                 "market_price": read_from_db(pos["latest_price"]) if pos["latest_price"] else 0.00,
+                "quantity": pos["quantity"],
                 "pnl": read_from_db(pos["unrealized_pnl"]) if pos["unrealized_pnl"] else 0.00,
             })
 
@@ -125,7 +125,7 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
 
     # Optional: sort and format
     if not df.empty:
-        df = df.sort_values(by=["instrument", "type", "date"], ascending=[True, True, True])
+        df = df.sort_values(by=["instrument", "type", "trade_date"], ascending=[True, True, True])
         df.reset_index(drop=True, inplace=True)
 
     return df
