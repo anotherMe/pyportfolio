@@ -71,45 +71,6 @@ def get_latest_closing_price(session, instrument_id):
     
     return read_from_db(last_price_row.close) if last_price_row else None
 
-
-def load_ohlcv_from_symbol_bulk(symbol: YahooSymbol):
-    """
-    Insert the Symbol.ochlv_df into the OHLCV table.
-
-    Args:
-        session: SQLAlchemy Session
-        symbol_obj: Symbol dataclass instance
-        granularity: str, e.g. "1d", "1h", "1m"
-    """
-
-    if symbol.ochlv_df.empty:
-        print("No OHCLV data to insert.")
-        return
-
-    # Prepare list of dicts for bulk insert
-    records = []
-    for _, row in symbol.ochlv_df.iterrows():
-        records.append({
-            "symbol": symbol.ticker,
-            "timestamp": row["timestamp"],
-            "granularity": symbol.data_granularity,
-            "open": read_from_db(int(row["open"])),
-            "high": read_from_db(int(row["high"])),
-            "low": read_from_db(int(row["low"])),
-            "close": read_from_db(int(row["close"])),
-            "volume": int(row["volume"] or 0),
-        })
-
-    with get_session() as session, session.begin():
-        try:
-            session.bulk_insert_mappings(OHLCV, records)
-            session.commit()
-            print(f"Inserted {len(records)} rows for symbol {symbol.ticker}.")
-        except Exception as e:
-            session.rollback()
-            print(f"Error inserting OHLCV data: {e}")
-
-
 def load_ohlcv_from_symbol(symbol: YahooSymbol, create_instrument: bool):
     """
     Insert OHLCV rows, skipping duplicates efficiently.
@@ -125,7 +86,7 @@ def load_ohlcv_from_symbol(symbol: YahooSymbol, create_instrument: bool):
 
     with get_session() as session, session.begin():
 
-        # Get the Instrument
+        # Get or create the Instrument
         instrument = session.query(Instrument).filter_by(ticker=symbol.ticker).first()
         if not instrument:
             if not create_instrument:
