@@ -1,19 +1,24 @@
 
-import json
-import traceback
+from datetime import datetime, timedelta
 import pandas as pd
 import streamlit as st
+import time
+import math
 
 from lib.database import get_session
-from lib.myYahooFinance import YahooSymbolParser
+from lib.models import OHLCV
 from lib.repo.instruments_repository import get_all_instruments
-from lib.repo.ohlcvs_repository import get_latest_prices, load_ohlcv_from_symbol
-from lib.repo.prices_repository import load_prices_from_symbol
+from lib.repo.ohlcvs_repository import get_latest_prices
+import service.YahooFinanceService as yfs
+from service.custom_exceptions import PortfolioException
+
+from logging_config import setup_logger
+log = setup_logger(__name__)
 
 
 st.title("Load Yahoo Finance data")
 
-st.subheader("Instruments")
+st.subheader("Instruments latest update")
 
 with get_session() as session:
     instruments = get_all_instruments(session)
@@ -86,10 +91,52 @@ else:
         )
 
 
+# ----------------------------------------------------------------------------------------------------------------------------
 
-st.subheader("Load data")
 
-uploaded_files = st.file_uploader("Choose one or more Yahoo Finance JSON files", type="json", accept_multiple_files=True)
+st.subheader("Download data with yfinance")
+
+message_container = st.container()
+progress_bar = st.progress(0, text="Idle")
+
+col1, col2 = st.columns([5,1])
+with col2:
+    btn_update_instruments = st.button(label="Download data", type="primary")
+
+if btn_update_instruments:
+
+    step = math.floor(100 / len(instruments))
+    progress = 0
+    for instrument in instruments:
+
+        # retrive latest available OHLCV for instrument
+        latest_ohlcv = OHLCV()
+        latest_ohlcv.timestamp = datetime.now() - timedelta(days=365) # Set to one year ago
+        try:
+            filtered_ohlcvs = [o for o in ohlcvs if o.instrument_id == instrument.id]
+            latest_ohlcv = filtered_ohlcvs[0]
+        except Exception:
+            # There was an error or simply we have no OHLCVs yet for the current instrument
+            log.warning(f"Cannot retrieve latest OHLCV for instrument {instrument.ticker}")
+
+        progress += step
+        progress_bar.progress(progress, text="Operation in progress. Please wait.")
+        success, message = yfs.download_history(instrument, latest_ohlcv.timestamp)
+        with message_container:
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
+        time.sleep(5)
+    progress_bar.empty()
+
+
+# ----------------------------------------------------------------------------------------------------------------------------
+
+
+st.subheader("Load data from local JSON")
+
+uploaded_files = st.file_uploader("Load one or more local Yahoo Finance JSON files", type="json", accept_multiple_files=True)
 
 col1, col2 = st.columns([5,1])
 with col1:
@@ -99,11 +146,11 @@ with col2:
 
 if btn_parse_files:
     for uploaded_file in uploaded_files:
+
         try:
-            data = json.load(uploaded_file)
-            parser = YahooSymbolParser(data)
-            load_ohlcv_from_symbol(parser.symbol, create_instrument)
-            load_prices_from_symbol(parser.symbol, create_instrument)
-        except Exception as e:
-            print(traceback.format_exc())
-            st.error(f"Failed to load file: {uploaded_file.name}")
+            parser = yfs.parse_json_file_into_yahoo_symbol(uploaded_file)
+            yfs.parse_file(parser)
+            st.success(f"Parsed file {uploaded_file.name}")
+        except PortfolioException:
+            st.error(f"Error while parsing file {uploaded_file.name}")
+            continue

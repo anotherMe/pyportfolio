@@ -1,6 +1,6 @@
 import streamlit as st
 
-from lib.myYahooFinance import YahooSymbolParser
+from service.myYahooFinanceService import YahooSymbolParser
 
 
 st.title("Test page")

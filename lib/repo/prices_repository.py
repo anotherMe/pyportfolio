@@ -1,19 +1,25 @@
 
+from pandas import DataFrame
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased
 from lib.database import get_session, write_to_db
 from lib.models import Price, Instrument
-from lib.myYahooFinance import YahooSymbol
+from service.myYahooFinanceService import YahooSymbol
+
+from logging_config import setup_logger
+log = setup_logger(__name__)
+
+DEFAULT_TIMEZONE = "Europe/Rome"
 
 
-def load_prices_from_symbol(symbol: YahooSymbol, create_instrument: bool):
+def load_prices_from_symbol(symbol: YahooSymbol, granularity: str, instrument: Instrument):
     """
     Given a DataFrame with 'timestamp' and 'close' columns,
     inserts MarketPrice rows for the instrument identified by ticker.
     """
 
-    df = symbol.ochlv_df
-    if df.empty:
+    dataframe = symbol.ochlv_df
+    if dataframe.empty:
         print("No OHLCV data to insert.")
         return
     
@@ -22,19 +28,47 @@ def load_prices_from_symbol(symbol: YahooSymbol, create_instrument: bool):
 
     with get_session() as session, session.begin():
 
-        # Get the Instrument
-        instrument = session.query(Instrument).filter_by(ticker=symbol.ticker).first()
-        if not instrument:
-            if not create_instrument:
-                raise Exception(f"No Instrument found with ticker: {symbol.ticker}")
-            else:
-                instrument = Instrument()
-                instrument.ticker = symbol.ticker
-                instrument.name = symbol.name
-                instrument.name_long = symbol.long_name
-                instrument.currency = symbol.currency
-                session.add(instrument)
-                session.flush()
+        # Pre-fetch existing timestamps for this symbol
+        existing_timestamps = set(
+            session.scalars(
+                select(Price.date).where(Price.instrument_id == instrument.id)
+            ).all()
+        )
+
+        for _, row in dataframe.iterrows():
+            ts = row["Date"]
+            if ts in existing_timestamps:
+                skipped += 1
+                continue
+
+            entry = Price(
+                instrument_id=instrument.id,
+                date=ts,
+                price=write_to_db(int(row["Close"])),
+                granularity=granularity
+            )
+
+            session.add(entry)
+            inserted += 1
+
+        session.commit()
+
+    print(f"Inserted {inserted} new prices, skipped {skipped} duplicates.")
+
+def load_prices_from_yfinance_dataframe(dataframe: DataFrame, granularity: str, instrument: Instrument):
+    """
+    Given a DataFrame with 'timestamp' and 'close' columns,
+    inserts MarketPrice rows for the instrument identified by ticker.
+    """
+
+    if dataframe.empty:
+        print("No OHLCV data to insert.")
+        return
+    
+    inserted = 0
+    skipped = 0
+
+    with get_session() as session, session.begin():
 
         # Pre-fetch existing timestamps for this symbol
         existing_timestamps = set(
@@ -43,17 +77,16 @@ def load_prices_from_symbol(symbol: YahooSymbol, create_instrument: bool):
             ).all()
         )
 
-        for _, row in df.iterrows():
-            ts = row["timestamp"]
-            if ts in existing_timestamps:
+        for ts, row in dataframe.iterrows():
+            if ts.to_pydatetime() in existing_timestamps:
                 skipped += 1
                 continue
 
             entry = Price(
                 instrument_id=instrument.id,
                 date=ts,
-                price=write_to_db(int(row["close"])),
-                granularity=symbol.data_granularity
+                price=write_to_db(int(row["Close"])),
+                granularity=granularity
             )
 
             session.add(entry)

@@ -5,7 +5,7 @@ from lib.enums import Currency
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session, read_from_db
 from lib.repo.portfolio_repository import compute_closed_positions
-from lib.streamlit.utils import account_selector
+from service.utils import account_selector
 
 st.title("Trades (FIFO PnL)")
 

@@ -18,6 +18,9 @@ def add_instrument(session, isin, name, ticker=None, category=None, currency="EU
 def get_instrument_by_isin(session, isin):
     return session.query(Instrument).filter_by(isin=isin).first()
 
+def get_instrument_by_ticker(session, ticker):
+    return session.query(Instrument).filter_by(ticker=ticker,).first()
+
 def get_all_instruments(session):
     return session.query(Instrument).all()
 

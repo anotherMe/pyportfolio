@@ -93,7 +93,7 @@ class Price(Base):
     granularity = Column(String, nullable=False)
 
     instrument = relationship("Instrument", back_populates="prices")
-    __table_args__ = (UniqueConstraint('instrument_id', 'date', name='_instrument_date_uc'),)
+    __table_args__ = (UniqueConstraint('instrument_id', 'date', 'granularity', name='_instrument_date_uc'),)
 
 
 # ==========================================================
@@ -114,6 +114,6 @@ class OHLCV(Base):
 
     instrument = relationship("Instrument", back_populates="ohlcvs")
     __table_args__ = (
-        UniqueConstraint('instrument_id', 'timestamp', name='_instrument_timestamp_uc'),
+        UniqueConstraint('instrument_id', 'timestamp', 'granularity', name='_instrument_timestamp_uc'),
 )
 

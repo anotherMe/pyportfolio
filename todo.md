@@ -8,19 +8,21 @@
 - create custom Exceptions in the layer just below the UI
 - try to automate data download from Yahoo Finance ( maybe with [yfinance](https://github.com/ranaroussi/yfinance) ? )
 - manage currency properly ( read the currency from price tables and enforce use of the related Enum )
+- sum fee to prices inside all list and views
+- add "Delete" confirmation dialog for Trades and other objects that currently miss that feature
+- clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
 
 
 # Do
 
-- sum fee to prices inside all list and views
-- add "Delete" confirmation dialog for Trades and other objects that currently miss that feature
-- clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
 - manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
-
+- add other Yahoo columns to OHLCV table ( events, dividends, etc )
+- manage TimeZone 
 
 # Doing
 
-
+- implement Python logging ( see: logging_config.py )
+- add try/catch to load_XXXX functions ( expcted result is a Tuple with error message: we should manage the exception inside the function )
 
 
 # Done

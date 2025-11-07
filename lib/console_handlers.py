@@ -2,7 +2,7 @@
 import json
 import logging
 from lib.database import init_db
-from lib.myYahooFinance import YahooSymbolParser
+from service.myYahooFinanceService import YahooSymbolParser
 from lib.repo.ohlcvs_repository import load_ohlcv_from_symbol
 from lib.repo.prices_repository import load_prices_from_symbol
 
