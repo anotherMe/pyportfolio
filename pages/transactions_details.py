@@ -2,7 +2,7 @@
 import streamlit as st
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import read_from_db, get_session
-from service.utils import account_selector
+from service.utils import account_selector, to_local
 import lib.repo.transactions_repository as trans_repo
 
 
@@ -93,7 +93,7 @@ with get_session() as session, session.begin():
             
             # --- Row 3 ---
             col1, col2 = st.columns([2, 1])
-            col1.markdown(f"**Date:** {trans.date.strftime('%Y-%m-%d %H:%M')}")
+            col1.markdown(f"**Date:** {to_local(trans.date)}")
             col2.markdown(f"**Amount (€):** {read_from_db(trans.amount)}")
 
             # --- Row 4: Button bar ---

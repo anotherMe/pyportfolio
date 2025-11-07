@@ -1,12 +1,13 @@
 
 
-from datetime import date, datetime
+from datetime import datetime
 import streamlit as st
 from lib.repo.accounts_repository import get_all_accounts
 from lib.database import read_from_db, get_session, write_to_db
 from lib.models import Transaction
 from lib.models import Trade
 from lib.repo.trades_repository import get_all_trades
+from lib.settings_manager import get_timezone
 
 
 print("Running transactions edit page...")
@@ -52,7 +53,7 @@ with get_session() as session, session.begin():
                     # TODO: add validation
                     transaction.account = accounts_map.get(selected_account)
                     transaction.type = transaction_type
-                    transaction.date = datetime.combine(transaction_date, transaction_time)
+                    transaction.date = datetime.combine(transaction_date, transaction_time).replace(tzinfo=get_timezone())
                     transaction.amount = write_to_db(amount)
                     session.add(transaction)
                     st.success(f"Transaction for {transaction.id} updated successfully!")
@@ -108,7 +109,7 @@ with get_session() as session, session.begin():
                         transaction.account_id = accounts_map.get(selected_account).id
                         if t:
                             transaction.trade_id = t.id
-                        transaction.date = datetime.combine(transaction_date, transaction_time)
+                        transaction.date = datetime.combine(transaction_date, transaction_time).replace(tzinfo=get_timezone())
                         transaction.type = selected_type
                         transaction.amount = write_to_db(amount)
                         transaction.description = description

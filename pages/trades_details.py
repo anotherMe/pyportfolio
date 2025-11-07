@@ -7,7 +7,7 @@ from lib.database import read_from_db, get_session
 from lib.models import Instrument
 import pandas as pd
 
-from service.utils import account_selector
+from service.utils import account_selector, to_local
 from lib.repo.trades_repository import get_all_trades
 
 print("Running trades page...")
@@ -61,7 +61,7 @@ with get_session() as session:
                 col3.write(f"ISIN: {trade.instrument.isin}")
                 
                 col1, col2, col3, col4 = st.columns([3,1,1,1])
-                col1.write(f"Date: {trade.date.strftime('%Y-%m-%d %H:%M')}")
+                col1.write(f"Date: {to_local(trade.date)}")
                 col2.write(trade.type)
                 col3.write(trade.quantity)
                 col4.write(f"{read_from_db(trade.price)} €")
@@ -84,7 +84,7 @@ with get_session() as session:
                     txn_details = [{
                         "Type": txn.type,
                         "Amount (€)": f"{read_from_db(txn.amount):.2f}",
-                        "Date": txn.date.strftime('%Y-%m-%d')
+                        "Date": to_local(txn.date)
                     } for txn in trade.transactions]
                     st.dataframe(pd.DataFrame(txn_details))
                 else:

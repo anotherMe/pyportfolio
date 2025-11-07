@@ -5,7 +5,7 @@ from lib.database import read_from_db, get_session
 from lib.repo.instruments_repository import get_all_instruments
 import pandas as pd
 
-from service.utils import account_selector
+from service.utils import account_selector, to_local
 from lib.repo.trades_repository import get_all_trades
 
 print("Running trades page...")
@@ -52,7 +52,7 @@ with get_session() as session:
         latest_trade_details = [{
                                 "Instrument": t.instrument.name,
                                 "ISIN": t.instrument.isin,
-                                "Date": t.date.strftime("%Y-%m-%d %H:%M"),
+                                "Date": to_local(t.date),
                                 "Type": "➕ BUY" if t.type.lower() == "buy" else "➖ SELL",
                                 "Quantity": t.quantity,
                                 "Price (€)": f"{read_from_db(t.price)}"

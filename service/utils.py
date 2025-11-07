@@ -1,5 +1,10 @@
+
 import streamlit as st
 
+from lib.settings_manager import get_timezone
+
+
+DEFAULT_DATETIME_FORMAT = "%Y-%m-%d %H:%M"
 
 def account_selector(accounts):
 
@@ -26,3 +31,9 @@ def account_selector(accounts):
         st.session_state.account = selected
 
     # st.sidebar.caption(f"🔹 Active account: **{selected}**")
+
+
+def to_local(dt):
+    if dt is None:
+        return None
+    return dt.astimezone(get_timezone()).strftime(DEFAULT_DATETIME_FORMAT)

@@ -3,7 +3,7 @@ import streamlit as st
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session, read_from_db
 from lib.models import Transaction, Instrument
-from service.utils import account_selector
+from service.utils import account_selector, to_local
 from lib.repo.transactions_repository import get_all_transactions
 
 print("Running transactions page...")
@@ -38,7 +38,7 @@ with get_session() as session:
                 {
                     "Type": t.type,
                     "Instrument": t.trade.instrument.name if t.trade else "",
-                    "Date": t.date.strftime("%Y-%m-%d"),
+                    "Date": to_local(t.date),
                     "Amount (€)": read_from_db(t.amount),
                     "Description": t.description or ""
                 } for t in transactions
@@ -56,7 +56,7 @@ with get_session() as session:
             st.dataframe(data=[
                 {
                     "Instrument": d.trade.instrument.name,
-                    "Date": d.date.strftime("%Y-%m-%d"),
+                    "Date": to_local(d.date),
                     "Amount (€)": read_from_db(d.amount)
                 } for d in dividends
             ])
@@ -74,7 +74,7 @@ with get_session() as session:
             st.dataframe(data=[
                 {
                     "Description": t.description,
-                    "Date": t.date.strftime("%Y-%m-%d"),
+                    "Date": to_local(t.date),
                     "Amount (€)": read_from_db(t.amount)
                 } for t in taxes
             ])
@@ -91,7 +91,7 @@ with get_session() as session:
             st.dataframe(data=[
                 {
                     "Description": f.description,
-                    "Date": f.date.strftime("%Y-%m-%d"),
+                    "Date": to_local(f.date),
                     "Amount (€)": read_from_db(f.amount)
                 } for f in fees
             ])

@@ -1,5 +1,7 @@
 import json
 from pathlib import Path
+import zoneinfo
+
 
 SETTINGS_PATH = Path("settings.json")
 
@@ -16,3 +18,7 @@ def save_settings(data: dict):
 def get_db_path():
     settings = load_settings()
     return settings["database"]["url"]
+
+def get_timezone():
+    settings = load_settings()
+    return zoneinfo.ZoneInfo(settings["app"]["default_timezone"])

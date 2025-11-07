@@ -8,6 +8,7 @@ from lib.repo.accounts_repository import get_all_accounts
 from lib.database import read_from_db, get_session, write_to_db
 from lib.repo.instruments_repository import get_all_instruments
 from lib.models import Instrument, Trade, Transaction
+from lib.settings_manager import get_timezone
 
 
 print("Running trades page...")
@@ -72,7 +73,7 @@ with get_session() as session, session.begin():
                     instrument_id = instrument_map.get(selected_instrument).id
                     trade.account_id = accounts_map.get(selected_account).id
                     trade.instrument_id = instrument_id
-                    trade.date = datetime.combine(trade_date, trade_time)
+                    trade.date = datetime.combine(trade_date, trade_time).replace(tzinfo=get_timezone())
                     trade.quantity = trade_quantity
                     trade.price = write_to_db(trade_price)
                     trade.type = selected_type
@@ -132,7 +133,7 @@ with get_session() as session, session.begin():
 
                         trade.account_id = account.id
                         trade.instrument_id = instrument_id.id
-                        trade.date = datetime.combine(trade_date, trade_time)
+                        trade.date = datetime.combine(trade_date, trade_time).replace(tzinfo=get_timezone())
                         trade.type = selected_type
                         trade.quantity = qty
                         trade.price = write_to_db(price)
