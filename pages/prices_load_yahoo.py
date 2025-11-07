@@ -149,7 +149,7 @@ if btn_parse_files:
 
         try:
             parser = yfs.parse_json_file_into_yahoo_symbol(uploaded_file)
-            yfs.parse_file(parser)
+            yfs.parse_file(parser, create_instrument)
             st.success(f"Parsed file {uploaded_file.name}")
         except PortfolioException:
             st.error(f"Error while parsing file {uploaded_file.name}")

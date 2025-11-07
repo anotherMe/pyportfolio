@@ -1,5 +1,5 @@
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, DateTime, String, Integer, ForeignKey, Text, TypeDecorator, UniqueConstraint
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,20 +12,34 @@ Base = declarative_base()
 # Type decorators
 # ----------------------------------------------------------
 
+
 class UTCDateTime(TypeDecorator):
+    """
+    Custom SQLAlchemy type that enforces UTC timestamps.
+    Guarantees all stored and loaded datetimes are timezone-aware and in UTC.
+    """
     impl = DateTime(timezone=True)
 
     def process_bind_param(self, value, dialect):
+        """
+        When writing to DB:
+            - Rejects naive datetimes.
+            - Converts aware datetimes to UTC.
+        """
         if value is None:
             return value
         if value.tzinfo is None:
             raise ValueError("naive datetime")
-        return value.astimezone(datetime.timezone.utc)
+        return value.astimezone(timezone.utc)
 
     def process_result_value(self, value, dialect):
+        """
+        When reading from DB:
+            - Attaches UTC tzinfo to returned values.
+        """
         if value is None:
             return value
-        return value.replace(tzinfo=datetime.timezone.utc)
+        return value.replace(tzinfo=timezone.utc)
     
 
 # ==========================================================

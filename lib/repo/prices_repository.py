@@ -1,5 +1,6 @@
 
 from pandas import DataFrame
+import pytz
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased
 from lib.database import get_session, write_to_db
@@ -35,15 +36,17 @@ def load_prices_from_symbol(symbol: YahooSymbol, granularity: str, instrument: I
             ).all()
         )
 
+        tz = pytz.timezone(symbol.timezone_name)
         for _, row in dataframe.iterrows():
             ts = row["Date"]
-            if ts in existing_timestamps:
+            dt = tz.localize(ts.to_pydatetime())
+            if dt in existing_timestamps:
                 skipped += 1
                 continue
 
             entry = Price(
                 instrument_id=instrument.id,
-                date=ts,
+                date=dt,
                 price=write_to_db(int(row["Close"])),
                 granularity=granularity
             )

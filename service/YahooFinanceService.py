@@ -1,6 +1,7 @@
 
 from datetime import datetime
 import json
+import logging
 import yfinance as yf
 from typing import Any, Tuple
 
@@ -22,14 +23,13 @@ def download_history(instrument: Instrument, start_date: datetime) -> Tuple[bool
 
     try:
         yf_symbol = yf.Ticker(instrument.ticker)
-        # df = yf_symbol.history(period='1y', interval=GRANULARITY)
         df = yf_symbol.history(start=start_date, interval=DEFAULT_GRANULARITY)
         load_ohlcv_from_yfinance_dataframe(df, DEFAULT_GRANULARITY, instrument)
-        # load_prices_from_yfinance_dataframe(df, DEFAULT_GRANULARITY, instrument)
+        load_prices_from_yfinance_dataframe(df, DEFAULT_GRANULARITY, instrument)
         return True, f"Symbol {instrument.ticker} parsed correctly"
     
-    except Exception as ex:
-        print(ex)
+    except Exception:
+        logging.exception("")
         return(False, f"Failed to parse symbol: {instrument.ticker}")
 
 
@@ -37,9 +37,9 @@ def parse_json_file_into_yahoo_symbol(uploaded_file: Any) -> YahooSymbolParser:
     try:
         data = json.load(uploaded_file)
         return YahooSymbolParser(data)
-    except Exception as ex:
-        print(ex)
-        raise PortfolioException(f"Failed to parse file: {uploaded_file.name}")
+    except Exception:
+        logging.exception("")
+        raise PortfolioException("YahooFinanceService", f"Failed to parse file: {uploaded_file.name}")
 
 
 def parse_file(parser: YahooSymbolParser, create_instrument: bool):
@@ -64,10 +64,10 @@ def parse_file(parser: YahooSymbolParser, create_instrument: bool):
             instrument = get_instrument_by_ticker(session, parser.symbol.ticker)
         except Exception as ex:
             print(ex)
-            raise PortfolioException(f"Error while retrieving Instrument with ticker {parser.symbol.ticker}")
+            raise PortfolioException("YahooFinanceService", f"Error while retrieving Instrument with ticker {parser.symbol.ticker}")
             
     if not instrument and not create_instrument:
-        raise PortfolioException(f"No Instrument found with ticker: {parser.symbol.ticker}")
+        raise PortfolioException("YahooFinanceService", f"No Instrument found with ticker: {parser.symbol.ticker}")
 
     if not instrument and create_instrument:
 
@@ -82,17 +82,17 @@ def parse_file(parser: YahooSymbolParser, create_instrument: bool):
                 session.commit()
             except Exception as ex:
                 session.rollback()
-                print(ex)
-                raise PortfolioException("Error while parsing file")
+                logging.exception()
+                raise PortfolioException("YahooFinanceService", "Error while parsing file") from ex
                 
     try:
-        load_ohlcv_from_symbol(parser.symbol.ochlv_df, parser.symbol.data_granularity, instrument)
+        load_ohlcv_from_symbol(parser.symbol, parser.symbol.data_granularity, instrument)
     except Exception as ex:
-        print(ex)
-        raise PortfolioException("Can't load data into OHLCVs")
+        logging.exception()
+        raise PortfolioException("YahooFinanceService", "Can't load data into OHLCVs") from ex
     
     try:
-        load_prices_from_symbol(parser.symbol.ochlv_df, parser.symbol.data_granularity, instrument)
+        load_prices_from_symbol(parser.symbol, parser.symbol.data_granularity, instrument)
     except Exception as ex:
-        print(ex)
-        raise PortfolioException("Can't load data into Prices")
+        logging.exception()
+        raise PortfolioException("YahooFinanceService", "Can't load data into Prices") from ex

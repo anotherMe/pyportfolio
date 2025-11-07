@@ -97,15 +97,17 @@ def load_ohlcv_from_symbol(symbol: YahooSymbol, granularity: str, instrument: In
             ).all()
         )
 
+        tz = pytz.timezone(symbol.timezone_name)
         for _, row in dataframe.iterrows():
             ts = row["timestamp"]
-            if ts in existing_timestamps:
+            dt = tz.localize(ts.to_pydatetime())
+            if dt in existing_timestamps:
                 skipped += 1
                 continue
 
             entry = OHLCV(
                 instrument_id=instrument.id,
-                timestamp=ts,
+                timestamp=dt,
                 granularity=granularity,
                 open=write_to_db(int(row["open"])),
                 high=write_to_db(int(row["high"])),

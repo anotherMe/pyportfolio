@@ -17,13 +17,25 @@
 
 - manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
 - add other Yahoo columns to OHLCV table ( events, dividends, etc )
-- manage TimeZone 
+
+- add service layer
+- implement Python logging ( see: logging_config.py )
+- add try/catch to load_XXXX functions ( expcted result is a Tuple with error message: we should manage the exception inside the function )
+- use `logging.exception()`
+
 
 # Doing
 
-- implement Python logging ( see: logging_config.py )
-- add try/catch to load_XXXX functions ( expcted result is a Tuple with error message: we should manage the exception inside the function )
+- manage TimeZone 
+    - from now on, only UTC dates in the database
+    - manage transformations when reading from DB
+    - manage transformations when writing to DB
 
+    load_ohlcv_from_symbol
+    load_ohlcv_from_yfinance_dataframe
+
+
+    
 
 # Done
 
