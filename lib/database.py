@@ -1,7 +1,9 @@
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from lib.models import Base
 from lib.settings_manager import get_db_path
+
 
 # ==========================================================
 # Dynamic database manager
@@ -34,14 +36,13 @@ def get_session():
         init_engine()
     return _SessionLocal()
 
-
 def init_db():
     """Create all tables."""
     init_engine()
     Base.metadata.create_all(_engine)
     print(f"✅ Database schema created for {_current_path}")
 
-
+    
 # ----------------------------------------------------------
 # Utility functions
 # ----------------------------------------------------------
@@ -51,3 +52,4 @@ def write_to_db(amount: float) -> int:
 
 def read_from_db(cents: int) -> float:
     return cents / 1000000
+

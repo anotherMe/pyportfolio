@@ -1,9 +1,12 @@
 
+from datetime import datetime
 from sqlalchemy import (
-    Column, String, Integer, DateTime, ForeignKey, Text, UniqueConstraint
+    Column, DateTime, String, Integer, ForeignKey, Text, TypeDecorator, UniqueConstraint
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+
+from lib.database import UTCDateTime
 
 Base = declarative_base()
 
@@ -51,7 +54,7 @@ class Trade(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
-    date = Column(DateTime, nullable=False)
+    date = Column(UTCDateTime, nullable=False)
     type = Column(String, nullable=False)  # 'buy' or 'sell'
     quantity = Column(Integer, nullable=False)  # integer shares
     price = Column(Integer, nullable=False)
@@ -71,7 +74,7 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
     trade_id = Column(Integer, ForeignKey("trades.id", ondelete="CASCADE"), nullable=True)
-    date = Column(DateTime, nullable=False)
+    date = Column(UTCDateTime, nullable=False)
     type = Column(String, nullable=False)  # 'div', 'tax', 'fee'
     amount = Column(Integer, nullable=False)
     description = Column(Text)
@@ -88,7 +91,7 @@ class Price(Base):
     __tablename__ = "prices"
     id = Column(Integer, primary_key=True, autoincrement=True)
     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
-    date = Column(DateTime, nullable=False)
+    date = Column(UTCDateTime, nullable=False)
     price = Column(Integer, nullable=False)
     granularity = Column(String, nullable=False)
 
@@ -104,7 +107,7 @@ class OHLCV(Base):
     __tablename__ = 'ohlcvs'
     id = Column(Integer, primary_key=True, autoincrement=True)
     instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
-    timestamp = Column(DateTime, nullable=False)
+    timestamp = Column(UTCDateTime, nullable=False)
     granularity = Column(String, nullable=False)
     open = Column(Integer)
     high = Column(Integer)
@@ -117,3 +120,23 @@ class OHLCV(Base):
         UniqueConstraint('instrument_id', 'timestamp', 'granularity', name='_instrument_timestamp_uc'),
 )
 
+
+
+# ----------------------------------------------------------
+# Type decorators
+# ----------------------------------------------------------
+
+class UTCDateTime(TypeDecorator):
+    impl = DateTime(timezone=True)
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if value.tzinfo is None:
+            raise ValueError("naive datetime")
+        return value.astimezone(datetime.timezone.utc)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        return value.replace(tzinfo=datetime.timezone.utc)
