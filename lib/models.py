@@ -1,15 +1,32 @@
 
 from datetime import datetime
-from sqlalchemy import (
-    Column, DateTime, String, Integer, ForeignKey, Text, TypeDecorator, UniqueConstraint
-)
+from sqlalchemy import Column, DateTime, String, Integer, ForeignKey, Text, TypeDecorator, UniqueConstraint
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-from lib.database import UTCDateTime
-
 Base = declarative_base()
 
+
+# ----------------------------------------------------------
+# Type decorators
+# ----------------------------------------------------------
+
+class UTCDateTime(TypeDecorator):
+    impl = DateTime(timezone=True)
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if value.tzinfo is None:
+            raise ValueError("naive datetime")
+        return value.astimezone(datetime.timezone.utc)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        return value.replace(tzinfo=datetime.timezone.utc)
+    
 
 # ==========================================================
 #  Accounts
@@ -120,23 +137,4 @@ class OHLCV(Base):
         UniqueConstraint('instrument_id', 'timestamp', 'granularity', name='_instrument_timestamp_uc'),
 )
 
-
-
-# ----------------------------------------------------------
-# Type decorators
-# ----------------------------------------------------------
-
-class UTCDateTime(TypeDecorator):
-    impl = DateTime(timezone=True)
-
-    def process_bind_param(self, value, dialect):
-        if value is None:
-            return value
-        if value.tzinfo is None:
-            raise ValueError("naive datetime")
-        return value.astimezone(datetime.timezone.utc)
-
-    def process_result_value(self, value, dialect):
-        if value is None:
-            return value
-        return value.replace(tzinfo=datetime.timezone.utc)
+    

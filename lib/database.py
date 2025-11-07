@@ -36,16 +36,16 @@ def get_session():
         init_engine()
     return _SessionLocal()
 
+    
+# ----------------------------------------------------------
+# Utility functions
+# ----------------------------------------------------------
+
 def init_db():
     """Create all tables."""
     init_engine()
     Base.metadata.create_all(_engine)
     print(f"✅ Database schema created for {_current_path}")
-
-    
-# ----------------------------------------------------------
-# Utility functions
-# ----------------------------------------------------------
 
 def write_to_db(amount: float) -> int:
     return int(round(amount * 1000000))
