@@ -12,6 +12,7 @@
 
 # Ongoing
 
+- import setup_logger
 - use `logging.exception()`
 - add service layer
 - manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers

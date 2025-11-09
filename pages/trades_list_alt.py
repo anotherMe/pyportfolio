@@ -64,8 +64,26 @@ with get_session() as session:
                                 "Quantity": t.quantity,
                                 "Price (€)": f"{read_from_db(t.price)}"
                             } for t in filtered_trades]
-        df_latest = pd.DataFrame(latest_trade_details)
-        st.dataframe(data=df_latest, hide_index=True)
+        
+        cols = st.columns([2, 2, 2, 2, 2, 2, 2])
+        headers = ["Instrument", "ISIN", "Date", "Type", "Quantity", "Price (€)", "Action"]
+        for c, h in zip(cols, headers):
+            c.markdown(f"**{h}**")
+
+        # Data rows
+        for row in latest_trade_details:
+            cols = st.columns([2, 2, 2, 2, 2, 2, 2])
+            cols[0].write(row["Instrument"])
+            cols[1].write(row["ISIN"])
+            cols[2].write(row["Date"])
+            cols[3].write(row["Type"])
+            cols[4].write(row["Quantity"])
+            cols[5].write(row["Price (€)"])
+
+            if cols[6].button("View", key=f"view_{row['ISIN']}_{row['Date']}"):
+                st.session_state["trade_id"] = row["trade_id"]
+                st.switch_page("pages/trades_edit.py")  # target page path
+
     else:
         st.info("No trades available for the current search")
-
+        

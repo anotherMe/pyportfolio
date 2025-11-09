@@ -10,6 +10,8 @@ from lib.repo.instruments_repository import get_all_instruments
 from lib.models import Instrument, Trade, Transaction
 from lib.settings_manager import get_timezone
 
+from logging_config import setup_logger
+log = setup_logger(__name__)
 
 print("Running trades page...")
 
