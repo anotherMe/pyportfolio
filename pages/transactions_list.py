@@ -3,10 +3,23 @@ import streamlit as st
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session, read_from_db
 from lib.models import Transaction, Instrument
+from lib.utils import confirm_delete_dialog
 from service.utils import account_selector, to_local
-from lib.repo.transactions_repository import get_all_transactions
+import lib.repo.transactions_repository as transactions_repo
 
-print("Running transactions page...")
+from logging_config import setup_logger
+log = setup_logger(__name__)
+
+log.debug("Running transactions page...")
+
+def delete_transaction(item_id):
+    with get_session() as session, session.begin():
+        try:
+            transactions_repo.delete_transaction(session, item_id)
+            session.commit()
+        except Exception:
+            log.exception("")
+            st.error(f"Error while deleting item {item_id}")
 
 st.title("💰 Transactions")
 
@@ -32,9 +45,10 @@ with get_session() as session:
         
         st.subheader("All Transactions")
 
-        transactions = get_all_transactions(session, current_account)
+        transactions = transactions_repo.get_all_transactions(session, current_account)
+        
         if transactions:
-            st.dataframe(data=[
+            st_dataframe = st.dataframe(data=[
                 {
                     "Type": t.type,
                     "Instrument": t.trade.instrument.name if t.trade else "",
@@ -42,58 +56,77 @@ with get_session() as session:
                     "Amount (€)": read_from_db(t.amount),
                     "Description": t.description or ""
                 } for t in transactions
-            ])
+            ],
+            on_select="rerun", 
+            selection_mode="single-row")
         else:
             st.info("No transactions recorded yet.")
 
-    # --- DIVIDENDS TAB ---
-    with tab2:
+    # # --- DIVIDENDS TAB ---
+    # with tab2:
 
-        st.subheader("Dividend History")
+    #     st.subheader("Dividend History")
 
-        dividends = session.query(Transaction).where(Transaction.type == 'div').order_by(Transaction.date.desc()).all()
-        if dividends:
-            st.dataframe(data=[
-                {
-                    "Instrument": d.trade.instrument.name,
-                    "Date": to_local(d.date),
-                    "Amount (€)": read_from_db(d.amount)
-                } for d in dividends
-            ])
-        else:
-            st.info("No dividends recorded yet.")
+    #     dividends = session.query(Transaction).where(Transaction.type == 'div').order_by(Transaction.date.desc()).all()
+    #     if dividends:
+    #         st.dataframe(data=[
+    #             {
+    #                 "Instrument": d.trade.instrument.name,
+    #                 "Date": to_local(d.date),
+    #                 "Amount (€)": read_from_db(d.amount)
+    #             } for d in dividends
+    #         ],
+    #         on_select="rerun", 
+    #         selection_mode="single-row")
+    #     else:
+    #         st.info("No dividends recorded yet.")
 
 
-    # --- TAXES TAB ---
-    with tab3:
+    # # --- TAXES TAB ---
+    # with tab3:
 
-        st.subheader("Tax History")
+    #     st.subheader("Tax History")
 
-        taxes = session.query(Transaction).where(Transaction.type == 'tax').order_by(Transaction.date.desc()).all()
-        if taxes:
-            st.dataframe(data=[
-                {
-                    "Description": t.description,
-                    "Date": to_local(t.date),
-                    "Amount (€)": read_from_db(t.amount)
-                } for t in taxes
-            ])
-        else:
-            st.info("No taxes recorded yet.")
+    #     taxes = session.query(Transaction).where(Transaction.type == 'tax').order_by(Transaction.date.desc()).all()
+    #     if taxes:
+    #         st.dataframe(data=[
+    #             {
+    #                 "Description": t.description,
+    #                 "Date": to_local(t.date),
+    #                 "Amount (€)": read_from_db(t.amount)
+    #             } for t in taxes
+    #         ],
+    #         on_select="rerun", 
+    #         selection_mode="single-row")
+    #     else:
+    #         st.info("No taxes recorded yet.")
 
-    # --- FEES TAB ---
-    with tab4:
+    # # --- FEES TAB ---
+    # with tab4:
 
-        st.subheader("Fee History")
+    #     st.subheader("Fee History")
 
-        fees = session.query(Transaction).where(Transaction.type == 'fee').order_by(Transaction.date.desc()).all()
-        if fees:
-            st.dataframe(data=[
-                {
-                    "Description": f.description,
-                    "Date": to_local(f.date),
-                    "Amount (€)": read_from_db(f.amount)
-                } for f in fees
-            ])
-        else:
-            st.info("No fees recorded yet.")
+    #     fees = session.query(Transaction).where(Transaction.type == 'fee').order_by(Transaction.date.desc()).all()
+    #     if fees:
+    #         st.dataframe(data=[
+    #             {
+    #                 "Description": f.description,
+    #                 "Date": to_local(f.date),
+    #                 "Amount (€)": read_from_db(f.amount)
+    #             } for f in fees
+    #         ],
+    #         on_select="rerun", 
+    #         selection_mode="single-row")
+    #     else:
+    #         st.info("No fees recorded yet.")
+
+    if st_dataframe["selection"]["rows"]:
+        dataframe_index = st_dataframe["selection"]["rows"][0]
+        selected_transaction: Transaction = transactions[dataframe_index]
+        with st.container(horizontal=True):
+            st.space("stretch")
+            if st.button("Show details"):
+                st.session_state.transaction_id = selected_transaction.id
+                st.switch_page("pages/transactions_edit.py")
+            if st.button("Delete", type="primary"):
+                confirm_delete_dialog(f"Are you sure you want to delete transaction {selected_transaction.id} ?", selected_transaction.id, delete_transaction)

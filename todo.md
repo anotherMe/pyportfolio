@@ -24,6 +24,8 @@
 - change "Add/Edit" page in order to make it a "Detail" page first and an "Edit" page only upon user request
     - maybe worth having a separated "Add new" page and "Edit page" (wich is going to be also the "Detail")
 
+- in "Transaction list" page, remove tabs and replace with selector
+
 # Doing
 
 - remove details page

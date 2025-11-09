@@ -1,5 +1,4 @@
 
-import logging
 import streamlit as st
 from lib.models import Trade
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
@@ -95,7 +94,7 @@ with get_session() as session:
             "Price": "Price"
         }
 
-        the_dataframe = st.dataframe(
+        st_dataframe = st.dataframe(
             data=df_latest,
             column_config=my_column_config, 
             hide_index=True, 
@@ -106,8 +105,8 @@ with get_session() as session:
         st.info("No trades available for the current search")
 
 
-    if the_dataframe["selection"]["rows"]:
-        dataframe_index = the_dataframe["selection"]["rows"][0]
+    if st_dataframe["selection"]["rows"]:
+        dataframe_index = st_dataframe["selection"]["rows"][0]
         selected_trade: Trade = filtered_trades[dataframe_index]
         with st.container(horizontal=True):
             st.space("stretch")
