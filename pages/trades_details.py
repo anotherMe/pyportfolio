@@ -1,33 +1,45 @@
 
-from locale import currency
+import logging
 import streamlit as st
 from lib.enums import Currency
-from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
+import lib.repo.accounts_repository as accounts_repo
+import lib.repo.trades_repository as trades_repo
 from lib.database import read_from_db, get_session
 from lib.models import Instrument
 import pandas as pd
 
+from lib.utils import confirm_delete_dialog
 from service.utils import account_selector, to_local
-from lib.repo.trades_repository import get_all_trades
 
 print("Running trades page...")
 
-st.title("💼 Trades")
 
 if 'trade_id' not in st.session_state:
     st.session_state.trade_id = None
 
+def delete_trade(item_id):
+    with get_session() as session, session.begin():
+        try:
+            trades_repo.trades_repo.delete_trade(session, item_id)
+            session.commit()
+        except Exception:
+            logging.exception("")
+            st.error(f"Error while deleting item {item_id}")
+
+
+st.title("💼 Trades")
+
 with get_session() as session:
 
     # --- Account selector ---
-    accounts = get_all_accounts(session)
+    accounts = accounts_repo.get_all_accounts(session)
     account_selector(accounts) # Show sidebar account selector
-    current_account = get_account_by_name(session, st.session_state.account)
+    current_account = accounts_repo.get_account_by_name(session, st.session_state.account)
 
     # --- Fetch data ---
     instruments = session.query(Instrument).all()
     instrument_map = {inst.name: inst for inst in instruments}
-    trades = get_all_trades(session, current_account)
+    trades = trades_repo.get_all_trades(session, current_account)
     
     if not trades:
         st.info("No trades available")
@@ -73,9 +85,7 @@ with get_session() as session:
                         st.switch_page("pages/trades_edit.py")
                 with col3:
                     if st.button("🗑️ Delete", key=f"delete_{trade.id}"):
-                        st.warning("Delete functionality is not implemented yet.")
-                        # session.delete(trade)
-                        # st.success("Trade deleted.")
+                        confirm_delete_dialog(f"Are you sure you want to delete trade {trade.id} ?", trade.id, trades_repo.delete_trade)
 
                 # --- Related transactions ---
                 st.divider()

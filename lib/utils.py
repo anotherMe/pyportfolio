@@ -1,4 +1,7 @@
+
 import re
+import streamlit as st
+
 
 def is_valid_isin(isin: str) -> bool:
     s = (isin or "").strip().upper().replace(" ", "")
@@ -23,3 +26,16 @@ def is_valid_isin(isin: str) -> bool:
                 d -= 9
         total += d
     return total % 10 == 0
+
+
+@st.dialog("Confirm deletion")
+def confirm_delete_dialog(confirm_message, item_id, delete_function):
+    st.write(confirm_message)
+    col1, col2, col3 = st.columns([3,1,1])
+    with col2:
+        if st.button("✅ Yes"):
+            delete_function(item_id)
+            st.rerun()
+    with col3:
+        if st.button("❌ No"):
+            st.rerun()

@@ -1,8 +1,10 @@
 
+import logging
 import pandas as pd
 import streamlit as st
 from lib.database import read_from_db, get_session
-from lib.repo.instruments_repository import delete_instrument, get_all_instruments
+import lib.repo.instruments_repository as instruments_repo
+from lib.utils import confirm_delete_dialog
 from service.utils import to_local
 
 
@@ -10,23 +12,16 @@ print("Running instruments details page...")
 
 if "instrument_id" not in st.session_state:
     st.session_state.instrument_id = None
-if "ok_delete_instrument" not in st.session_state:
-    st.session_state.ok_delete_instrument = False
-if "show_delete_instrument_confirmation_dialog" not in st.session_state:
-    st.session_state.show_delete_instrument_confirmation_dialog = False
 
-@st.dialog("Confirm instrument deletion")
-def confirm_delete_dialog():
-    st.write("Are you sure you want to delete this instrument ?")
-    col1, col2, col3 = st.columns([3,1,1])
-    with col2:
-        if st.button("✅ Yes"):
-            st.session_state.ok_delete_instrument = True
-            st.rerun()
-    with col3:
-        if st.button("❌ No"):
-            st.session_state.show_delete_instrument_confirmation_dialog = False
-            st.rerun()
+
+def delete_instrument(item_id):
+    with get_session() as session, session.begin():
+        try:
+            instruments_repo.delete_instrument(session, item_id)
+            session.commit()
+        except Exception:
+            logging.exception("")
+            st.error(f"Error while deleting item {item_id}")
 
 
 st.title("🔧 Instruments")
@@ -34,7 +29,7 @@ st.subheader("Instrument Details")
 
 with get_session() as session, session.begin():
 
-    instruments = get_all_instruments(session)
+    instruments = instruments_repo.get_all_instruments(session)
 
     if not instruments:
         st.info("No instruments found.")
@@ -105,22 +100,8 @@ with get_session() as session, session.begin():
                     st.switch_page("pages/instruments_edit.py")
 
             with col3:
-                if not st.session_state.ok_delete_instrument:
-                    if st.button("🗑️ Delete", key=f"delete_{inst.id}"):
-                        st.session_state.show_delete_instrument_confirmation_dialog = True
-                        st.rerun()
-                else:
-                    try:
-                        delete_instrument(session, inst.id)
-                        st.success("Instrument deleted successfully")
-                        st.session_state.ok_delete_instrument = False  # VERY IMPORTANT: without this, it would keep deleting ALL instruments
-                        st.session_state.show_delete_instrument_confirmation_dialog = False
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error deleting instrument: {e}")
-
-                if st.session_state.show_delete_instrument_confirmation_dialog:
-                    confirm_delete_dialog()
+                if st.button("🗑️ Delete", key=f"delete_{inst.id}"):
+                    confirm_delete_dialog(f"Are you sure you want to delete instrument {inst.id} ?", inst.id, delete_instrument)
 
             # --- Related trades ---
             st.divider()

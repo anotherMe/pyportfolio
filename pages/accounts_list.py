@@ -1,15 +1,27 @@
 
+import logging
 import streamlit as st
 from lib.database import get_session
-from lib.repo.accounts_repository import get_all_accounts, delete_account
+import lib.repo.accounts_repository as accounts_repo
+from lib.utils import confirm_delete_dialog
 
 print("Running accounts list page...")
+
+def delete_account(item_id):
+    with get_session() as session, session.begin():
+        try:
+            accounts_repo.delete_account(session, item_id)
+            session.commit()
+        except Exception:
+            logging.exception("")
+            st.error(f"Error while deleting item {item_id}")
+
 
 st.title("🏦 Accounts")
 
 with get_session() as session, session.begin():
 
-    accounts = get_all_accounts(session)
+    accounts = accounts_repo.get_all_accounts(session)
 
     if not accounts:
         st.info("No accounts found.")
@@ -39,9 +51,7 @@ with get_session() as session, session.begin():
                 col1, col2, col3 = st.columns([5,1,1])
                 with col2:
                     if st.button("🗑️ Delete", key=f"delete_{acc.id}"):
-                        delete_account(session, acc.id)
-                        st.success(f"Account '{acc.name}' deleted.")
-                        st.rerun()
+                        confirm_delete_dialog(f"Are you sure you want to delete account {acc.name} ?", acc.id, delete_account)
                 with col3:
                     if st.button("✏️ Edit", key=f"edit_{acc.id}"):
                         st.session_state["account_id"] = acc.id

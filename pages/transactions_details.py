@@ -3,6 +3,7 @@ import logging
 import streamlit as st
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import read_from_db, get_session
+from lib.utils import confirm_delete_dialog
 from service.utils import account_selector, to_local
 import lib.repo.transactions_repository as trans_repo
 
@@ -11,27 +12,14 @@ print("Running transactions details page...")
 st.session_state.transaction_id = None  # Always reset selected transaction ID
 
 
-@st.dialog("Confirm transaction deletion")
-def confirm_delete_dialog(item, item_id, on_confirm):
-    st.write(f"Are you sure you want to delete transaction {item} ?")
-    col1, col2, col3 = st.columns([3,1,1])
-    with col2:
-        if st.button("✅ Yes"):
-            on_confirm(item_id)
-            st.rerun()
-    with col3:
-        if st.button("❌ No"):
-            st.rerun()
-
 def delete_transaction(item_id):
     with get_session() as session, session.begin():
         try:
             trans_repo.delete_transaction(session, item_id)
-            st.success("Transaction deleted successfully")
             session.commit()
         except Exception:
             logging.exception("")
-            st.error("Error deleting transaction")
+            st.error(f"Error while deleting item {item_id}")
 
 
 st.title("💰 Transactions")
@@ -108,7 +96,7 @@ with get_session() as session, session.begin():
             col1, col2, col3 = st.columns([6, 1, 1])  # last column small for button
             with col2:
                 if st.button("🗑️ Delete", key=f"delete_{trans.id}"):
-                    confirm_delete_dialog(trans.id, trans.id, delete_transaction)
+                    confirm_delete_dialog(f"Are you sure you want to delete transaction {trans.id} ?", trans.id, delete_transaction)
             with col3:
                 if st.button("✏️ Edit", key=f"edit_{trans.id}"):
                     st.session_state["transaction_id"] = trans.id
