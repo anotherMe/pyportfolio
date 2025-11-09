@@ -87,7 +87,7 @@ with get_session() as session, session.begin():
                         fee_transaction.type = 'fee'
                         fee_transaction.amount = write_to_db(trade_fee)
                         fee_transaction.description = f"Fee for {trade.type}ing {trade.quantity} of {selected_instrument}"
-                    session.add(fee_transaction)
+                        session.add(fee_transaction)
                     st.session_state.trade_id = None
                     st.session_state.instrument_id = instrument_id
                     st.success("✅ Trade saved successfully!")

@@ -20,7 +20,7 @@ if 'trade_id' not in st.session_state:
 def delete_trade(item_id):
     with get_session() as session, session.begin():
         try:
-            trades_repo.trades_repo.delete_trade(session, item_id)
+            trades_repo.delete_trade(session, item_id)
             session.commit()
         except Exception:
             logging.exception("")
@@ -85,7 +85,7 @@ with get_session() as session:
                         st.switch_page("pages/trades_edit.py")
                 with col3:
                     if st.button("🗑️ Delete", key=f"delete_{trade.id}"):
-                        confirm_delete_dialog(f"Are you sure you want to delete trade {trade.id} ?", trade.id, trades_repo.delete_trade)
+                        confirm_delete_dialog(f"Are you sure you want to delete trade {trade.id} ?", trade.id, delete_trade)
 
                 # --- Related transactions ---
                 st.divider()
