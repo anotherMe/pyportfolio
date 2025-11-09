@@ -15,7 +15,6 @@ pages = {
     ],
     "🔧 Instruments": [    
         st.Page("pages/instruments_list.py", title="List"),
-        st.Page("pages/instruments_details.py", title="Details"),
         st.Page("pages/instruments_edit.py", title="Add / Edit"),
     ],
     "💼 Trades": [
@@ -24,16 +23,13 @@ pages = {
     ],
     "💰 Transactions": [
         st.Page("pages/transactions_list.py", title="List"),
-        st.Page("pages/transactions_details.py", title="Details"),
         st.Page("pages/transactions_edit.py", title="Add / Edit"),
     ],
     "📈 Prices": [
         st.Page("pages/prices_list.py", title="List"),
         st.Page("pages/prices_load_yahoo.py", title="Load from Yahoo"),
-        # st.Page("pages/prices_load_csv.py", title="Load from CSV"),
     ],
     "⚙️ Other": [
-        # st.Page("pages/settings.py", title="Settings"),
         st.Page("pages/backup.py", title="Backup", icon="💾"),
         st.Page("pages/demo_seed.py", title="Seed database", icon="🌱"),
         st.Page("pages/test.py", title="🧪 Test"),

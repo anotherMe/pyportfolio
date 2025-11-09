@@ -30,7 +30,13 @@ with get_session() as session:
     account_selector(accounts) # Show sidebar account selector
     current_account = get_account_by_name(session, st.session_state.account)
 
-    tab1, tab2, tab3, tab4 = st.tabs(["All", "📈 Dividends", "💸 Taxes", "Fees"])
+    # --- Transaction type selector
+    # tab1, tab2, tab3, tab4 = st.tabs(["All", "📈 Dividends", "💸 Taxes", "Fees"])
+    transaction_type = st.selectbox(
+        "Transaction Type",
+        options=["All", "div", "tax", "fee"],
+        disabled=False
+    )
 
     instruments = session.query(Instrument).order_by(Instrument.isin).all()
     if not instruments:
@@ -39,86 +45,29 @@ with get_session() as session:
 
     isin_map = {f"{inst.isin} — {inst.name or inst.ticker or ''}".strip(): inst.id for inst in instruments}
     isin_options = list(isin_map.keys())
-
-    # --- ALL TRANSACTIONS TAB ---
-    with tab1:
         
-        st.subheader("All Transactions")
+    st.subheader("Transactions")
 
+    if transaction_type == "All":
         transactions = transactions_repo.get_all_transactions(session, current_account)
-        
-        if transactions:
-            st_dataframe = st.dataframe(data=[
-                {
-                    "Type": t.type,
-                    "Instrument": t.trade.instrument.name if t.trade else "",
-                    "Date": to_local(t.date),
-                    "Amount (€)": read_from_db(t.amount),
-                    "Description": t.description or ""
-                } for t in transactions
-            ],
-            on_select="rerun", 
-            selection_mode="single-row")
-        else:
-            st.info("No transactions recorded yet.")
+    else:
+        transactions = session.query(Transaction).where(Transaction.type == transaction_type).order_by(Transaction.date.desc()).all()
 
-    # # --- DIVIDENDS TAB ---
-    # with tab2:
+    if not transactions:
+        st.info("No transactions recorded yet.")
+        st.stop()
 
-    #     st.subheader("Dividend History")
-
-    #     dividends = session.query(Transaction).where(Transaction.type == 'div').order_by(Transaction.date.desc()).all()
-    #     if dividends:
-    #         st.dataframe(data=[
-    #             {
-    #                 "Instrument": d.trade.instrument.name,
-    #                 "Date": to_local(d.date),
-    #                 "Amount (€)": read_from_db(d.amount)
-    #             } for d in dividends
-    #         ],
-    #         on_select="rerun", 
-    #         selection_mode="single-row")
-    #     else:
-    #         st.info("No dividends recorded yet.")
-
-
-    # # --- TAXES TAB ---
-    # with tab3:
-
-    #     st.subheader("Tax History")
-
-    #     taxes = session.query(Transaction).where(Transaction.type == 'tax').order_by(Transaction.date.desc()).all()
-    #     if taxes:
-    #         st.dataframe(data=[
-    #             {
-    #                 "Description": t.description,
-    #                 "Date": to_local(t.date),
-    #                 "Amount (€)": read_from_db(t.amount)
-    #             } for t in taxes
-    #         ],
-    #         on_select="rerun", 
-    #         selection_mode="single-row")
-    #     else:
-    #         st.info("No taxes recorded yet.")
-
-    # # --- FEES TAB ---
-    # with tab4:
-
-    #     st.subheader("Fee History")
-
-    #     fees = session.query(Transaction).where(Transaction.type == 'fee').order_by(Transaction.date.desc()).all()
-    #     if fees:
-    #         st.dataframe(data=[
-    #             {
-    #                 "Description": f.description,
-    #                 "Date": to_local(f.date),
-    #                 "Amount (€)": read_from_db(f.amount)
-    #             } for f in fees
-    #         ],
-    #         on_select="rerun", 
-    #         selection_mode="single-row")
-    #     else:
-    #         st.info("No fees recorded yet.")
+    st_dataframe = st.dataframe(data=[
+        {
+            "Type": t.type,
+            "Instrument": t.trade.instrument.name if t.trade else "",
+            "Date": to_local(t.date),
+            "Amount (€)": read_from_db(t.amount),
+            "Description": t.description or ""
+        } for t in transactions
+    ],
+    on_select="rerun", 
+    selection_mode="single-row")
 
     if st_dataframe["selection"]["rows"]:
         dataframe_index = st_dataframe["selection"]["rows"][0]
