@@ -29,7 +29,7 @@ def delete_trade(item_id):
             trades_repo.delete_trade(session, item_id)
             session.commit()
         except Exception:
-            logging.exception("")
+            log.exception("")
             st.error(f"Error while deleting item {item_id}")
 
 with get_session() as session:
@@ -108,11 +108,11 @@ with get_session() as session:
 
     if the_dataframe["selection"]["rows"]:
         dataframe_index = the_dataframe["selection"]["rows"][0]
-        trade: Trade = filtered_trades[dataframe_index]
+        selected_trade: Trade = filtered_trades[dataframe_index]
         with st.container(horizontal=True):
             st.space("stretch")
             if st.button("Show details"):
-                st.session_state.trade_id = trade.id
+                st.session_state.trade_id = selected_trade.id
                 st.switch_page("pages/trades_edit.py")
             if st.button("Delete", type="primary"):
-                confirm_delete_dialog(f"Are you sure you want to delete trade {trade.id} ?", trade.id, delete_trade)
+                confirm_delete_dialog(f"Are you sure you want to delete trade {selected_trade.id} ?", selected_trade.id, delete_trade)

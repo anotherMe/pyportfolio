@@ -54,6 +54,6 @@ with get_session() as session, session.begin():
     
     col1, col2 = st.columns([5,1])
     with col2:
-        if st.button("Back to details"):
-            st.switch_page("pages/instruments_details.py")
+        if st.button("Back to list"):
+            st.switch_page("pages/instruments_list.py")
 
