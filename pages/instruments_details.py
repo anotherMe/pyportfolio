@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 from lib.database import read_from_db, get_session
 from lib.repo.instruments_repository import delete_instrument, get_all_instruments
+from service.utils import to_local
 
 
 print("Running instruments details page...")
@@ -128,7 +129,7 @@ with get_session() as session, session.begin():
                 inst_trades = [{
                     "Account": trade.account.name,
                     "Type": "📥 Buy" if trade.type.lower() == "buy" else "📤 Sell" if trade.type.lower() == "sell" else trade.type,
-                    "Date": trade.date,
+                    "Date": to_local(trade.date),
                     "Qty": trade.quantity,
                     "Price": read_from_db(trade.price)
                 } for trade in inst.trades]

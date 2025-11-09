@@ -6,6 +6,7 @@ from lib.settings_manager import get_timezone
 
 DEFAULT_DATETIME_FORMAT = "%Y-%m-%d %H:%M"
 
+
 def account_selector(accounts):
 
     if 'account' not in st.session_state:
@@ -29,9 +30,6 @@ def account_selector(accounts):
     # Update session query param if it changed
     if selected != current_account_name:
         st.session_state.account = selected
-
-    # st.sidebar.caption(f"🔹 Active account: **{selected}**")
-
 
 def to_local(dt):
     if dt is None:

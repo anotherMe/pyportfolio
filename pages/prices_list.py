@@ -3,6 +3,7 @@ import pandas as pd
 
 from lib.database import get_session, read_from_db
 from lib.repo.prices_repository import get_latest_prices
+from service.utils import to_local
 
 
 
@@ -17,6 +18,7 @@ with get_session() as session:
 df = pd.DataFrame(results, columns=["instrument_name", "instrument_ticker", "last_close", "timestamp"])
 df["last_close"] = df["last_close"].apply(lambda x: read_from_db(x) if x else None)
 df["instrument_ticker"] = df["instrument_ticker"].apply(lambda x: f"https://finance.yahoo.com/quote/{x}" if x else "")
+df["timestamp"] = df["timestamp"].apply(lambda x: to_local(x))
 
 # Show dataframe in Streamlit
 st.dataframe(

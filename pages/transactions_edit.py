@@ -6,7 +6,6 @@ from lib.repo.accounts_repository import get_all_accounts
 from lib.database import read_from_db, get_session, write_to_db
 from lib.models import Transaction
 from lib.models import Trade
-from lib.repo.trades_repository import get_all_trades
 from lib.settings_manager import get_timezone
 
 

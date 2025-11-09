@@ -13,6 +13,7 @@ import service.YahooFinanceService as yfs
 from service.custom_exceptions import PortfolioException
 
 from logging_config import setup_logger
+from service.utils import to_local
 log = setup_logger(__name__)
 
 
@@ -24,6 +25,10 @@ with get_session() as session:
     instruments = get_all_instruments(session)
     ohlcvs = get_latest_prices(session)
 
+
+# ----------------------------------------------------------------------------------------------------------------------------
+# Instrument list
+
 if not instruments:
     st.info("No instruments found.")
 else:
@@ -31,14 +36,13 @@ else:
     df_ohlcv = pd.DataFrame([
         {
             "instrument_id": o.instrument_id,
-            "timestamp": o.timestamp,
+            "timestamp": to_local(o.timestamp),
             # "open": o.open,
             # "high": o.high,
             # "low": o.low,
             "close": o.close,
             # "volume": o.volume,
-        }
-        for o in ohlcvs
+        } for o in ohlcvs
     ])
 
     df_instruments = pd.DataFrame([
@@ -47,8 +51,7 @@ else:
             "ticker": i.ticker,
             "name": i.name,
             "name_long": i.currency,
-        }
-        for i in instruments
+        } for i in instruments
     ])
 
     if not df_instruments.empty and not df_ohlcv.empty:
@@ -92,7 +95,7 @@ else:
 
 
 # ----------------------------------------------------------------------------------------------------------------------------
-
+# Download from Yahoo Finance
 
 st.subheader("Download data with yfinance")
 
@@ -131,7 +134,9 @@ if btn_update_instruments:
     progress_bar.empty()
 
 
+
 # ----------------------------------------------------------------------------------------------------------------------------
+# Load local JSON (Yahoo Finance)
 
 
 st.subheader("Load data from local JSON")

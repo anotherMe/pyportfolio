@@ -9,8 +9,10 @@
 - try to automate data download from Yahoo Finance ( maybe with [yfinance](https://github.com/ranaroussi/yfinance) ? )
 - manage currency properly ( read the currency from price tables and enforce use of the related Enum )
 - sum fee to prices inside all list and views
-- add "Delete" confirmation dialog for Trades and other objects that currently miss that feature
-- clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
+- implement Delete functionality
+    - add "Delete" confirmation dialog for Trades and other objects that currently miss that feature
+    - clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
+    - bypass confirmation dialog and just create a backup ? implement just LOGICAL DELETION ?
 
 
 # Do
@@ -30,6 +32,7 @@
     - from now on, only UTC dates in the database
     - manage transformations when reading from DB
     - manage transformations when writing to DB
+    - ALL DATES MUST BE converted before showing in UI
 
     load_ohlcv_from_symbol
     load_ohlcv_from_yfinance_dataframe
