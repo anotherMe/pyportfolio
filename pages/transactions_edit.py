@@ -38,7 +38,8 @@ with get_session() as session, session.begin():
             with st.form("dividend_form"):
                 selected_account = st.selectbox(
                     "Account",
-                    list(accounts_map.keys())
+                    list(accounts_map.keys()),
+                    index=list(accounts_map.keys()).index(transaction.account.name), 
                 )
                 transaction_type = st.selectbox(
                     "Transaction Type",
@@ -124,6 +125,6 @@ with get_session() as session, session.begin():
 
     col1, col2 = st.columns([5,1])
     with col2:
-        if st.button("Back to details"):
+        if st.button("Back to list"):
             st.session_state.trade_id = None
-            st.switch_page("pages/transactions_details.py")
+            st.switch_page("pages/transactions_list.py")
