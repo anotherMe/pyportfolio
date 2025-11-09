@@ -9,7 +9,6 @@
 - add other Yahoo columns to OHLCV table ( events, dividends, etc )
 - automatically calculate taxes on sell ( based on a parameter on settings ? like 26% ? )
 
-
 # Ongoing
 
 - import setup_logger
@@ -22,10 +21,14 @@
 
 # Do
 
-
+- change "Add/Edit" page in order to make it a "Detail" page first and an "Edit" page only upon user request
+    - maybe worth having a separated "Add new" page and "Edit page" (wich is going to be also the "Detail")
 
 # Doing
 
+- remove details page
+    - modify the list page to implement selection and show details button
+    - move delete function in list page
 
 # Done
 

@@ -1,12 +1,15 @@
 
+import logging
 import streamlit as st
+from lib.models import Trade
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import read_from_db, get_session
 from lib.repo.instruments_repository import get_all_instruments
 import pandas as pd
 
+from lib.utils import confirm_delete_dialog
 from service.utils import account_selector, to_local
-from lib.repo.trades_repository import get_all_trades
+import lib.repo.trades_repository as trades_repo
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
@@ -20,6 +23,15 @@ if 'show_editor' not in st.session_state:
 if 'trade_id' not in st.session_state:
     st.session_state.trade_id = None
 
+def delete_trade(item_id):
+    with get_session() as session, session.begin():
+        try:
+            trades_repo.delete_trade(session, item_id)
+            session.commit()
+        except Exception:
+            logging.exception("")
+            st.error(f"Error while deleting item {item_id}")
+
 with get_session() as session:
 
     # --- Account selector ---
@@ -30,7 +42,7 @@ with get_session() as session:
     # --- Fetch data ---
     instruments = get_all_instruments(session)
     instrument_map = {inst.name: inst for inst in instruments}
-    trades = get_all_trades(session, current_account)
+    trades = trades_repo.get_all_trades(session, current_account)
     # latest_trades = session.query(Trade).join(Trade.instrument).order_by(Trade.date.desc()).limit(10).all()
 
     if not trades:
@@ -55,17 +67,52 @@ with get_session() as session:
     st.subheader("Trades")
     
     if filtered_trades:
+        
         latest_trade_details = [{
-                                "trade_id": t.id,
-                                "Instrument": t.instrument.name,
-                                "ISIN": t.instrument.isin,
-                                "Date": to_local(t.date),
-                                "Type": "➕ BUY" if t.type.lower() == "buy" else "➖ SELL",
-                                "Quantity": t.quantity,
-                                "Price (€)": f"{read_from_db(t.price)}"
-                            } for t in filtered_trades]
+            "trade_id": t.id,
+            "Instrument": t.instrument.name,
+            "ISIN": t.instrument.isin,
+            "Date": to_local(t.date),
+            "Type": "➕ BUY" if t.type.lower() == "buy" else "➖ SELL",
+            "Quantity": t.quantity,
+            "Price": f"{read_from_db(t.price)}"
+        } for t in filtered_trades]
+        
         df_latest = pd.DataFrame(latest_trade_details)
-        st.dataframe(data=df_latest, hide_index=True)
+
+        my_column_config = {
+
+            "trade_id": None,
+            "Instrument": "Instrument",
+            "ISIN": "ISIN",
+            # "ISIN": st.column_config.LinkColumn(
+            #     help="Look up ISIN on JustETF site",
+            #     display_text=r"[?&]isin=([^&#]+)"
+            # ),
+            "Date": "Date",
+            "Type": "Type",
+            "Quantity": "Quantity",
+            "Price": "Price"
+        }
+
+        the_dataframe = st.dataframe(
+            data=df_latest,
+            column_config=my_column_config, 
+            hide_index=True, 
+            on_select="rerun", 
+            selection_mode="single-row")
+
     else:
         st.info("No trades available for the current search")
 
+
+    if the_dataframe["selection"]["rows"]:
+        dataframe_index = the_dataframe["selection"]["rows"][0]
+        trade: Trade = filtered_trades[dataframe_index]
+        with st.container(horizontal=True):
+            st.space("stretch")
+            if st.button("Show details"):
+                st.session_state.trade_id = trade.id
+                st.switch_page("pages/trades_edit.py")
+            if st.button("Delete", type="primary"):
+                confirm_delete_dialog(f"Are you sure you want to delete trade {trade.id} ?", trade.id, delete_trade)
