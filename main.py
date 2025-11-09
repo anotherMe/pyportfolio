@@ -1,67 +1,44 @@
 
-import argparse
-import lib.portfolio as pf
+import streamlit as st
 
-def main():
-    parser = argparse.ArgumentParser(description="📊 Portfolio Manager CLI")
-    subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # init-db
-    subparsers.add_parser("init-db", help="Initialize the database")
+st.set_page_config(page_title="My Portfolio Dashboard", layout="wide", initial_sidebar_state="collapsed")
 
-    # add-instrument
-    p_add = subparsers.add_parser("add-instrument", help="Add a new instrument")
-    p_add.add_argument("-i", "--isin", required=True)
-    p_add.add_argument("-n", "--name", required=True)
-    p_add.add_argument("-t", "--ticker")
-    p_add.add_argument("-c", "--category")
-    p_add.add_argument("-cur", "--currency", default="EUR")
+pages = {
+    "📊 Overview": [
+        st.Page("pages/overview_positions.py", title="Open positions"),
+        st.Page("pages/overview_fifo_pnl.py", title="FIFO PnL"),
+    ],
+    "🏦 Accounts": [
+        st.Page("pages/accounts_list.py", title="List"),
+        st.Page("pages/accounts_edit.py", title="Add / Edit"),
+    ],
+    "🔧 Instruments": [    
+        st.Page("pages/instruments_list.py", title="List"),
+        st.Page("pages/instruments_details.py", title="Details"),
+        st.Page("pages/instruments_edit.py", title="Add / Edit"),
+    ],
+    "💼 Trades": [
+        st.Page("pages/trades_list.py", title="List"),
+        st.Page("pages/trades_details.py", title="Details"),
+        st.Page("pages/trades_edit.py", title="Add / Edit"),
+    ],
+    "💰 Transactions": [
+        st.Page("pages/transactions_list.py", title="List"),
+        st.Page("pages/transactions_details.py", title="Details"),
+        st.Page("pages/transactions_edit.py", title="Add / Edit"),
+    ],
+    "📈 Prices": [
+        st.Page("pages/prices_list.py", title="List"),
+        st.Page("pages/prices_load_yahoo.py", title="Load from Yahoo"),
+        # st.Page("pages/prices_load_csv.py", title="Load from CSV"),
+    ],
+    "⚙️ Other": [
+        # st.Page("pages/settings.py", title="Settings"),
+        st.Page("pages/backup.py", title="Backup", icon="💾"),
+        st.Page("pages/demo_seed.py", title="Seed database", icon="🌱"),
+        st.Page("pages/test.py", title="🧪 Test"),
+    ]}
 
-    # buy / sell
-    for cmd in ["buy", "sell"]:
-        p_trade = subparsers.add_parser(cmd, help=f"Record a {cmd} trade")
-        p_trade.add_argument("-i", "--isin", required=True)
-        p_trade.add_argument("-q", "--qty", type=int, required=True)
-        p_trade.add_argument("-p", "--price", type=float, required=True, help="Price per unit")
-        p_trade.add_argument("-f", "--fees", type=float, default=39.0, help="Total fees for the trade (default: 39.0 €)")
-        p_trade.add_argument("-tr", "--tax_rate", type=float, default=26.0, help="Tax rate in % (default: 26%)")
-        p_trade.add_argument("--description")
-
-    # add-transaction
-    p_trans = subparsers.add_parser("add-transaction", help="Add a tax/dividend/fee")
-    p_trans.add_argument("-t", "--type", required=True, choices=["dividend", "tax", "fee", "global_tax"])
-    p_trans.add_argument("-a", "--amount", type=float, required=True)
-    p_trans.add_argument("-i", "--isin")
-    p_trans.add_argument("-d", "--description")
-
-    # add-price
-    p_price = subparsers.add_parser("add-price", help="Add a market price")
-    p_price.add_argument("-i", "--isin", required=True)
-    p_price.add_argument("-p", "--price", type=float, required=True)
-
-    # portfolio-value
-    subparsers.add_parser("portfolio-value", help="Compute portfolio value")
-
-    # show-positions
-    subparsers.add_parser("show-positions", help="Show current positions")
-
-    args = parser.parse_args()
-
-    match args.command:
-        case "init-db":
-            pf.handle_init_db()
-        case "add-instrument":
-            pf.handle_add_instrument(args)
-        case "buy" | "sell":
-            pf.handle_trade(args)
-        case "add-transaction":
-            pf.handle_transaction(args)
-        case "add-price":
-            pf.handle_add_price(args)
-        case "portfolio-value":
-            pf.handle_portfolio_value(args)
-        case "show-positions":
-            pf.handle_show_positions(args)
-
-if __name__ == "__main__":
-    main()
+nav = st.navigation(pages)
+nav.run()

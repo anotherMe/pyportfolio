@@ -1,7 +1,6 @@
 .venv
 data
 
-.vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
 
@@ -15,3 +14,8 @@ __pycache__/
 # Ignore database file
 *.sqlite3
 *.db
+*.bak
+
+
+settings.json
+

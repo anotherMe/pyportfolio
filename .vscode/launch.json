@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Debug Streamlit application",
+      "program": ".venv/bin/streamlit",
+      "args": ["run", "main.py"]
+    },
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Console - Load Yahoo data for IEGE.MI",
+      "program": "${workspaceFolder}/console.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": ["load-data", "-f", "data/IEGE.MI.json"]
+    },
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Console - Load Yahoo data for X13E.MI",
+      "program": "${workspaceFolder}/console.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": ["load-data", "-f", "data/X13E.MI.json"]
+    },
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Console - Load Yahoo data for SGLD.MI",
+      "program": "${workspaceFolder}/console.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": ["load-data", "-f", "data/SGLD.MI.json"]
+    }
+  ]
+}

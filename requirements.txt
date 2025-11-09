@@ -1,3 +1,7 @@
 
 SQLAlchemy
-rich
+streamlit
+streamlit-aggrid
+tabulate
+faker
+yfinance
