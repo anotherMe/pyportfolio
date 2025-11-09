@@ -28,20 +28,11 @@
 
 # Doing
 
-- manage TimeZone 
-    - from now on, only UTC dates in the database
-    - manage transformations when reading from DB
-    - manage transformations when writing to DB
-    - ALL DATES MUST BE converted before showing in UI
 
-    load_ohlcv_from_symbol
-    load_ohlcv_from_yfinance_dataframe
-
-
-    
 
 # Done
 
+- manage TimeZone 
 - fix current market positions using Prices instead of OHLCVs 
 - when showing latest prices, read them from table Price not OHLCV
 - when loading Yahoo prices, load MarketPrice too 
