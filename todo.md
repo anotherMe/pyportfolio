@@ -4,8 +4,6 @@
 
 - add a "Link" table ? I mean a FK table to store al current and future links ( JustETF, Yahoo, etc )
 - cache some data; starts with account list ( used in every page )
-- have a look at [AGGrid](https://www.ag-grid.com/)
-- try to automate data download from Yahoo Finance ( maybe with [yfinance](https://github.com/ranaroussi/yfinance) ? )
 - manage currency properly ( read the currency from price tables and enforce use of the related Enum )
 - sum fee to prices inside all list and views
 - add other Yahoo columns to OHLCV table ( events, dividends, etc )
@@ -23,18 +21,16 @@
 
 # Do
 
-- implement Delete functionality
-    - add "Delete" confirmation dialog for Trades and other objects that currently miss that feature
-    - now delete functionality is correctly implemented in `transactions_details.py`: use it as a reference
 
 
 # Doing
 
 
-
 # Done
 
+- implement Delete functionality
 - manage TimeZone 
+- automate data download from Yahoo Finance
 - fix current market positions using Prices instead of OHLCVs 
 - when showing latest prices, read them from table Price not OHLCV
 - when loading Yahoo prices, load MarketPrice too 
