@@ -1,13 +1,14 @@
+
 import streamlit as st
 from lib.database import get_session
 from lib.models import Account
 
 print("Running accounts edit page...")
 
-st.title("🔧 Accounts")
-
 if 'account_id' not in st.session_state:
     st.session_state.account_id = None
+
+st.title("🔧 Accounts")
 
 with get_session() as session, session.begin():
     

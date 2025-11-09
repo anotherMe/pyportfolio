@@ -14,6 +14,9 @@ print("Running transactions edit page...")
 if 'transaction_id' not in st.session_state:
     st.session_state.transaction_id = None
 
+if 'trade_id' not in st.session_state:
+    st.session_state.trade_id = None
+
 
 st.title("💰 Transactions")
 
@@ -63,7 +66,7 @@ with get_session() as session, session.begin():
 
         # --- Manage default values if session_state contains trade_id
         t = None
-        selected_account_index = None
+        selected_account_index = 0
         transaction_date_default = datetime.now()
         transaction_time_default = transaction_date_default.time()
         if st.session_state.trade_id:  # trade ID coming from page trades_details.py
@@ -96,7 +99,7 @@ with get_session() as session, session.begin():
                 save = st.form_submit_button("💾 Save")
 
             if save:
-                
+                # TODO: add validation
                 if not transaction_date:
                     st.warning("Date cannot be empty.")
                 elif not transaction_time:

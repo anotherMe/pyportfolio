@@ -5,25 +5,27 @@
 - add a "Link" table ? I mean a FK table to store al current and future links ( JustETF, Yahoo, etc )
 - cache some data; starts with account list ( used in every page )
 - have a look at [AGGrid](https://www.ag-grid.com/)
-- create custom Exceptions in the layer just below the UI
 - try to automate data download from Yahoo Finance ( maybe with [yfinance](https://github.com/ranaroussi/yfinance) ? )
 - manage currency properly ( read the currency from price tables and enforce use of the related Enum )
 - sum fee to prices inside all list and views
-- implement Delete functionality
-    - add "Delete" confirmation dialog for Trades and other objects that currently miss that feature
-    - clicking on "Delete" button gives error because one too many dialog opened ( solved but sub-optimally)
-    - bypass confirmation dialog and just create a backup ? implement just LOGICAL DELETION ?
+- add other Yahoo columns to OHLCV table ( events, dividends, etc )
+- automatically calculate taxes on sell ( based on a parameter on settings ? like 26% ? )
+
+
+# Ongoing
+
+- use `logging.exception()`
+- add service layer
+- manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
+- implement Python logging ( see: logging_config.py )
+- create custom Exceptions in the layer just below the UI
 
 
 # Do
 
-- manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
-- add other Yahoo columns to OHLCV table ( events, dividends, etc )
-
-- add service layer
-- implement Python logging ( see: logging_config.py )
-- add try/catch to load_XXXX functions ( expcted result is a Tuple with error message: we should manage the exception inside the function )
-- use `logging.exception()`
+- implement Delete functionality
+    - add "Delete" confirmation dialog for Trades and other objects that currently miss that feature
+    - now delete functionality is correctly implemented in `transactions_details.py`: use it as a reference
 
 
 # Doing

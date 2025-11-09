@@ -123,9 +123,8 @@ def load_ohlcv_from_symbol(symbol: YahooSymbol, granularity: str, instrument: In
 
     print(f"Inserted {inserted} new OHLCV rows, skipped {skipped} existing.")
 
-def load_ohlcv_from_yfinance_dataframe(dataframe: DataFrame, granularity: str, instrument: Instrument):
 
-    log.info
+def load_ohlcv_from_yfinance_dataframe(dataframe: DataFrame, granularity: str, instrument: Instrument):
 
     if dataframe.empty:
         print("No OHLCV data to insert.")
