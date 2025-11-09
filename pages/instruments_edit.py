@@ -41,9 +41,7 @@ with get_session() as session, session.begin():
             save = st.form_submit_button("💾 Save")
         if save:
             inst.isin = (inst.isin or "").strip().upper()
-            if not inst.isin:
-                st.warning("ISIN cannot be empty.")
-            elif not is_valid_isin(inst.isin):
+            if inst.isin and not is_valid_isin(inst.isin):
                 st.warning("ISIN is invalid (bad format or checksum).")
             elif not inst.name:
                 st.warning("Name cannot be empty.")

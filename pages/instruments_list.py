@@ -72,9 +72,10 @@ if st_dataframe["selection"]["rows"]:
     dataframe_index = st_dataframe["selection"]["rows"][0]
     selected_instrument: Instrument = instruments[dataframe_index]
     with st.container(horizontal=True):
-        st.space("stretch")
+        # st.space("stretch")
         if st.button("Show details"):
             st.session_state.instrument_id = selected_instrument.id
             st.switch_page("pages/instruments_edit.py")
         if st.button("Delete", type="primary"):
-            confirm_delete_dialog(f"Are you sure you want to delete trade {selected_instrument.id} ?", selected_instrument.id, delete_instrument)
+            confirm_delete_dialog(f"Are you sure you want to delete trade {selected_instrument.id} ?", 
+                                  selected_instrument.id, delete_instrument)
