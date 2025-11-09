@@ -46,10 +46,9 @@ column_config = {
 }
 
 # --- Display table ---
-st.data_editor(
+st.dataframe(
     data=df,
     hide_index=True,
     column_config=column_config,
-    disabled=True,
 )
 
