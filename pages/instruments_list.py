@@ -75,6 +75,9 @@ if st_dataframe["selection"]["rows"]:
         # st.space("stretch")
         if st.button("Show details"):
             st.session_state.instrument_id = selected_instrument.id
+            st.switch_page("pages/instruments_details.py")
+        if st.button("Edit", type="secondary"):
+            st.session_state.instrument_id = selected_instrument.id
             st.switch_page("pages/instruments_edit.py")
         if st.button("Delete", type="primary"):
             confirm_delete_dialog(f"Are you sure you want to delete trade {selected_instrument.id} ?", 

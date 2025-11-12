@@ -4,8 +4,10 @@ from lib.database import get_session
 from lib.models import Instrument
 from lib.utils import is_valid_isin
 
+from logging_config import setup_logger
+log = setup_logger(__name__)
 
-print("Running instruments edit page...")
+log.debug("Running instruments edit page...")
 
 st.title("🔧 Instruments")
 
