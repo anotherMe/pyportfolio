@@ -97,14 +97,14 @@ else:
 # ----------------------------------------------------------------------------------------------------------------------------
 # Download from Yahoo Finance
 
-st.subheader("Download data with yfinance")
+st.subheader("Update prices data with yfinance")
 
 message_container = st.container()
 progress_bar = st.progress(0, text="Idle")
 
 col1, col2 = st.columns([5,1])
 with col2:
-    btn_update_instruments = st.button(label="Download data", type="primary")
+    btn_update_instruments = st.button(label="Download prices", type="primary")
 
 if btn_update_instruments:
 
