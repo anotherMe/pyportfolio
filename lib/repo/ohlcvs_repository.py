@@ -152,10 +152,10 @@ def load_ohlcv_from_yfinance_dataframe(dataframe: DataFrame, granularity: str, i
                 instrument_id=instrument.id,
                 timestamp=ts,
                 granularity=granularity,
-                open=write_to_db(int(row["Open"])),
-                high=write_to_db(int(row["High"])),
-                low=write_to_db(int(row["Low"])),
-                close=write_to_db(int(row["Close"])),
+                open=write_to_db(row["Open"]),
+                high=write_to_db(row["High"]),
+                low=write_to_db(row["Low"]),
+                close=write_to_db(row["Close"]),
                 volume=int(row["Volume"] or 0),
             )
 

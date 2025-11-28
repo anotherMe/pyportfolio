@@ -88,7 +88,7 @@ def load_prices_from_yfinance_dataframe(dataframe: DataFrame, granularity: str, 
             entry = Price(
                 instrument_id=instrument.id,
                 date=ts,
-                price=write_to_db(int(row["Close"])),
+                price=write_to_db(row["Close"]),
                 granularity=granularity
             )
 
