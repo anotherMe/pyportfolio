@@ -11,29 +11,38 @@
     {
       "type": "debugpy",
       "request": "launch",
-      "name": "Console - Load Yahoo data for IEGE.MI",
+      "name": "Console - Load JSON data for IEGE.MI",
       "program": "${workspaceFolder}/console.py",
       "console": "integratedTerminal",
       "justMyCode": true,
-      "args": ["load-data", "-f", "data/IEGE.MI.json"]
+      "args": ["load-json", "-f", "data/IEGE.MI.json"]
     },
     {
       "type": "debugpy",
       "request": "launch",
-      "name": "Console - Load Yahoo data for X13E.MI",
+      "name": "Console - Load JSON data for X13E.MI",
       "program": "${workspaceFolder}/console.py",
       "console": "integratedTerminal",
       "justMyCode": true,
-      "args": ["load-data", "-f", "data/X13E.MI.json"]
+      "args": ["load-json", "-f", "data/X13E.MI.json"]
     },
     {
       "type": "debugpy",
       "request": "launch",
-      "name": "Console - Load Yahoo data for SGLD.MI",
+      "name": "Console - Load JSON data for SGLD.MI",
       "program": "${workspaceFolder}/console.py",
       "console": "integratedTerminal",
       "justMyCode": true,
-      "args": ["load-data", "-f", "data/SGLD.MI.json"]
+      "args": ["load-json", "-f", "data/SGLD.MI.json"]
+    },
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Console - Load 30 days data for ticker MONC.MI",
+      "program": "${workspaceFolder}/console.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": ["load", "-t", "MONC.MI", "-d", "30"]
     }
   ]
 }
