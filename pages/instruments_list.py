@@ -73,9 +73,9 @@ if st_dataframe["selection"]["rows"]:
     selected_instrument: Instrument = instruments[dataframe_index]
     with st.container(horizontal=True):
         st.space("stretch")
-        if st.button("Show details"):
+        if st.button("Detail"):
             st.session_state.instrument_id = selected_instrument.id
-            st.switch_page("pages/instruments_details.py")
+            st.switch_page("pages/instruments_detail.py")
         if st.button("Edit", type="secondary"):
             st.session_state.instrument_id = selected_instrument.id
             st.switch_page("pages/instruments_edit.py")

@@ -79,12 +79,12 @@ with get_session() as session:
         st.divider()
         st.write("Transactions:")
         if trade.transactions:                        
-            txn_details = [{
+            txn_detail = [{
                 "Type": txn.type,
                 "Amount (€)": f"{read_from_db(txn.amount):.2f}",
                 "Date": to_local(txn.date)
             } for txn in trade.transactions]
-            st.dataframe(pd.DataFrame(txn_details))
+            st.dataframe(pd.DataFrame(txn_detail))
         else:
             st.info("No transactions available")
         cols = st.columns([5,1])

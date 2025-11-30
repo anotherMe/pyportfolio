@@ -67,7 +67,7 @@ with get_session() as session:
     
     if filtered_trades:
         
-        latest_trade_details = [{
+        latest_trade_detail = [{
             "trade_id": t.id,
             "Instrument": t.instrument.name,
             "ISIN": t.instrument.isin,
@@ -77,7 +77,7 @@ with get_session() as session:
             "Price": f"{read_from_db(t.price)}"
         } for t in filtered_trades]
         
-        df_latest = pd.DataFrame(latest_trade_details)
+        df_latest = pd.DataFrame(latest_trade_detail)
 
         my_column_config = {
 
@@ -110,9 +110,9 @@ with get_session() as session:
         selected_trade: Trade = filtered_trades[dataframe_index]
         with st.container(horizontal=True):
             st.space("stretch")
-            if st.button("Show details"):
+            if st.button("Detail"):
                 st.session_state.trade_id = selected_trade.id
-                st.switch_page("pages/trades_details.py")
+                st.switch_page("pages/trades_detail.py")
             if st.button("Edit", type="secondary"):
                 st.session_state.trade_id = selected_trade.id
                 st.switch_page("pages/trades_edit.py")

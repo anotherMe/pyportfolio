@@ -73,9 +73,9 @@ with get_session() as session:
         selected_transaction: Transaction = transactions[dataframe_index]
         with st.container(horizontal=True):
             st.space("stretch")
-            if st.button("Show details"):
+            if st.button("Detail"):
                 st.session_state.transaction_id = selected_transaction.id
-                st.switch_page("pages/transactions_details.py")
+                st.switch_page("pages/transactions_detail.py")
             if st.button("Edit", type="secondary"):
                 st.session_state.transaction_id = selected_transaction.id
                 st.switch_page("pages/transactions_edit.py")

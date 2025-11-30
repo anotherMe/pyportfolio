@@ -69,7 +69,7 @@ with get_session() as session, session.begin():
         selected_account_index = 0
         transaction_date_default = datetime.now()
         transaction_time_default = transaction_date_default.time()
-        if st.session_state.trade_id:  # trade ID coming from page trades_details.py
+        if st.session_state.trade_id:  # trade ID coming from page trades_detail.py
             t = session.get(Trade, st.session_state.trade_id)
             selected_account_index = list(accounts_map.keys()).index(t.account.name)
             transaction_date_default = t.date.date()

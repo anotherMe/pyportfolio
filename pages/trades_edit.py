@@ -36,7 +36,7 @@ with get_session() as session, session.begin():
 
         with st.form("add_trade"):
 
-            # if an instrument has been set from instrument_details.py
+            # if an instrument has been set from instrument_detail.py
             selected_instrument_index = None
             if st.session_state.instrument_id:
                 work_on_instrument = session.get(Instrument, st.session_state.instrument_id)
