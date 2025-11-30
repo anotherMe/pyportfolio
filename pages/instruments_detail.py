@@ -102,3 +102,8 @@ with get_session() as session, session.begin():
                 st.session_state.trade_id = None
                 st.session_state.instrument_id = inst.id
                 st.switch_page("pages/trades_edit.py")
+
+    with st.container(horizontal=True):
+        st.space("stretch")
+        if st.button("Back to list"):
+            st.switch_page("pages/instruments_list.py")

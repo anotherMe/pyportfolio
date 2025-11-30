@@ -2,14 +2,13 @@
 import logging
 import streamlit as st
 from lib.enums import Currency
-import lib.repo.accounts_repository as accounts_repo
 import lib.repo.trades_repository as trades_repo
 from lib.database import read_from_db, get_session
-from lib.models import Instrument, Trade
+from lib.models import Trade
 import pandas as pd
 
 from lib.utils import confirm_delete_dialog
-from service.utils import account_selector, to_local
+from service.utils import to_local
 
 print("Running trades page...")
 
@@ -31,17 +30,7 @@ st.title("💼 Trades")
 
 with get_session() as session:
 
-    # --- Account selector ---
-    accounts = accounts_repo.get_all_accounts(session)
-    account_selector(accounts) # Show sidebar account selector
-    current_account = accounts_repo.get_account_by_name(session, st.session_state.account)
-
-    # --- Fetch data ---
-    instruments = session.query(Instrument).all()
-    instrument_map = {inst.name: inst for inst in instruments}
-
-
-    st.subheader("Trade Details")
+    st.subheader("Trade details")
 
     if not st.session_state.trade_id:
         st.write("No Trade selected")
@@ -50,7 +39,6 @@ with get_session() as session:
         st.stop()
 
     trade = session.get(Trade, st.session_state.trade_id)
-
     with st.container(border=True):
 
         currency = Currency.from_code(trade.instrument.currency)
@@ -92,3 +80,9 @@ with get_session() as session:
             if st.button("Add new transaction", key=f"add_trans_btn_{trade.id}"):
                 st.session_state.trade_id = trade.id
                 st.switch_page("pages/transactions_edit.py")
+
+with st.container(horizontal=True):
+    st.space("stretch")
+    if st.button("Back to list"):
+        st.session_state.trade_id = None
+        st.switch_page("pages/trades_list.py")

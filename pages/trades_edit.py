@@ -100,7 +100,7 @@ with get_session() as session, session.begin():
 
             trade = session.get(Trade, st.session_state.trade_id)
 
-            st.subheader("Edit Trade")
+            st.subheader(f"Editing Trade with ID: {trade.id}")
             with st.form("edit_trade"):
 
                 selected_account = st.selectbox(
@@ -149,7 +149,9 @@ with get_session() as session, session.begin():
                     except Exception as e:
                         st.error(f"Error updating trade: {e}")
 
-    col1, col2 = st.columns([5,1])
-    with col2:
+    with st.container(horizontal=True):
+        st.space("stretch")
         if st.button("⬅️ Back to list"):
+            st.session_state.trade_id = None
+            st.session_state.instrument_id = None
             st.switch_page("pages/trades_list.py")

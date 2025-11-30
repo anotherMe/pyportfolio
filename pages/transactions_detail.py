@@ -2,10 +2,9 @@
 import logging
 import streamlit as st
 from lib.models import Transaction
-from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import read_from_db, get_session
 from lib.utils import confirm_delete_dialog
-from service.utils import account_selector, to_local
+from service.utils import to_local
 import lib.repo.transactions_repository as trans_repo
 
 print("Running transactions details page...")
@@ -35,10 +34,6 @@ if not st.session_state.transaction_id:
 
 with get_session() as session, session.begin():
 
-    accounts = get_all_accounts(session)
-    account_selector(accounts) # Show sidebar account selector
-    current_account = get_account_by_name(session, st.session_state.account)
-
     trans = session.get(Transaction, st.session_state.transaction_id)
 
     with st.container(border=True):
@@ -67,3 +62,9 @@ with get_session() as session, session.begin():
             if st.button("✏️ Edit", key=f"edit_{trans.id}"):
                 st.session_state["transaction_id"] = trans.id
                 st.switch_page("pages/transactions_edit.py")
+
+    with st.container(horizontal=True):
+        st.space("stretch")
+        if st.button("Back to list"):
+            st.session_state.transaction_id = None
+            st.switch_page("pages/transactions_list.py")

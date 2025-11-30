@@ -27,14 +27,13 @@
 # Doing
 
 
-- change "Add/Edit" page in order to make it a "Detail" page first and an "Edit" page only upon user request
-    - maybe worth having a separated "Add new" page and "Edit page" (wich is going to be also the "Detail")
-    - move search filter from "Details" page to "List" page
-    - transform "Details" page into "Detail" page ? ( with "edit" button )
 
 # Done
 
-
+- add "Back to list" button
+- add ID of the model when in "Edit" mode
+- remove "Account" selector when not needed
+- change "Add/Edit" page in order to make it a "Detail" page first and an "Edit" page only upon user request
 - in "Transaction list" page, remove tabs and replace with selector
 - remove details page
 - implement Delete functionality
@@ -54,8 +53,8 @@
 - add fee's transaction when adding trade
 - pre-fill "Add transaction" fields when coming from the "Trade details" page
 - increase to six decimal storage of currency
-- add transactions on a trade in the trade_details page
-- add trades on an instrument in the instrument_details page
+- add transactions on a trade in the trade_detail page
+- add trades on an instrument in the instrument_detail page
 - from "list" page go to specific "details" ?
 - introduce Account model
 - working on Instruments now, align other models too

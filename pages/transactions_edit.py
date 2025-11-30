@@ -26,39 +26,35 @@ with get_session() as session, session.begin():
 
     if st.session_state.transaction_id:
 
-        st.subheader("Edit Transaction")
-
         transaction = session.get(Transaction, st.session_state.transaction_id)
-        if not transaction:
-            st.error("Transaction not found.")
-        else:
-            
-            # --- Transaction form ---
-            with st.form("dividend_form"):
-                selected_account = st.selectbox(
-                    "Account",
-                    list(accounts_map.keys()),
-                    index=list(accounts_map.keys()).index(transaction.account.name), 
-                )
-                transaction_type = st.selectbox(
-                    "Transaction Type",
-                    options=["div", "tax", "fee"],
-                    index=["div", "tax", "fee"].index(transaction.type),
-                    disabled=False
-                )
-                transaction_date = st.date_input("Transaction date", value=transaction.date)
-                transaction_time = st.time_input("Transaction time", value=transaction.date.time(), step=60)
-                amount = st.number_input("Amount (€)", min_value=0.0, step=0.01, value=read_from_db(transaction.amount))
-                submitted = st.form_submit_button("Save Transaction")
+        st.subheader(f"Editing Transaction with ID: {transaction.id}")
+    
+        # --- Transaction form ---
+        with st.form("dividend_form"):
+            selected_account = st.selectbox(
+                "Account",
+                list(accounts_map.keys()),
+                index=list(accounts_map.keys()).index(transaction.account.name), 
+            )
+            transaction_type = st.selectbox(
+                "Transaction Type",
+                options=["div", "tax", "fee"],
+                index=["div", "tax", "fee"].index(transaction.type),
+                disabled=False
+            )
+            transaction_date = st.date_input("Transaction date", value=transaction.date)
+            transaction_time = st.time_input("Transaction time", value=transaction.date.time(), step=60)
+            amount = st.number_input("Amount (€)", min_value=0.0, step=0.01, value=read_from_db(transaction.amount))
+            submitted = st.form_submit_button("Save Transaction")
 
-                if submitted:
-                    # TODO: add validation
-                    transaction.account = accounts_map.get(selected_account)
-                    transaction.type = transaction_type
-                    transaction.date = datetime.combine(transaction_date, transaction_time).replace(tzinfo=get_timezone())
-                    transaction.amount = write_to_db(amount)
-                    session.add(transaction)
-                    st.success(f"Transaction for {transaction.id} updated successfully!")
+            if submitted:
+                # TODO: add validation
+                transaction.account = accounts_map.get(selected_account)
+                transaction.type = transaction_type
+                transaction.date = datetime.combine(transaction_date, transaction_time).replace(tzinfo=get_timezone())
+                transaction.amount = write_to_db(amount)
+                session.add(transaction)
+                st.success(f"Transaction for {transaction.id} updated successfully!")
 
     else:
 
@@ -125,5 +121,6 @@ with get_session() as session, session.begin():
     col1, col2 = st.columns([5,1])
     with col2:
         if st.button("Back to list"):
+            st.session_state.transaction_id = None
             st.session_state.trade_id = None
             st.switch_page("pages/transactions_list.py")

@@ -19,8 +19,8 @@ with get_session() as session, session.begin():
 
     inst = None
     if st.session_state.instrument_id:
-        st.subheader("Edit Instrument")
         inst = session.get(Instrument, st.session_state.instrument_id)
+        st.subheader(f"Editing Instrument with ID: {inst.id}")
         if not inst:
             st.error("Instrument not found.")
             st.stop()
@@ -52,8 +52,8 @@ with get_session() as session, session.begin():
                 st.session_state.instrument_id = None
                 st.success("✅ Instrument saved successfully!")
     
-    col1, col2 = st.columns([5,1])
-    with col2:
+    with st.container(horizontal=True):
+        st.space("stretch")
         if st.button("Back to list"):
             st.switch_page("pages/instruments_list.py")
 
