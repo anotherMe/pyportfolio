@@ -20,10 +20,12 @@ pages = {
     ],
     "💼 Trades": [
         st.Page("pages/trades_list.py", title="List"),
+        st.Page("pages/trades_details.py", title="Details"),
         st.Page("pages/trades_edit.py", title="Add / Edit"),
     ],
     "💰 Transactions": [
         st.Page("pages/transactions_list.py", title="List"),
+        st.Page("pages/transactions_details.py", title="Details"),
         st.Page("pages/transactions_edit.py", title="Add / Edit"),
     ],
     "📈 Prices": [

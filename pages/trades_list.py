@@ -112,6 +112,9 @@ with get_session() as session:
             st.space("stretch")
             if st.button("Show details"):
                 st.session_state.trade_id = selected_trade.id
+                st.switch_page("pages/trades_details.py")
+            if st.button("Edit", type="secondary"):
+                st.session_state.trade_id = selected_trade.id
                 st.switch_page("pages/trades_edit.py")
             if st.button("Delete", type="primary"):
                 confirm_delete_dialog(f"Are you sure you want to delete trade {selected_trade.id} ?", selected_trade.id, delete_trade)
