@@ -31,7 +31,6 @@ with get_session() as session:
     current_account = get_account_by_name(session, st.session_state.account)
 
     # --- Transaction type selector
-    # tab1, tab2, tab3, tab4 = st.tabs(["All", "📈 Dividends", "💸 Taxes", "Fees"])
     transaction_type = st.selectbox(
         "Transaction Type",
         options=["All", "div", "tax", "fee"],
@@ -75,6 +74,9 @@ with get_session() as session:
         with st.container(horizontal=True):
             st.space("stretch")
             if st.button("Show details"):
+                st.session_state.transaction_id = selected_transaction.id
+                st.switch_page("pages/transactions_details.py")
+            if st.button("Edit", type="secondary"):
                 st.session_state.transaction_id = selected_transaction.id
                 st.switch_page("pages/transactions_edit.py")
             if st.button("Delete", type="primary"):

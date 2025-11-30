@@ -13,7 +13,6 @@ print("Running transactions edit page...")
 
 if 'transaction_id' not in st.session_state:
     st.session_state.transaction_id = None
-
 if 'trade_id' not in st.session_state:
     st.session_state.trade_id = None
 

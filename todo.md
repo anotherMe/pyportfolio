@@ -21,6 +21,9 @@
 
 # Do
 
+- show instrument in transaction details / edit
+
+
 # Doing
 
 
