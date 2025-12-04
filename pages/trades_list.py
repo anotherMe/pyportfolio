@@ -109,7 +109,7 @@ with get_session() as session:
         dataframe_index = st_dataframe["selection"]["rows"][0]
         selected_trade: Trade = filtered_trades[dataframe_index]
         with st.container(horizontal=True):
-            st.space("stretch")
+            # st.space("stretch")
             if st.button("Detail"):
                 st.session_state.trade_id = selected_trade.id
                 st.switch_page("pages/trades_detail.py")
