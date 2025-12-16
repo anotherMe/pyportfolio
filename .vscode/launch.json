@@ -5,7 +5,8 @@
       "type": "debugpy",
       "request": "launch",
       "name": "Debug Streamlit application",
-      "program": ".venv/bin/streamlit",
+      "python": ".venv/bin/python",
+      "module": "streamlit",
       "args": ["run", "main.py"]
     },
     {
