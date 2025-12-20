@@ -9,6 +9,7 @@
 - add other Yahoo columns to OHLCV table ( events, dividends, etc )
 - automatically calculate taxes on sell ( based on a parameter on settings ? like 26% ? )
 
+
 # Ongoing
 
 - import setup_logger
@@ -23,13 +24,28 @@
 
 - show instrument in transaction details / edit
 
+- add some other type of categorization in Instruments:
+    - ETF vs stocks
+    - Bond ETF vs Equity ETF vs ETC
+- add Pie chart in Overview showing the above categorization percentage
+
+- add all transactions (fee, div and taxes ) in totals ( eg: Portfolio overview )
+
 
 # Doing
+
+- (!) keep selected items when navigating away from a list page
+
+    - do not reset session_state
+    - cant set selection programmatically on st.dataframe
+    - use the search widget instead ?
+    
 
 
 
 # Done
 
+- new version released - [Streamlit 1.52](https://github.com/streamlit/streamlit/releases/tag/1.52.0)
 - add "Back to list" button
 - add ID of the model when in "Edit" mode
 - remove "Account" selector when not needed

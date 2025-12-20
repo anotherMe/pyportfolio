@@ -1,17 +1,32 @@
 
 # pyportfolio
 
-Python toolbox to manage your personal portfolio
+Python - Streamlit app to manage your personal portfolio
 
-## Console app
 
-TODO
+## Install
 
-## Streamlit Web app
+To support latest Streamlit version ( eg: 1.52.0 ), you'll need a quite recent version of Python. Let's say 3.14 should do:
+
+```sh
+brew install python@3.14
+/opt/homebrew/opt/python@3.14/bin/python3 -m venv .venv
+```
+
+Then you can install dependencies:
+
+```sh
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+
+## Run
 
 Run the Streamlit app with:
 
 ```sh
+source .venv/bin/activate
 streamlit run main.py
 ```
 

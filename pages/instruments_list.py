@@ -12,7 +12,12 @@ log = setup_logger(__name__)
 
 log.debug("Running instruments list page...")
 
-st.session_state.instrument_id = None  # Always reset selected instrument ID
+
+if 'instrument_id' not in st.session_state:
+    st.session_state.instrument_id = None
+
+def clear_search():
+    st.session_state.search_term = ""
 
 def delete_instrument(item_id):
     with get_session() as session, session.begin():
@@ -21,8 +26,7 @@ def delete_instrument(item_id):
             session.commit()
         except Exception:
             log.exception("")
-            st.error(f"Error while deleting item {item_id}")
-
+            st.err
 
 st.title("🔧 Instruments")
 st.subheader("Instruments list")
@@ -34,9 +38,35 @@ if not instruments:
     st.info("No instruments found.")
     st.stop()
 
+# --- Search input ---
+col1, col2 = st.columns([5, 1], vertical_alignment="bottom")
+with col1:
+    # st.space("stretch")
+    search_term = st.text_input("🔍 Search by Instrument ISIN, Ticker, or Name", key="search_term" ).strip().lower()
+with col2:
+    st.button(label="", icon=":material/clear_all:", on_click=clear_search)
+
+        
+if search_term:
+    st.session_state.instruments_list_search_term = search_term
+    filtered_instruments = [
+        instrument for instrument in instruments
+        if search_term in (instrument.isin or "").lower()
+        or search_term in (instrument.ticker or "").lower()
+        or search_term in (instrument.name or "").lower()
+    ]
+else:
+    filtered_instruments = instruments
+    
+
+if not filtered_instruments:
+    st.info("No Instruments corresponding to the current search")
+    st.stop()
+
+
 # --- Create dataframe ---
 data = []
-for inst in instruments:
+for inst in filtered_instruments:
     data.append({
         # "ID": inst.id,
         "ISIN": f"https://www.justetf.com/en/etf-profile.html?isin={inst.isin}" if inst.isin else "",
@@ -68,9 +98,10 @@ st_dataframe = st.dataframe(
     selection_mode="single-row"
 )
 
+# --- If a row has been selected, show buttons
 if st_dataframe["selection"]["rows"]:
     dataframe_index = st_dataframe["selection"]["rows"][0]
-    selected_instrument: Instrument = instruments[dataframe_index]
+    selected_instrument: Instrument = filtered_instruments[dataframe_index]
     with st.container(horizontal=True):
         # st.space("stretch")
         if st.button("Detail"):
