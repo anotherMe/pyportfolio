@@ -103,6 +103,7 @@ with get_session() as session:
 
     else:
         st.info("No trades available for the current search")
+        st.stop()
 
 
     if st_dataframe["selection"]["rows"]:
