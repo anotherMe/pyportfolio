@@ -5,7 +5,10 @@ from lib.database import get_session
 import lib.repo.accounts_repository as accounts_repo
 from lib.utils import confirm_delete_dialog
 
-print("Running accounts list page...")
+from logging_config import setup_logger
+log = setup_logger(__name__)
+
+log.debug("Running accounts list page...")
 
 def delete_account(item_id):
     with get_session() as session, session.begin():
