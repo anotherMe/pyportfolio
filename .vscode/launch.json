@@ -4,7 +4,7 @@
     {
       "type": "debugpy",
       "request": "launch",
-      "name": "Debug Streamlit application",
+      "name": "Streamlit apps",
       "python": ".venv/bin/python",
       "module": "streamlit",
       "args": ["run", "main.py"]
@@ -12,7 +12,7 @@
     {
       "type": "debugpy",
       "request": "launch",
-      "name": "Console - Load JSON data for IEGE.MI",
+      "name": "Console - Load JSO data for IEGE.MI",
       "program": "${workspaceFolder}/console.py",
       "console": "integratedTerminal",
       "justMyCode": true,
