@@ -102,7 +102,7 @@ with get_session() as session:
             selection_mode="single-row")
 
     else:
-        st.info("No trades available for the current search")
+        st.info("No trades corresponding to the current search")
         st.stop()
 
 
