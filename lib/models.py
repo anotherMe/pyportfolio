@@ -19,6 +19,7 @@ class UTCDateTime(TypeDecorator):
     Guarantees all stored and loaded datetimes are timezone-aware and in UTC.
     """
     impl = DateTime(timezone=True)
+    cache_ok = True
 
     def process_bind_param(self, value, dialect):
         """
