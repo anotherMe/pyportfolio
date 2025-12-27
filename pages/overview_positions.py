@@ -38,7 +38,7 @@ def style_positions(df):
             "pnl_alt": format_pnl,
             "trade_date_alt": format_trade_date
         })
-        .applymap(style_pnl, subset=["pnl_alt"])
+        .map(style_pnl, subset=["pnl_alt"])
     )
 
     return styled
