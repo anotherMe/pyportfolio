@@ -1,6 +1,8 @@
 
 from lib.models import Instrument
 
+from logging_config import setup_logger
+log = setup_logger(__name__)
 
 def add_instrument(session, isin, name, ticker=None, category=None, currency="EUR"):
 
@@ -8,10 +10,10 @@ def add_instrument(session, isin, name, ticker=None, category=None, currency="EU
     try:
         session.add(instrument)
         session.commit()
-        print(f"🗑️ Added instrument ID {instrument.id}")
+        log.info(f"🗑️ Added instrument ID {instrument.id}")
     except Exception as e:
         session.rollback()
-        print(f"⚠️ Cannot add instrument ID {instrument.id}: {e}")
+        log.error(f"⚠️ Cannot add instrument ID {instrument.id}: {e}")
         return False    
     return True
 
@@ -31,13 +33,13 @@ def delete_instrument(session, instrument_id):
             # Attempt to delete the instrument
             session.delete(instrument)
             session.commit()
-            print(f"🗑️ Deleted instrument ID {instrument_id}")
+            log.info(f"🗑️ Deleted instrument ID {instrument_id}")
         except Exception as e:
             session.rollback()
-            print(f"⚠️ Cannot delete instrument ID {instrument_id}: {e}")
+            log.error(f"⚠️ Cannot delete instrument ID {instrument_id}: {e}")
             return False    
         return True
     else:
-        print(f"⚠️ Instrument ID {instrument_id} not found.")
+        log.warning(f"⚠️ Instrument ID {instrument_id} not found.")
         return False
     
