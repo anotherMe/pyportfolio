@@ -14,8 +14,9 @@ def style_positions(df):
     """Add formatted display columns and apply color styling with type icons."""
 
     # Create human-friendly display columns
-    df["pnl_alt"] = df["pnl"]
-    df["trade_date_alt"] = df["trade_date"]
+    df["pnl_styled"] = df["pnl"]
+    df["pnl_percent_styled"] = df["pnl_percent"]
+    df["trade_date_styled"] = df["trade_date"]
 
     # Define coloring for PnL
     def style_pnl(v):
@@ -24,7 +25,10 @@ def style_positions(df):
 
     # Format PnL numbers
     def format_pnl(v):
-        return f"€{v:,.2f}"
+        return f"{v:,.2f}"  # TODO: add currency ?
+
+    def format_pnl_percent(v):
+        return f"{v*100:,.2f} %"
 
     def format_trade_date(v):
         # 🔓 open | 🔒 closed
@@ -35,10 +39,11 @@ def style_positions(df):
     styled = (
         df.style
         .format({
-            "pnl_alt": format_pnl,
-            "trade_date_alt": format_trade_date
+            "pnl_styled": format_pnl,
+            "pnl_percent_styled": format_pnl_percent,
+            "trade_date_styled": format_trade_date
         })
-        .map(style_pnl, subset=["pnl_alt"])
+        .map(style_pnl, subset=["pnl_styled", "pnl_percent_styled"])
     )
 
     return styled
@@ -99,9 +104,11 @@ with get_session() as session:
             "avg_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
             "market_price": st.column_config.NumberColumn("Market price", format="euro"),
             "pnl": None, # st.column_config.NumberColumn("PNL", format="euro")
-            "pnl_alt": "PNL",
+            "pnl_styled": "PnL",
             "pnl_type": None,
-            "trade_date_alt": "Closed on"
+            "pnl_percent": None,
+            "pnl_percent_styled": st.column_config.NumberColumn("PnL %"),
+            "trade_date_styled": "Closed on"
         },
         hide_index=True,
     )

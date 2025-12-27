@@ -103,9 +103,10 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
                 "type": "closed",
                 "trade_date": trade.date,
                 "avg_price": read_from_db(pos["avg_buy_price"]),
-                "market_price": read_from_db(trade.price),  # execution price
+                "market_price": read_from_db(trade.price),  # sell price
                 "quantity": trade.quantity,
                 "pnl": read_from_db(pos["pnl"]),
+                "pnl_percent": ( read_from_db(trade.price) - read_from_db(pos["avg_buy_price"]) ) / read_from_db(pos["avg_buy_price"]),
             })
 
     if include_open:
@@ -121,6 +122,7 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
                 "market_price": read_from_db(pos["latest_price"]) if pos["latest_price"] else 0.00,
                 "quantity": pos["quantity"],
                 "pnl": read_from_db(pos["unrealized_pnl"]) if pos["unrealized_pnl"] else 0.00,
+                "pnl_percent": ( read_from_db(pos["latest_price"]) - read_from_db(pos["avg_cost"]) ) / read_from_db(pos["avg_cost"]) if pos["latest_price"] else None,
             })
 
     # Return a pandas DataFrame for easy integration with Streamlit
