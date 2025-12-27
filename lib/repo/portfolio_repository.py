@@ -5,6 +5,9 @@ from lib.database import read_from_db
 from lib.models import Instrument, Trade, Transaction
 from lib.repo.prices_repository import get_latest_price
 
+from logging_config import setup_logger
+log = setup_logger(__name__)
+
 
 # ----------------------------
 # 🔹 Utility functions
@@ -195,7 +198,7 @@ def get_portfolio_value(session):
 
     global_cash = session.query(func.sum(Transaction.amount)).filter(Transaction.instrument_id.is_(None)).scalar() or 0
     total_cents += global_cash
-    print(f"📊 Portfolio value (including global transactions): {read_from_db(total_cents):.2f}")
+    log.info(f"📊 Portfolio value (including global transactions): {read_from_db(total_cents):.2f}")
     return read_from_db(total_cents)
 
 def get_position(session, instrument_id):
