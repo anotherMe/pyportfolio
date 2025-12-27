@@ -9,12 +9,12 @@ from lib.utils import confirm_delete_dialog
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
-
 log.debug("Running instruments list page...")
 
 
 if 'instrument_id' not in st.session_state:
     st.session_state.instrument_id = None
+
 
 def clear_search():
     st.session_state.search_term = ""
@@ -27,6 +27,7 @@ def delete_instrument(item_id):
         except Exception:
             log.exception("")
             st.err
+
 
 st.title("🔧 Instruments")
 st.subheader("Instruments list")
@@ -69,10 +70,11 @@ data = []
 for inst in filtered_instruments:
     data.append({
         # "ID": inst.id,
+        "Name": inst.name,
         "ISIN": f"https://www.justetf.com/en/etf-profile.html?isin={inst.isin}" if inst.isin else "",
         "Ticker": f"https://finance.yahoo.com/quote/{inst.ticker}" if inst.ticker else "",
-        "Name": inst.name,
-        # "Currency": inst.currency or "",
+        "Currency": inst.currency or "",
+        "Type": inst.category or "",
     })
 
 df = pd.DataFrame(data)
