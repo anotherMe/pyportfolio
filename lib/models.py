@@ -1,5 +1,5 @@
 
-from datetime import datetime, timezone
+from datetime import timezone
 from sqlalchemy import Column, DateTime, String, Integer, ForeignKey, Text, TypeDecorator, UniqueConstraint
 
 from sqlalchemy.ext.declarative import declarative_base

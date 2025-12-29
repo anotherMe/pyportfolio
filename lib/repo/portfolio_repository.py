@@ -1,12 +1,31 @@
 
+from attr import dataclass
 import pandas as pd
 from sqlalchemy import func, select, text
 from lib.database import read_from_db
-from lib.models import Instrument, Trade, Transaction
+from lib.models import Instrument, Trade, Transaction, UTCDateTime
 from lib.repo.prices_repository import get_latest_price
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
+
+
+# # -----------------------
+# # -- Models
+# # -----------------------
+
+# @dataclass
+# class Overview:
+#     instrument: Instrument
+#     instrument_id: int
+#     type: str
+#     trade_date: UTCDateTime
+#     quantity: int
+#     avg_price: int
+#     market_price: int
+#     pnl: int
+#     pnl_type: str
+#     pnl_percent: float
 
 
 # ----------------------------
@@ -33,6 +52,22 @@ def _get_trades_for_instrument(session, inst_id, account=None):
         stmt = stmt.where(Trade.account_id == account.id)
     return session.scalars(stmt).all()
 
+# def _get_transactions(session, account=None):
+#     """Return sum of transactions amounts, grouped by Trade."""
+
+#     stmt = (
+#         session.query(
+#             Transaction.trade_id,
+#             func.sum(Transaction.amount).label("total_amount")
+#         )
+#         .filter(Transaction.trade_id.isnot(None))
+#         .group_by(Transaction.trade_id)
+#     )
+
+#     if account:
+#         stmt = stmt.where(Trade.account_id == account.id)
+
+#     return stmt.all()
 
 def _apply_fifo(trades):
     """
@@ -155,7 +190,7 @@ def compute_open_positions(session, account=None):
     for inst_id in _get_instruments_with_trades(session, account):
         trades = _get_trades_for_instrument(session, inst_id, account)
         _, open_lots = _apply_fifo(trades)
-
+        
         if not open_lots:
             continue
 

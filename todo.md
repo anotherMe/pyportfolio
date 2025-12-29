@@ -18,6 +18,7 @@
 - manage sessions locally ( avoid one session for the whole page ); maybe worth though to keep managing the session on the page, not on the lower layers
 - implement Python logging ( see: logging_config.py )
 - create custom Exceptions in the layer just below the UI
+- add "Clear search" button ( see Instrument list page )
 
 
 # Do
@@ -27,24 +28,17 @@
 - add some other type of categorization in Instruments:
     - ETF vs stocks
     - Bond ETF vs Equity ETF vs ETC
-- add Pie chart in Overview showing the above categorization percentage
-
-- add all transactions (fee, div and taxes ) in totals ( eg: Portfolio overview )
-
+    
 
 # Doing
 
-- (!) keep selected items when navigating away from a list page
-
-    - do not reset session_state
-    - cant set selection programmatically on st.dataframe
-    - use the search widget instead ?
-    
-
-
+- add all transactions (fee, div and taxes ) in totals ( eg: Portfolio overview )
+    - add a "transactions" column ?
+    - change sign of Transaction amount ( already existent and when adding )
 
 # Done
 
+- make table's entries selectable in Overview page
 - new version released - [Streamlit 1.52](https://github.com/streamlit/streamlit/releases/tag/1.52.0)
 - add "Back to list" button
 - add ID of the model when in "Edit" mode

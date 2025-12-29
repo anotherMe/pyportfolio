@@ -2,11 +2,11 @@
 import pandas as pd
 import streamlit as st
 
-from lib.models import Instrument
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session
 from lib.repo.portfolio_repository import get_positions_summary
 from service.utils import account_selector
+
 
 # --------------------------------------------------------------------------------
 # -- utility functions
@@ -99,15 +99,12 @@ with get_session() as session:
             "instrument": "Instrument",
             "instrument_id": None,
             "type": None,
-            # "type_alt": st.column_config.TextColumn(label="",width=1, help="Show if the position has been closed"),
             "trade_date": None,
-            # "trade_date": st.column_config.DateColumn("Date"), # st.column_config.DatetimeColumn("Date")
             "quantity": st.column_config.NumberColumn("Quantity"),
             "avg_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
             "market_price": st.column_config.NumberColumn("Market price", format="euro"),
             "pnl": None, # st.column_config.NumberColumn("PNL", format="euro")
             "pnl_styled": "PnL",
-            "pnl_type": None,
             "pnl_percent": None,
             "pnl_percent_styled": st.column_config.NumberColumn("PnL %"),
             "trade_date_styled": "Closed on"
@@ -141,7 +138,7 @@ with get_session() as session:
     col1, col2 = st.columns([2,1])
     with col2:
         st.markdown(
-            f"<h3>Total buy price: <span style='color:{color}'>{total_buy_price:,.2f} €</span></h3>",
+            f"<h3>Total buy: <span style='color:{color}'>{total_buy_price:,.2f} €</span></h3>",
             unsafe_allow_html=True
         )
         st.markdown(
