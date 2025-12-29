@@ -26,7 +26,7 @@ def delete_instrument(item_id):
             session.commit()
         except Exception:
             log.exception("")
-            st.err
+            st.error(f"Error while deleting item {item_id}")
 
 
 st.title("🔧 Instruments")
