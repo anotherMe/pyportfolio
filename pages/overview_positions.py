@@ -2,6 +2,7 @@
 import pandas as pd
 import streamlit as st
 
+from lib.models import Instrument
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session
 from lib.repo.portfolio_repository import get_positions_summary
@@ -89,9 +90,10 @@ with get_session() as session:
     
     positions = get_positions_summary(session, current_account, include_closed=include_closed, include_open=include_open)
 
-    # --- Show positions
+    # --- Show dataframe
+
     styled_positions = style_positions(positions)
-    st.dataframe(
+    st_dataframe = st.dataframe(
         data=styled_positions,
         column_config={
             "instrument": "Instrument",
@@ -111,8 +113,23 @@ with get_session() as session:
             "trade_date_styled": "Closed on"
         },
         hide_index=True,
+        on_select="rerun",
+        selection_mode="single-row"
     )
 
+    # --- If a row has been selected, show buttons
+
+    if st_dataframe["selection"]["rows"]:
+        dataframe_index = st_dataframe["selection"]["rows"][0]
+        selected_instrument_id = positions.iloc[dataframe_index].instrument_id.item()
+        with st.container(horizontal=True):
+            # st.space("stretch")
+            if st.button("Detail"):
+                st.session_state.instrument_id = selected_instrument_id
+                st.switch_page("pages/instruments_detail.py")
+            if st.button("Edit", type="secondary"):
+                st.session_state.instrument_id = selected_instrument_id
+                st.switch_page("pages/instruments_edit.py")
 
     # --- Totals --- 
 
