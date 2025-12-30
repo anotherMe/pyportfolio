@@ -5,8 +5,8 @@ import streamlit as st
 st.set_page_config(page_title="My Portfolio Dashboard", layout="wide", initial_sidebar_state="collapsed")
 
 pages = {
-    "📊 Overview": [
-        st.Page("pages/positions_list.py", title="Positions"),
+    "📊 Positions": [
+        st.Page("pages/positions_list.py", title="List"),
     ],
     "🏦 Accounts": [
         st.Page("pages/accounts_list.py", title="List"),
