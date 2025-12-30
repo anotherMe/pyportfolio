@@ -36,5 +36,10 @@
 
 # Doing
 
+- Position refactoring
+
+    - [ ] Transaction is no longer linked to Trade but to Position
+    - [ ] when to add a new Position ? create explicitly or create when creating a buy trade ?
+
 
 # Done

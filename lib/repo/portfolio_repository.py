@@ -101,8 +101,6 @@ def _apply_fifo(session, account):
                 realized_pnl = 0.0
                 matched_qty = 0.0
 
-                first_buy_date = buy_queue[len(buy_queue)-1].t.date
-
                 # match FIFO
                 while sell_qty > 0 and buy_queue:
                     lot = buy_queue[0]

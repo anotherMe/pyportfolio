@@ -8,9 +8,9 @@ from sqlalchemy.orm import relationship
 Base = declarative_base()
 
 
-# ----------------------------------------------------------
+# ==========================================================
 # Type decorators
-# ----------------------------------------------------------
+# ==========================================================
 
 
 class UTCDateTime(TypeDecorator):
@@ -44,85 +44,40 @@ class UTCDateTime(TypeDecorator):
     
 
 # ==========================================================
-#  Accounts
+#  Models
 # ==========================================================
 
-class Account(Base):
-    __tablename__ = "accounts"
+
+class Position(Base):
+    __tablename__ = 'positions'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String, unique=True, nullable=False)
-    description = Column(Text)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    instrument_id = Column(Integer, ForeignKey("instruments.id"), nullable=False)
+    
+    account = relationship("Account", back_populates="positions")
+    instrument = relationship("Instrument", back_populates="positions")
+    transactions = relationship("Transaction", back_populates="position", cascade="all")
+    trades = relationship("Trade", back_populates="position", cascade="all")
 
-    transactions = relationship("Transaction", back_populates="account", cascade="all, delete-orphan")
-    trades = relationship("Trade", back_populates="account", cascade="all, delete-orphan")
-
-
-# ==========================================================
-#  Instruments
-# ==========================================================
-
-class Instrument(Base):
-    __tablename__ = "instruments"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    isin = Column(String, unique=True)
-    ticker = Column(String)
-    name = Column(String, nullable=False)
-    name_long = Column(String)
-    category = Column(String) # acc or dist
-    description = Column(Text)
-    currency = Column(String, nullable=False)
-
-    trades = relationship("Trade", back_populates="instrument", cascade="all, delete-orphan")
-    prices = relationship("Price", back_populates="instrument", cascade="all, delete-orphan")
-    ohlcvs = relationship("OHLCV", back_populates="instrument", cascade="all, delete-orphan")
-
-
-# ==========================================================
-#  Trades (Buy/Sell)
-# ==========================================================
-
-class Trade(Base):
-    __tablename__ = "trades"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
-    instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
-    date = Column(UTCDateTime, nullable=False)
-    type = Column(String, nullable=False)  # 'buy' or 'sell'
-    quantity = Column(Integer, nullable=False)  # integer shares
-    price = Column(Integer, nullable=False)
-    description = Column(Text)
-
-    account = relationship("Account", back_populates="trades")
-    instrument = relationship("Instrument", back_populates="trades")
-    transactions = relationship("Transaction", back_populates="trade", cascade="all, delete-orphan")
-
-
-# ==========================================================
-#  Transactions (Dividends, Taxes, Fees)
-# ==========================================================
 
 class Transaction(Base):
     __tablename__ = "transactions"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
-    trade_id = Column(Integer, ForeignKey("trades.id", ondelete="CASCADE"), nullable=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    position_id = Column(Integer, ForeignKey("positions.id"), nullable=True)
     date = Column(UTCDateTime, nullable=False)
     type = Column(String, nullable=False)  # 'div', 'tax', 'fee'
     amount = Column(Integer, nullable=False)
     description = Column(Text)
 
     account = relationship("Account", back_populates="transactions")
-    trade = relationship("Trade", back_populates="transactions")
+    position = relationship("Position", back_populates="transactions")
 
-
-# ==========================================================
-#  Prices
-# ==========================================================
 
 class Price(Base):
     __tablename__ = "prices"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
+    instrument_id = Column(Integer, ForeignKey("instruments.id"), nullable=False)
     date = Column(UTCDateTime, nullable=False)
     price = Column(Integer, nullable=False)
     granularity = Column(String, nullable=False)
@@ -131,14 +86,10 @@ class Price(Base):
     __table_args__ = (UniqueConstraint('instrument_id', 'date', 'granularity', name='_instrument_date_uc'),)
 
 
-# ==========================================================
-#  OHLCV data
-# ==========================================================
-
 class OHLCV(Base):
     __tablename__ = 'ohlcvs'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    instrument_id = Column(Integer, ForeignKey("instruments.id", ondelete="CASCADE"), nullable=False)
+    instrument_id = Column(Integer, ForeignKey("instruments.id"), nullable=False)
     timestamp = Column(UTCDateTime, nullable=False)
     granularity = Column(String, nullable=False)
     open = Column(Integer)
@@ -152,4 +103,47 @@ class OHLCV(Base):
         UniqueConstraint('instrument_id', 'timestamp', 'granularity', name='_instrument_timestamp_uc'),
 )
 
-    
+
+class Instrument(Base):
+    __tablename__ = "instruments"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    isin = Column(String, unique=True)
+    ticker = Column(String)
+    name = Column(String, nullable=False)
+    name_long = Column(String)
+    category = Column(String) # acc or dist
+    description = Column(Text)
+    currency = Column(String, nullable=False)
+
+    trades = relationship("Trade", back_populates="instrument", cascade="all")
+    prices = relationship("Price", back_populates="instrument", cascade="all")
+    ohlcvs = relationship("OHLCV", back_populates="instrument", cascade="all")
+    positions = relationship("Position", back_populates="instrument", cascade="all")
+
+
+class Trade(Base):
+    __tablename__ = "trades"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    position_id = Column(Integer, ForeignKey("positions.id"), nullable=False)
+    instrument_id = Column(Integer, ForeignKey("instruments.id"), nullable=False)
+    date = Column(UTCDateTime, nullable=False)
+    type = Column(String, nullable=False)  # 'buy' or 'sell'
+    quantity = Column(Integer, nullable=False)  # integer shares
+    price = Column(Integer, nullable=False)
+    description = Column(Text)
+
+    account = relationship("Account", back_populates="trades")
+    position = relationship("Position", back_populates="trades")
+    instrument = relationship("Instrument", back_populates="trades")
+
+
+class Account(Base):
+    __tablename__ = "accounts"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, unique=True, nullable=False)
+    description = Column(Text)
+
+    transactions = relationship("Transaction", back_populates="account", cascade="all")
+    trades = relationship("Trade", back_populates="account", cascade="all")
+    positions = relationship("Position", back_populates="account", cascade="all")
