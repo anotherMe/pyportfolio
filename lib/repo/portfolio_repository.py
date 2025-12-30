@@ -8,6 +8,7 @@ from lib.models import Instrument, Trade, Transaction, UTCDateTime
 from lib.repo.prices_repository import get_latest_price
 
 from lib.repo.trades_repository import get_all_trades
+
 from logging_config import setup_logger
 log = setup_logger(__name__)
 
@@ -22,11 +23,12 @@ class Position:
     instrument_name: str = ""
     type: str = "open"  # 'open' or 'closed'
     quantity: int = 0
-    buy_price: float = 0
-    pnl: float = 0
-    pnl_percent: float = 0.00
-    closing_price: float = 0      # latest market price or closing price
+    buy_price: float = 0.00
+    closing_price: float = 0.00      # latest market price or closing price
     closing_date: Optional[UTCDateTime] = None
+    pnl: float = 0.00
+    pnl_percent: float = 0.00
+    transactions_amount: float = 0.00
 
 
 # ----------------------------
@@ -39,7 +41,8 @@ def _get_instruments_with_trades(session, account=None):
     if account:
         stmt = select(Instrument).where(
             Instrument.id.in_(
-                select(Trade.instrument_id).where(Trade.account_id == account.id)
+                select(Trade.instrument_id)
+                .where(Trade.account_id == account.id)
             )
         )
     else:
@@ -51,34 +54,27 @@ def _get_instruments_with_trades(session, account=None):
 
     return session.scalars(stmt).all()
 
+def _get_transactions_totals_for_instrument(session, instrument_id, start_date, end_date:None, account=None):
+    """
+    Return sum of transactions amounts.
+    """
 
-# def _get_trades_for_instrument(session, instrument, account=None):
-#     """Return ordered trades for an instrument."""
-#     stmt = (
-#         select(Trade)
-#         .where(Trade.instrument_id == instrument.id)
-#         .order_by(Trade.date)
-#     )
-#     if account:
-#         stmt = stmt.where(Trade.account_id == account.id)
-#     return session.scalars(stmt).all()
+    stmt = (
+        select(func.sum(Transaction.amount).label("total"))
+        .join(Transaction.trade)
+        .where(
+            Trade.instrument_id == instrument_id,
+            Trade.date >= start_date
+        )
+    )
 
-# def _get_transactions_totals_for_trade(session, trade_id, account=None):
-#     """Return sum of transactions amounts, grouped by Trade."""
+    if end_date:
+        stmt = stmt.where(Trade.date <= end_date)
 
-#     stmt = (
-#         session.query(
-#             Transaction.trade_id,
-#             func.sum(Transaction.amount).label("amount_total")
-#         )
-#         .filter(Transaction.trade_id == trade_id)
-#         .group_by(Transaction.trade_id)
-#     )
+    if account:
+        stmt = stmt.where(Trade.account_id == account.id)
 
-#     if account:
-#         stmt = stmt.where(Trade.account_id == account.id)
-
-#     return stmt.all()
+    return stmt.all()
 
 def _apply_fifo(session, account):
     """
@@ -105,6 +101,8 @@ def _apply_fifo(session, account):
                 realized_pnl = 0.0
                 matched_qty = 0.0
 
+                first_buy_date = buy_queue[len(buy_queue)-1].t.date
+
                 # match FIFO
                 while sell_qty > 0 and buy_queue:
                     lot = buy_queue[0]
@@ -120,16 +118,16 @@ def _apply_fifo(session, account):
                         buy_queue.pop(0)
 
                 if matched_qty > 0:
-                    avg_buy_price = (t.price - (realized_pnl / matched_qty))  # TODO: check this
+                    avg_buy_price = (t.price - (realized_pnl / matched_qty))
                     position = Position(instrument.id)
                     position.instrument_name = instrument.name
                     position.type = 'closed'
                     position.quantity = matched_qty
                     position.buy_price = read_from_db(avg_buy_price)
-                    position.pnl = read_from_db(realized_pnl)
-                    position.pnl_percent = ( read_from_db(t.price) - read_from_db(avg_buy_price) ) / read_from_db(avg_buy_price)
                     position.closing_price = read_from_db(t.price)
                     position.closing_date = t.date
+                    position.pnl = read_from_db(realized_pnl)
+                    position.pnl_percent = ( read_from_db(t.price) - read_from_db(avg_buy_price) ) / read_from_db(avg_buy_price)
                     positions.append(position)
 
         if len(buy_queue) > 0:
@@ -150,10 +148,10 @@ def _apply_fifo(session, account):
             position.type = 'open'
             position.quantity = total_qty
             position.buy_price = read_from_db(avg_cost)
-            position.pnl = read_from_db(unrealized_pnl)
-            position.pnl_percent = ( read_from_db(latest_price) - read_from_db(avg_cost) ) / read_from_db(avg_cost)
             position.closing_price = read_from_db(latest_price)
             position.closing_date = None
+            position.pnl = read_from_db(unrealized_pnl)
+            position.pnl_percent = ( read_from_db(latest_price) - read_from_db(avg_cost) ) / read_from_db(avg_cost)
             positions.append(position)
 
     return positions
@@ -186,7 +184,7 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
 
     # Return a pandas DataFrame for easy integration with Streamlit
     df = pd.DataFrame([vars(p) for p in filtered_positions])
-    
+
     # for some reason, int types get converted to float64 dtypes -> need to fix it
     df['quantity'] = df['quantity'].astype('Int64')
 
