@@ -17,7 +17,7 @@ def style_positions(df):
     # Create human-friendly display columns
     df["pnl_styled"] = df["pnl"]
     df["pnl_percent_styled"] = df["pnl_percent"]
-    df["trade_date_styled"] = df["trade_date"]
+    df["closing_date_styled"] = df["closing_date"]
 
     # Define coloring for PnL
     def style_pnl(v):
@@ -31,7 +31,7 @@ def style_positions(df):
     def format_pnl_percent(v):
         return f"{v*100:,.2f} %"
 
-    def format_trade_date(v):
+    def format_closing_date(v):
         # 🔓 open | 🔒 closed
         # Alternatives: 🟢 / 🔴, ✅ / ❌, 🟩 / 🟥
         return "" if pd.isna(v) else v.strftime('%Y-%m-%d %H:%M:%S')
@@ -42,7 +42,7 @@ def style_positions(df):
         .format({
             "pnl_styled": format_pnl,
             "pnl_percent_styled": format_pnl_percent,
-            "trade_date_styled": format_trade_date
+            "closing_date_styled": format_closing_date
         })
         .map(style_pnl, subset=["pnl_styled", "pnl_percent_styled"])
     )
@@ -88,26 +88,27 @@ with get_session() as session:
     elif st.session_state.status_filter == 'closed':
         include_open=False
     
-    positions = get_positions_summary(session, current_account, include_closed=include_closed, include_open=include_open)
+    positions_df = get_positions_summary(session, current_account, include_closed=include_closed, include_open=include_open)
 
     # --- Show dataframe
 
-    styled_positions = style_positions(positions)
+    styled_positions = style_positions(positions_df)
     st_dataframe = st.dataframe(
         data=styled_positions,
         column_config={
-            "instrument": "Instrument",
+            "instrument": None,
+            "instrument_name": "Instrument",
             "instrument_id": None,
             "type": None,
-            "trade_date": None,
             "quantity": st.column_config.NumberColumn("Quantity"),
-            "avg_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
-            "market_price": st.column_config.NumberColumn("Market price", format="euro"),
+            "buy_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
+            "closing_price": st.column_config.NumberColumn("Market price", format="euro"),
             "pnl": None, # st.column_config.NumberColumn("PNL", format="euro")
             "pnl_styled": "PnL",
             "pnl_percent": None,
             "pnl_percent_styled": st.column_config.NumberColumn("PnL %"),
-            "trade_date_styled": "Closed on"
+            "closing_date": None,
+            "closing_date_styled": "Closed on"
         },
         hide_index=True,
         on_select="rerun",
@@ -118,7 +119,7 @@ with get_session() as session:
 
     if st_dataframe["selection"]["rows"]:
         dataframe_index = st_dataframe["selection"]["rows"][0]
-        selected_instrument_id = positions.iloc[dataframe_index].instrument_id.item()
+        selected_instrument_id = positions_df.iloc[dataframe_index].instrument_id.item()
         with st.container(horizontal=True):
             # st.space("stretch")
             if st.button("Detail"):
@@ -130,8 +131,8 @@ with get_session() as session:
 
     # --- Totals --- 
 
-    total_buy_price = (positions["avg_price"] * positions["quantity"]).sum()
-    total_pnl = positions["pnl"].sum()
+    total_buy_price = (positions_df["buy_price"] * positions_df["quantity"]).sum()
+    total_pnl = positions_df["pnl"].sum()
     total_percent_pnl = 0
 
     color = "green" if total_pnl > 0 else "red"

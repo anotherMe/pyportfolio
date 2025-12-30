@@ -1,4 +1,5 @@
 
+from typing import Optional
 from attr import dataclass
 import pandas as pd
 from sqlalchemy import func, select, text
@@ -6,61 +7,70 @@ from lib.database import read_from_db
 from lib.models import Instrument, Trade, Transaction, UTCDateTime
 from lib.repo.prices_repository import get_latest_price
 
+from lib.repo.trades_repository import get_all_trades
 from logging_config import setup_logger
 log = setup_logger(__name__)
 
 
-# # -----------------------
-# # -- Models
-# # -----------------------
+# -----------------------
+# -- Models
+# -----------------------
 
-# @dataclass
-# class Overview:
-#     instrument: Instrument
-#     instrument_id: int
-#     type: str
-#     trade_date: UTCDateTime
-#     quantity: int
-#     avg_price: int
-#     market_price: int
-#     pnl: int
-#     pnl_type: str
-#     pnl_percent: float
+@dataclass
+class Position:
+    instrument: Optional[Instrument] = None
+    type: str = "open"          # 'open' or 'closed'
+    quantity: int = 0
+    buy_price: float = 0
+    pnl: float = 0
+    pnl_percent: float = 0.00
+    closing_price: float = 0      # latest market price or closing price
+    closing_date: Optional[UTCDateTime] = None
 
 
 # ----------------------------
 # 🔹 Utility functions
 # ----------------------------
 
-
 def _get_instruments_with_trades(session, account=None):
-    """Return list of instrument IDs that have trades."""
-    stmt = select(Trade.instrument_id).distinct()
+    """Return list of Instruments that have at least one trade."""
+
     if account:
-        stmt = stmt.where(Trade.account_id == account.id)
+        stmt = select(Instrument).where(
+            Instrument.id.in_(
+                select(Trade.instrument_id).where(Trade.account_id == account.id)
+            )
+        )
+    else:
+        stmt = select(Instrument).where(
+            Instrument.id.in_(
+                select(Trade.instrument_id)
+            )
+        )
+
     return session.scalars(stmt).all()
 
 
-def _get_trades_for_instrument(session, inst_id, account=None):
-    """Return ordered trades for an instrument."""
-    stmt = (
-        select(Trade)
-        .where(Trade.instrument_id == inst_id)
-        .order_by(Trade.date)
-    )
-    if account:
-        stmt = stmt.where(Trade.account_id == account.id)
-    return session.scalars(stmt).all()
+# def _get_trades_for_instrument(session, instrument, account=None):
+#     """Return ordered trades for an instrument."""
+#     stmt = (
+#         select(Trade)
+#         .where(Trade.instrument_id == instrument.id)
+#         .order_by(Trade.date)
+#     )
+#     if account:
+#         stmt = stmt.where(Trade.account_id == account.id)
+#     return session.scalars(stmt).all()
 
-# def _get_transactions(session, account=None):
+# def _get_transactions_totals_for_trade(session, trade_id, account=None):
 #     """Return sum of transactions amounts, grouped by Trade."""
 
 #     stmt = (
 #         session.query(
 #             Transaction.trade_id,
-#             func.sum(Transaction.amount).label("total_amount")
+#             func.sum(Transaction.amount).label("amount_total")
 #         )
-#         .filter(Transaction.trade_id.isnot(None))
+#         .filter(Transaction.trade_id == trade_id)
 #         .group_by(Transaction.trade_id)
 #     )
 
@@ -69,47 +79,83 @@ def _get_trades_for_instrument(session, inst_id, account=None):
 
 #     return stmt.all()
 
-def _apply_fifo(trades):
+def _apply_fifo(session, account):
     """
-    Apply FIFO to a sequence of trades.
+    Apply FIFO to trades of the same Instrument
     Returns:
         closed_trades: list of dicts with realized PnL
         open_lots: remaining open lots (list of dicts)
     """
-    buy_queue = []
-    closed_trades = []
 
-    for t in trades:
-        if t.type == "buy":
-            buy_queue.append({"remaining_qty": t.quantity, "price": t.price})
-        elif t.type == "sell":
-            sell_qty = t.quantity
-            realized_pnl = 0.0
-            matched_qty = 0.0
+    all_trades = get_all_trades(session, account)
+    positions = []
 
-            # match FIFO
-            while sell_qty > 0 and buy_queue:
-                lot = buy_queue[0]
-                take_qty = min(sell_qty, lot["remaining_qty"])
-                cost_price = lot["price"]
+    for instrument in _get_instruments_with_trades(session, account):
 
-                realized_pnl += (t.price - cost_price) * take_qty
-                matched_qty += take_qty
+        buy_queue = []
+        trades = [trade for trade in all_trades if trade.instrument_id == instrument.id]
 
-                lot["remaining_qty"] -= take_qty
-                sell_qty -= take_qty
-                if lot["remaining_qty"] <= 0:
-                    buy_queue.pop(0)
+        for t in trades:
 
-            if matched_qty > 0:
-                avg_buy_price = (t.price - (realized_pnl / matched_qty))
-                closed_trades.append({
-                    "trade": t,
-                    "avg_buy_price": avg_buy_price,
-                    "pnl": realized_pnl,
-                })
+            if t.type == "buy":
+                buy_queue.append({"trade": t, "remaining_qty": t.quantity, "price": t.price})
+            elif t.type == "sell":
+                sell_qty = t.quantity
+                realized_pnl = 0.0
+                matched_qty = 0.0
 
-    return closed_trades, buy_queue
+                # match FIFO
+                while sell_qty > 0 and buy_queue:
+                    lot = buy_queue[0]
+                    take_qty = min(sell_qty, lot["remaining_qty"])
+                    cost_price = lot["price"]
+
+                    realized_pnl += (t.price - cost_price) * take_qty
+                    matched_qty += take_qty
+
+                    lot["remaining_qty"] -= take_qty
+                    sell_qty -= take_qty
+                    if lot["remaining_qty"] <= 0:
+                        buy_queue.pop(0)
+
+                if matched_qty > 0:
+                    avg_buy_price = (t.price - (realized_pnl / matched_qty))  # TODO: check this
+                    position = Position()
+                    position.instrument = instrument
+                    position.type = 'closed'
+                    position.quantity = matched_qty
+                    position.buy_price = read_from_db(avg_buy_price)
+                    position.pnl = read_from_db(realized_pnl)
+                    position.pnl_percent = ( read_from_db(t.price) - read_from_db(avg_buy_price) ) / read_from_db(avg_buy_price)
+                    position.closing_price = read_from_db(t.price)
+                    position.closing_date = t.date
+                    positions.append(position)
+
+        if len(buy_queue) > 0:
+
+            total_qty = sum(l["remaining_qty"] for l in buy_queue)
+            total_cost = sum(l["remaining_qty"] * l["price"] for l in buy_queue)
+            avg_cost = total_cost / total_qty
+
+            latest_price = get_latest_price(session, instrument.id)
+            unrealized_pnl = (
+                (latest_price - avg_cost) * total_qty
+                if latest_price is not None and avg_cost is not None
+                else None
+            )
+
+            position = Position()
+            position.instrument = instrument
+            position.type = 'open'
+            position.quantity = total_qty
+            position.buy_price = read_from_db(avg_cost)
+            position.pnl = read_from_db(unrealized_pnl)
+            position.pnl_percent = ( read_from_db(latest_price) - read_from_db(avg_cost) ) / read_from_db(avg_cost)
+            position.closing_price = read_from_db(latest_price)
+            position.closing_date = None
+            positions.append(position)
+
+    return positions
 
 
 # ----------------------------
@@ -125,98 +171,81 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
         market_price, pnl, pnl_type ('realized' or 'unrealized')
     """
 
-    results = []
+    all_positions = _apply_fifo(session, account)
+    filtered_positions = []
+    pos: Position
+    for pos in all_positions:
 
-    if include_closed:
-        closed_positions = compute_closed_positions(session, account)
-        for pos in closed_positions:
-            trade = pos["trade"]
-            instrument = trade.instrument
-            results.append({
-                "instrument": instrument.name if instrument else None,
-                "instrument_id": trade.instrument_id,
-                "type": "closed",
-                "trade_date": trade.date,
-                "avg_price": read_from_db(pos["avg_buy_price"]),
-                "market_price": read_from_db(trade.price),  # sell price
-                "quantity": trade.quantity,
-                "pnl": read_from_db(pos["pnl"]),
-                "pnl_percent": ( read_from_db(trade.price) - read_from_db(pos["avg_buy_price"]) ) / read_from_db(pos["avg_buy_price"]),
-            })
+        if  pos.type == 'closed' and include_closed:
+            filtered_positions.append(pos)
 
-    if include_open:
-        open_positions = compute_open_positions(session, account)
-        for pos in open_positions:
-            instrument = pos["instrument"]
-            results.append({
-                "instrument": instrument.name if instrument else None,
-                "instrument_id": pos["instrument_id"],
-                "type": "open",
-                "trade_date": None,
-                "avg_price": read_from_db(pos["avg_cost"]),
-                "market_price": read_from_db(pos["latest_price"]) if pos["latest_price"] else 0.00,
-                "quantity": pos["quantity"],
-                "pnl": read_from_db(pos["unrealized_pnl"]) if pos["unrealized_pnl"] else 0.00,
-                "pnl_percent": ( read_from_db(pos["latest_price"]) - read_from_db(pos["avg_cost"]) ) / read_from_db(pos["avg_cost"]) if pos["latest_price"] else None,
-            })
+        if pos.type == 'open' and include_open:
+            filtered_positions.append(pos)
+
 
     # Return a pandas DataFrame for easy integration with Streamlit
-    df = pd.DataFrame(results)
+    df = pd.DataFrame([vars(p) for p in filtered_positions])
+    # for some reason, int types get converted to float64 dtypes -> need to fix it
+    df['quantity'] = df['quantity'].astype('Int64')
+
+    # insert column for instrument name ( inserting it at first position )
+    df.insert(0, "instrument_name", df["instrument"].apply(lambda inst: inst.name))
 
     # Optional: sort and format
     if not df.empty:
-        df = df.sort_values(by=["instrument", "type", "trade_date"], ascending=[True, True, True])
+        # df = df.sort_values(by=["instrument_id", "type", "closing_date"], ascending=[True, True, True])
+        df = df.sort_values(by=["closing_date"], ascending=[True])
         df.reset_index(drop=True, inplace=True)
 
     return df
 
 
-def compute_closed_positions(session, account=None):
-    """Compute FIFO-based realized PnL for all instruments (closed positions)."""
-    results = []
+# def compute_closed_positions(session, account=None):
+#     """Compute FIFO-based realized PnL for all instruments (closed positions)."""
+#     results = []
 
-    for inst_id in _get_instruments_with_trades(session, account):
-        trades = _get_trades_for_instrument(session, inst_id, account)
-        closed_trades, _ = _apply_fifo(trades)
-        results.extend(closed_trades)
+#     for inst_id in _get_instruments_with_trades(session, account):
+#         trades = _get_trades_for_instrument(session, inst_id, account)
+#         closed_trades, _ = _apply_fifo(trades)
+#         results.extend(closed_trades)
 
-    return results
+#     return results
 
 
-def compute_open_positions(session, account=None):
-    """Compute open positions (unrealized PnL) using FIFO."""
-    results = []
+# def compute_open_positions(session, account=None):
+#     """Compute open positions (unrealized PnL) using FIFO."""
+#     results = []
 
-    for inst_id in _get_instruments_with_trades(session, account):
-        trades = _get_trades_for_instrument(session, inst_id, account)
-        _, open_lots = _apply_fifo(trades)
+#     for inst_id in _get_instruments_with_trades(session, account):
+#         trades = _get_trades_for_instrument(session, inst_id, account)
+#         _, open_lots = _apply_fifo(trades)
         
-        if not open_lots:
-            continue
+#         if not open_lots:
+#             continue
 
-        total_qty = sum(l["remaining_qty"] for l in open_lots)
-        total_cost = sum(l["remaining_qty"] * l["price"] for l in open_lots)
-        avg_cost = total_cost / total_qty if total_qty else None
+#         total_qty = sum(l["remaining_qty"] for l in open_lots)
+#         total_cost = sum(l["remaining_qty"] * l["price"] for l in open_lots)
+#         avg_cost = total_cost / total_qty if total_qty else None
 
-        latest_price = get_latest_price(session, inst_id)
-        unrealized_pnl = (
-            (latest_price - avg_cost) * total_qty
-            if latest_price is not None and avg_cost is not None
-            else None
-        )
+#         latest_price = get_latest_price(session, inst_id)
+#         unrealized_pnl = (
+#             (latest_price - avg_cost) * total_qty
+#             if latest_price is not None and avg_cost is not None
+#             else None
+#         )
 
-        instrument = session.get(Instrument, inst_id)
+#         instrument = session.get(Instrument, inst_id)
 
-        results.append({
-            "instrument": instrument,
-            "instrument_id": inst_id,
-            "quantity": total_qty,
-            "avg_cost": avg_cost,
-            "latest_price": latest_price,
-            "unrealized_pnl": unrealized_pnl,
-        })
+#         results.append({
+#             "instrument": instrument,
+#             "instrument_id": inst_id,
+#             "quantity": total_qty,
+#             "avg_cost": avg_cost,
+#             "latest_price": latest_price,
+#             "unrealized_pnl": unrealized_pnl,
+#         })
 
-    return results
+#     return results
 
 
 # --------------------------------------------------------------------------------------------------------
