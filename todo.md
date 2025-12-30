@@ -30,44 +30,11 @@
     - Bond ETF vs Equity ETF vs ETC
     
 
-# Doing
-
 - add all transactions (fee, div and taxes ) in totals ( eg: Portfolio overview )
     - add a "transactions" column ?
     - change sign of Transaction amount ( already existent and when adding )
 
-# Done
+# Doing
 
-- make table's entries selectable in Overview page
-- new version released - [Streamlit 1.52](https://github.com/streamlit/streamlit/releases/tag/1.52.0)
-- add "Back to list" button
-- add ID of the model when in "Edit" mode
-- remove "Account" selector when not needed
-- change "Add/Edit" page in order to make it a "Detail" page first and an "Edit" page only upon user request
-- in "Transaction list" page, remove tabs and replace with selector
-- remove details page
-- implement Delete functionality
-- manage TimeZone 
-- automate data download from Yahoo Finance
-- fix current market positions using Prices instead of OHLCVs 
-- when showing latest prices, read them from table Price not OHLCV
-- when loading Yahoo prices, load MarketPrice too 
-- add "granularity" to MarketPrice table
-- restore "Price" table and models
-- automatically add transactions on a trade insertion
-- add market prices pages ( add it to instruments page ? )
-- when loading Yahoo data, create Instrument if not existent
-- manage MarketPrices / manage OHLCV: choose one table, drop the other
-- missing "category" in instrument edit
-- errors on "Trade edit"
-- add fee's transaction when adding trade
-- pre-fill "Add transaction" fields when coming from the "Trade details" page
-- increase to six decimal storage of currency
-- add transactions on a trade in the trade_detail page
-- add trades on an instrument in the instrument_detail page
-- from "list" page go to specific "details" ?
-- introduce Account model
-- working on Instruments now, align other models too
-- clicking on "Delete" button gives error because one too many dialog opened
-- move away from st.tabs, toward multi-page 
-- ask confirmation before *delete* operations
+
+# Done

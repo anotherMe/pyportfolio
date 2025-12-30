@@ -18,8 +18,9 @@ log = setup_logger(__name__)
 
 @dataclass
 class Position:
-    instrument: Optional[Instrument] = None
-    type: str = "open"          # 'open' or 'closed'
+    instrument_id: int
+    instrument_name: str = ""
+    type: str = "open"  # 'open' or 'closed'
     quantity: int = 0
     buy_price: float = 0
     pnl: float = 0
@@ -120,8 +121,8 @@ def _apply_fifo(session, account):
 
                 if matched_qty > 0:
                     avg_buy_price = (t.price - (realized_pnl / matched_qty))  # TODO: check this
-                    position = Position()
-                    position.instrument = instrument
+                    position = Position(instrument.id)
+                    position.instrument_name = instrument.name
                     position.type = 'closed'
                     position.quantity = matched_qty
                     position.buy_price = read_from_db(avg_buy_price)
@@ -144,8 +145,8 @@ def _apply_fifo(session, account):
                 else None
             )
 
-            position = Position()
-            position.instrument = instrument
+            position = Position(instrument.id)
+            position.instrument_name = instrument.name
             position.type = 'open'
             position.quantity = total_qty
             position.buy_price = read_from_db(avg_cost)
@@ -185,11 +186,9 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
 
     # Return a pandas DataFrame for easy integration with Streamlit
     df = pd.DataFrame([vars(p) for p in filtered_positions])
+    
     # for some reason, int types get converted to float64 dtypes -> need to fix it
     df['quantity'] = df['quantity'].astype('Int64')
-
-    # insert column for instrument name ( inserting it at first position )
-    df.insert(0, "instrument_name", df["instrument"].apply(lambda inst: inst.name))
 
     # Optional: sort and format
     if not df.empty:

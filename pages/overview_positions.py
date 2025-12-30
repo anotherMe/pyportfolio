@@ -96,9 +96,8 @@ with get_session() as session:
     st_dataframe = st.dataframe(
         data=styled_positions,
         column_config={
-            "instrument": None,
-            "instrument_name": "Instrument",
             "instrument_id": None,
+            "instrument_name": "Instrument",
             "type": None,
             "quantity": st.column_config.NumberColumn("Quantity"),
             "buy_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
