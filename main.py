@@ -6,7 +6,7 @@ st.set_page_config(page_title="My Portfolio Dashboard", layout="wide", initial_s
 
 pages = {
     "📊 Overview": [
-        st.Page("pages/overview_positions.py", title="Current positions"),
+        st.Page("pages/positions_list.py", title="Positions"),
     ],
     "🏦 Accounts": [
         st.Page("pages/accounts_list.py", title="List"),
