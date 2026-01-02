@@ -44,8 +44,8 @@ with get_session() as session, session.begin():
 
         # --- Row 2 ---
         col1, col2 = st.columns([2, 1])
-        if trans.trade:
-            col1.markdown(f"**Instrument:** {trans.trade.instrument.name}")
+        if trans.position:
+            col1.markdown(f"**Instrument:** {trans.position.instrument.name}")
         col2.markdown(f"**Type:** {trans.type}")
         
         # --- Row 3 ---

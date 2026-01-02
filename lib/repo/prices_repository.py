@@ -111,6 +111,30 @@ def get_latest_price(session, inst_id):
     return session.scalar(stmt)
 
 def get_latest_prices(session):
+    """Return a dictionary of latest prices for all instruments."""
+    
+    subquery = (
+        select(
+            Price.instrument_id,
+            func.max(Price.date).label("latest_date")
+        )
+        .group_by(Price.instrument_id)
+        .subquery()
+    )
+
+    stmt = (
+        select(Price.instrument_id, Price.price, subquery.c.latest_date.label("date"))
+        .join(
+            subquery,
+            (Price.instrument_id == subquery.c.instrument_id) &
+            (Price.date == subquery.c.latest_date)
+        )
+    )
+
+    return session.execute(stmt).mappings().all()
+
+
+def get_latest_prices_for_prices_list(session):
         
     # Subquery: get latest timestamp for each instrument
     latest_ts_subq = (

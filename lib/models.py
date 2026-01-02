@@ -1,6 +1,6 @@
 
 from datetime import timezone
-from sqlalchemy import Column, DateTime, String, Integer, ForeignKey, Text, TypeDecorator, UniqueConstraint
+from sqlalchemy import Boolean, Column, DateTime, String, Integer, ForeignKey, Text, TypeDecorator, UniqueConstraint
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -53,6 +53,8 @@ class Position(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     instrument_id = Column(Integer, ForeignKey("instruments.id"), nullable=False)
+    closed = Column(Boolean, nullable=False)
+    closing_date = Column(UTCDateTime)
     
     account = relationship("Account", back_populates="positions")
     instrument = relationship("Instrument", back_populates="positions")
@@ -99,9 +101,7 @@ class OHLCV(Base):
     volume = Column(Integer)
 
     instrument = relationship("Instrument", back_populates="ohlcvs")
-    __table_args__ = (
-        UniqueConstraint('instrument_id', 'timestamp', 'granularity', name='_instrument_timestamp_uc'),
-)
+    __table_args__ = (UniqueConstraint('instrument_id', 'timestamp', 'granularity', name='_instrument_timestamp_uc'),)
 
 
 class Instrument(Base):

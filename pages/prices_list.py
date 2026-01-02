@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from lib.database import get_session, read_from_db
-from lib.repo.prices_repository import get_latest_prices
+from lib.repo.prices_repository import get_latest_prices_for_prices_list
 from service.utils import to_local
 
 
@@ -11,7 +11,7 @@ st.title("📊 Latest Prices")
 
 # Open a session
 with get_session() as session:
-    results = get_latest_prices(session)
+    results = get_latest_prices_for_prices_list(session)
 
 
 # Convert to DataFrame

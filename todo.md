@@ -23,8 +23,6 @@
 
 # Do
 
-- show instrument in transaction details / edit
-
 - add some other type of categorization in Instruments:
     - ETF vs stocks
     - Bond ETF vs Equity ETF vs ETC
@@ -34,12 +32,20 @@
     - add a "transactions" column ?
     - change sign of Transaction amount ( already existent and when adding )
 
+- the "Add/Edit" page doesn't work as expected
+
+
 # Doing
 
 - Position refactoring
 
-    - [ ] Transaction is no longer linked to Trade but to Position
+    - [X] Transaction is no longer linked to Trade but to Position
+    - [X] Trade is linked to Position as well
     - [ ] when to add a new Position ? create explicitly or create when creating a buy trade ?
+    - [ ] show/calculate transactions amount in "Positions list"
+    - [X] Positions list must be rewritten: now it's an actual list of Positions
+    - [ ] sum "Realized PnL" and "Unrealized PnL" in "Positions list" page ?
+    - [ ] Add a "Position detail" page
 
 
 # Done

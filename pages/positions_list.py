@@ -4,20 +4,28 @@ import streamlit as st
 
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session
-from lib.repo.portfolio_repository import get_positions_summary
+from lib.repo.positions_repository import get_positions_summary
 from service.utils import account_selector
 
 
 # --------------------------------------------------------------------------------
 # -- utility functions
 
-def style_positions(df):
+def format_and_style_positions(df):
     """Add formatted display columns and apply color styling with type icons."""
 
     # Create human-friendly display columns
-    df["pnl_styled"] = df["pnl"]
-    df["pnl_percent_styled"] = df["pnl_percent"]
-    df["closing_date_styled"] = df["closing_date"]
+    realized_pnl_styled_col = df["realized_pnl"]
+    unrealized_pnl_styled_col = df["unrealized_pnl"]
+    # pnl_percent_styled_col = df["pnl_percent"]
+    opening_date_styled_col = df["opening_date"]
+    closing_date_styled_col = df["closing_date"]
+
+    df.insert(len(df.columns), "realized_pnl_styled", realized_pnl_styled_col)
+    df.insert(len(df.columns), "unrealized_pnl_styled", unrealized_pnl_styled_col)
+    # df.insert(len(df.columns), "pnl_percent_styled", pnl_percent_styled_col)
+    df.insert(1, "opening_date_styled", opening_date_styled_col)
+    df.insert(len(df.columns), "closing_date_styled", closing_date_styled_col)
 
     # Define coloring for PnL
     def style_pnl(v):
@@ -26,25 +34,26 @@ def style_positions(df):
 
     # Format PnL numbers
     def format_pnl(v):
-        return f"{v:,.2f}"  # TODO: add currency ?
+        return f"{v:,.2f} €"  # TODO: add currency ?
 
     def format_pnl_percent(v):
         return f"{v*100:,.2f} %"
 
-    def format_closing_date(v):
-        # 🔓 open | 🔒 closed
-        # Alternatives: 🟢 / 🔴, ✅ / ❌, 🟩 / 🟥
+    def format_date(v):
         return "" if pd.isna(v) else v.strftime('%Y-%m-%d %H:%M:%S')
 
     # Apply styles
     styled = (
         df.style
         .format({
-            "pnl_styled": format_pnl,
-            "pnl_percent_styled": format_pnl_percent,
-            "closing_date_styled": format_closing_date
+            "realized_pnl_styled": format_pnl,
+            "unrealized_pnl_styled": format_pnl,
+            # "pnl_percent_styled": format_pnl_percent,
+            "closing_date_styled": format_date,
+            "opening_date_styled": format_date,
         })
-        .map(style_pnl, subset=["pnl_styled", "pnl_percent_styled"])
+        # .map(style_pnl, subset=["realized_pnl_styled", "pnl_percent_styled"])
+        .map(style_pnl, subset=["realized_pnl_styled", "unrealized_pnl_styled"])
     )
 
     return styled
@@ -92,20 +101,28 @@ with get_session() as session:
 
     # --- Show dataframe
 
-    styled_positions = style_positions(positions_df)
+    styled_positions = format_and_style_positions(positions_df)
     st_dataframe = st.dataframe(
         data=styled_positions,
         column_config={
+            # "position_id": None,
+            "opening_date": None,
+            "opening_date_styled": "Opened on",
             "instrument_id": None,
             "instrument_name": "Instrument",
             "type": None,
-            "quantity": st.column_config.NumberColumn("Quantity"),
-            "buy_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
+            "remaining_quantity": st.column_config.NumberColumn("Qty left"),
+            "avg_buy_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
             "closing_price": st.column_config.NumberColumn("Market price", format="euro"),
-            "pnl": None, # st.column_config.NumberColumn("PNL", format="euro")
-            "pnl_styled": "PnL",
-            "pnl_percent": None,
-            "pnl_percent_styled": st.column_config.NumberColumn("PnL %"),
+            "realized_pnl": None,
+            "realized_pnl_styled": "Real PnL",
+            "unrealized_pnl": None,
+            "unrealized_pnl_styled": "Unreal PnL",
+            # FIXME: show this later
+            # "transactions_amount": st.column_config.NumberColumn("Transactions amount", format="euro"),
+            "transactions_amount": None,
+            # "pnl_percent": None,
+            # "pnl_percent_styled": st.column_config.NumberColumn("PnL %"),
             "closing_date": None,
             "closing_date_styled": "Closed on"
         },
@@ -121,17 +138,14 @@ with get_session() as session:
         selected_instrument_id = positions_df.iloc[dataframe_index].instrument_id.item()
         with st.container(horizontal=True):
             # st.space("stretch")
-            if st.button("Detail"):
+            if st.button("Instrument details"):
                 st.session_state.instrument_id = selected_instrument_id
                 st.switch_page("pages/instruments_detail.py")
-            if st.button("Edit", type="secondary"):
-                st.session_state.instrument_id = selected_instrument_id
-                st.switch_page("pages/instruments_edit.py")
 
     # --- Totals --- 
 
-    total_buy_price = (positions_df["buy_price"] * positions_df["quantity"]).sum()
-    total_pnl = positions_df["pnl"].sum()
+    total_buy_price = positions_df["avg_buy_price"].dot(positions_df["remaining_quantity"])  # FIXME: is this correct?
+    total_pnl = (positions_df["realized_pnl"] + positions_df["unrealized_pnl"]).sum()
     total_percent_pnl = 0
 
     color = "green" if total_pnl > 0 else "red"

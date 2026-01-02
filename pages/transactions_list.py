@@ -59,7 +59,7 @@ with get_session() as session:
     st_dataframe = st.dataframe(data=[
         {
             "Type": t.type,
-            "Instrument": t.trade.instrument.name if t.trade else "",
+            "Instrument": t.position.instrument.name if t.position else "",
             "Date": to_local(t.date),
             "Amount (€)": read_from_db(t.amount),
             "Description": t.description or ""
