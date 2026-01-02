@@ -4,7 +4,7 @@ import streamlit as st
 
 from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import get_session
-from lib.repo.positions_repository import get_positions_summary
+from service.positions_service import get_positions_summary
 from service.utils import account_selector
 
 
@@ -15,24 +15,20 @@ def format_and_style_positions(df):
     """Add formatted display columns and apply color styling with type icons."""
 
     # Create human-friendly display columns
-    realized_pnl_styled_col = df["realized_pnl"]
-    unrealized_pnl_styled_col = df["unrealized_pnl"]
-    # pnl_percent_styled_col = df["pnl_percent"]
+    pnl_styled_col = df["pnl"]
+    pnl_percent_styled_col = df["pnl_percent"]
     opening_date_styled_col = df["opening_date"]
     closing_date_styled_col = df["closing_date"]
 
-    df.insert(len(df.columns), "realized_pnl_styled", realized_pnl_styled_col)
-    df.insert(len(df.columns), "unrealized_pnl_styled", unrealized_pnl_styled_col)
-    # df.insert(len(df.columns), "pnl_percent_styled", pnl_percent_styled_col)
+    df.insert(len(df.columns), "pnl_styled", pnl_styled_col)
+    df.insert(len(df.columns), "pnl_percent_styled", pnl_percent_styled_col)
     df.insert(1, "opening_date_styled", opening_date_styled_col)
     df.insert(len(df.columns), "closing_date_styled", closing_date_styled_col)
 
-    # Define coloring for PnL
     def style_pnl(v):
         color = "green" if v > 0 else "red" if v < 0 else "gray"
         return f"color: {color}; font-weight: bold;"
 
-    # Format PnL numbers
     def format_pnl(v):
         return f"{v:,.2f} €"  # TODO: add currency ?
 
@@ -46,14 +42,12 @@ def format_and_style_positions(df):
     styled = (
         df.style
         .format({
-            "realized_pnl_styled": format_pnl,
-            "unrealized_pnl_styled": format_pnl,
-            # "pnl_percent_styled": format_pnl_percent,
+            "pnl_styled": format_pnl,
+            "pnl_percent_styled": format_pnl_percent,
             "closing_date_styled": format_date,
             "opening_date_styled": format_date,
         })
-        # .map(style_pnl, subset=["realized_pnl_styled", "pnl_percent_styled"])
-        .map(style_pnl, subset=["realized_pnl_styled", "unrealized_pnl_styled"])
+        .map(style_pnl, subset=["pnl_styled", "pnl_percent_styled"])
     )
 
     return styled
@@ -115,16 +109,16 @@ with get_session() as session:
             "avg_buy_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
             "closing_price": st.column_config.NumberColumn("Market price", format="euro"),
             "realized_pnl": None,
-            "realized_pnl_styled": "Real PnL",
             "unrealized_pnl": None,
-            "unrealized_pnl_styled": "Unreal PnL",
+            "pnl": None,
+            "pnl_styled": st.column_config.NumberColumn("PnL", format="euro"),
             # FIXME: show this later
             # "transactions_amount": st.column_config.NumberColumn("Transactions amount", format="euro"),
             "transactions_amount": None,
-            # "pnl_percent": None,
-            # "pnl_percent_styled": st.column_config.NumberColumn("PnL %"),
+            "pnl_percent": None,
+            "pnl_percent_styled": st.column_config.NumberColumn("PnL %"),
             "closing_date": None,
-            "closing_date_styled": "Closed on"
+            "closing_date_styled": None  # "Closed on"
         },
         hide_index=True,
         on_select="rerun",

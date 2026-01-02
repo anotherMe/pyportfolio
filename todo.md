@@ -46,6 +46,7 @@
     - [X] Positions list must be rewritten: now it's an actual list of Positions
     - [ ] sum "Realized PnL" and "Unrealized PnL" in "Positions list" page ?
     - [ ] Add a "Position detail" page
+    - [X] Add a "Position service" file
 
 
 # Done
