@@ -24,9 +24,9 @@ class PositionDTO:
     """Data Transfer Object for Position summary."""
 
     position_id: int
-    opening_date: Optional[UTCDateTime] = None
     instrument_id: int = 0
     instrument_name: str = ""
+    opening_date: Optional[UTCDateTime] = None
     avg_buy_price: float = 0.00
     total_buy_cost: float = 0.00
     realized_pnl: float = 0.00
@@ -34,7 +34,6 @@ class PositionDTO:
     transactions_amount: float = 0.00
     closing_date: Optional[UTCDateTime] = None
     remaining_quantity: int = 0
-    type: str = "open"  # 'open' or 'closed'  # FIXME: I don't like this field: can we infer it from remaining_quantity?
 
 
 # ----------------------------
@@ -65,7 +64,7 @@ def _apply_fifo(session, account):
 
         for current_trade in trades:
                 
-            if positionDTO.type == 'closed':
+            if positionDTO.remaining_quantity <= 0 and positionDTO.closing_date is not None:
                 raise PortfolioException(__name__, "Trade encountered after position was closed.")
                 
             if current_trade.type == "buy":
@@ -95,15 +94,14 @@ def _apply_fifo(session, account):
 
                 # Check if position is now closed ( ie: all quantity sold)
                 if positionDTO.remaining_quantity == 0:
-                    positionDTO.type = 'closed'
                     positionDTO.closing_date = current_trade.date
                     continue
 
         # If current position is still open, calculate unrealized PnL on remaining quantity
         if positionDTO.remaining_quantity > 0:
 
-            if positionDTO.type != 'open':
-                raise PortfolioException(__name__, "Position with remaining quantity is not marked as open.")
+            if positionDTO.closing_date is not None:
+                raise PortfolioException(__name__, "Position with remaining quantity has a closing date.")
 
             latest_price_entry = next((price for price in latest_prices if price['instrument_id'] == position.instrument.id), None)
             latest_price = read_from_db(latest_price_entry['price']) if latest_price_entry else 0.0
@@ -140,7 +138,7 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
     # TODO: do we still need this?
     # Sort by closing date
     if not df.empty:
-        # df = df.sort_values(by=["instrument_id", "type", "closing_date"], ascending=[True, True, True])
+        # df = df.sort_values(by=["instrument_id", "closing_date"], ascending=[True, True, True])
         df = df.sort_values(by=["closing_date"], ascending=[True])
         df.reset_index(drop=True, inplace=True)
 

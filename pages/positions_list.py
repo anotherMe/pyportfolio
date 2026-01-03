@@ -22,7 +22,7 @@ def format_and_style_positions(df):
 
     df.insert(len(df.columns), "pnl_styled", pnl_styled_col)
     df.insert(len(df.columns), "pnl_percent_styled", pnl_percent_styled_col)
-    df.insert(1, "opening_date_styled", opening_date_styled_col)
+    df.insert(5, "opening_date_styled", opening_date_styled_col)
     df.insert(len(df.columns), "closing_date_styled", closing_date_styled_col)
 
     def style_pnl(v):
@@ -99,14 +99,16 @@ with get_session() as session:
     st_dataframe = st.dataframe(
         data=styled_positions,
         column_config={
-            # "position_id": None,
+            "position_id": None,
             "opening_date": None,
             "opening_date_styled": "Opened on",
             "instrument_id": None,
             "instrument_name": "Instrument",
-            "type": None,
             "remaining_quantity": st.column_config.NumberColumn("Qty left"),
-            "avg_buy_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
+            # "avg_buy_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
+            "avg_buy_price": None,
+            # "total_buy_cost": st.column_config.NumberColumn("Total buy cost", format="euro"),
+            "total_buy_cost": None,
             "closing_price": st.column_config.NumberColumn("Market price", format="euro"),
             "realized_pnl": None,
             "unrealized_pnl": None,
@@ -129,12 +131,17 @@ with get_session() as session:
 
     if st_dataframe["selection"]["rows"]:
         dataframe_index = st_dataframe["selection"]["rows"][0]
+        selected_position_id = positions_df.iloc[dataframe_index].position_id.item()
         selected_instrument_id = positions_df.iloc[dataframe_index].instrument_id.item()
         with st.container(horizontal=True):
             # st.space("stretch")
             if st.button("Instrument details"):
                 st.session_state.instrument_id = selected_instrument_id
                 st.switch_page("pages/instruments_detail.py")
+            if st.button("Position details"):
+                st.session_state.position_id = selected_position_id
+                st.switch_page("pages/positions_detail.py")
+
 
     # --- Totals --- 
 
