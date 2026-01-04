@@ -104,6 +104,7 @@ with get_session() as session, session.begin():
             st.write(f"**Average buy price:** {format_currency(position_summary.avg_buy_price, Currency.from_code(inst.currency).symbol)}")
             st.write(f"**Total buy cost:** {format_currency(position_summary.total_buy_cost, Currency.from_code(inst.currency).symbol)}")
             st.write(f"**Realized PnL:** {format_currency(position_summary.realized_pnl, Currency.from_code(inst.currency).symbol)}")
+            st.write(f"**Latest market price:** {format_currency(position_summary.latest_price, Currency.from_code(inst.currency).symbol)} (as of {to_local(position_summary.latest_price_date) if position_summary.latest_price_date else 'N/A'})")
             st.write(f"**Unrealized PnL:** {format_currency(position_summary.unrealized_pnl, Currency.from_code(inst.currency).symbol)}")
             st.write(f"**Total PnL:** {format_currency(position_summary.pnl, Currency.from_code(inst.currency).symbol)}")
             pnl_percent = position_summary.pnl_percent * 100 if position_summary.pnl_percent is not None else None

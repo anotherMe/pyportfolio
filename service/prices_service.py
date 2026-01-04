@@ -13,6 +13,6 @@ def get_latest_prices_for_instrument_list(session, inst_ids: list[int]) -> list[
 
     results = repo.get_latest_prices_for_instrument_list(session, inst_ids)
     price_dtos = []
-    for instrument_id, price in results:
-        price_dtos.append(PriceDTO(instrument_id, read_from_db(price), None))
+    for instrument_id, price, date in results:
+        price_dtos.append(PriceDTO(instrument_id, read_from_db(price), date))
     return price_dtos

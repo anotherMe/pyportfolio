@@ -113,7 +113,7 @@ def get_latest_prices_for_instrument_list(session, inst_ids: list[int]):
     )
 
     stmt = (
-        select(Price.instrument_id, Price.price)
+        select(Price.instrument_id, Price.price, subquery.c.latest_date.label("date"))
         .join(
             subquery,
             (Price.instrument_id == subquery.c.instrument_id) &

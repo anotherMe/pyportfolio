@@ -59,6 +59,11 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
         positionDTO.instrument_id = position.instrument.id
         positionDTO.instrument_name = position.instrument.name
 
+        # Get latest price for this instrument
+        latest_price_entry = next((priceDTO for priceDTO in latest_prices if priceDTO.instrument_id == position.instrument.id), None)
+        positionDTO.latest_price = latest_price_entry.price if latest_price_entry else 0.0
+        positionDTO.latest_price_date = latest_price_entry.date if latest_price_entry else None
+
         # Get trades for this position
         trades = [trade for trade in all_trades if trade.position_id == position.id]
 
@@ -102,10 +107,6 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
 
             if positionDTO.closing_date is not None:
                 raise PortfolioException(__name__, "Position with remaining quantity has a closing date.")
-
-            latest_price_entry = next((priceDTO for priceDTO in latest_prices if priceDTO.instrument_id == position.instrument.id), None)
-            positionDTO.latest_price = latest_price_entry.price if latest_price_entry else 0.0
-            positionDTO.latest_price_date = latest_price_entry.date if latest_price_entry else None
 
             positionDTO.unrealized_pnl = ( positionDTO.latest_price * positionDTO.remaining_quantity ) - ( positionDTO.avg_buy_price * positionDTO.remaining_quantity )
 
