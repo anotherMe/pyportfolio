@@ -4,14 +4,13 @@ from attr import dataclass
 import pandas as pd
 from lib.database import read_from_db
 from lib.models import Position, UTCDateTime
-from lib.repo.prices_repository import get_latest_prices_for_instrument_list
 from lib.repo.trades_repository import get_trades_for_position_list
 from lib.repo.positions_repository import get_all_positions
-
 
 from logging_config import setup_logger
 from service import prices_service
 from service.custom_exceptions import PortfolioException
+
 log = setup_logger(__name__)
 
 
@@ -30,6 +29,8 @@ class PositionDTO:
     avg_buy_price: float = 0.00
     total_buy_cost: float = 0.00
     realized_pnl: float = 0.00
+    latest_price: float = 0.00
+    latest_price_date: Optional[UTCDateTime] = None
     unrealized_pnl: float = 0.00
     transactions_amount: float = 0.00
     closing_date: Optional[UTCDateTime] = None
@@ -103,9 +104,10 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
                 raise PortfolioException(__name__, "Position with remaining quantity has a closing date.")
 
             latest_price_entry = next((priceDTO for priceDTO in latest_prices if priceDTO.instrument_id == position.instrument.id), None)
-            latest_price = latest_price_entry.price if latest_price_entry else 0.0
+            positionDTO.latest_price = latest_price_entry.price if latest_price_entry else 0.0
+            positionDTO.latest_price_date = latest_price_entry.date if latest_price_entry else None
 
-            positionDTO.unrealized_pnl = ( latest_price * positionDTO.remaining_quantity ) - ( positionDTO.avg_buy_price * positionDTO.remaining_quantity )
+            positionDTO.unrealized_pnl = ( positionDTO.latest_price * positionDTO.remaining_quantity ) - ( positionDTO.avg_buy_price * positionDTO.remaining_quantity )
 
         positionDTOs.append(positionDTO)
 

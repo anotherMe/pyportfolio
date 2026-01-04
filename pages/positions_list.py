@@ -111,6 +111,8 @@ with get_session() as session:
             "total_buy_cost": None,
             "closing_price": st.column_config.NumberColumn("Market price", format="euro"),
             "realized_pnl": None,
+            "latest_price": None,
+            "latest_price_date": None,
             "unrealized_pnl": None,
             "pnl": None,
             "pnl_styled": st.column_config.NumberColumn("PnL", format="euro"),
