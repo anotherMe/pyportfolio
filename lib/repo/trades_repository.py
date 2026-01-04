@@ -1,6 +1,8 @@
 
 from lib.database import write_to_db
 from lib.models import Trade
+from sqlalchemy.orm import Session
+from lib.models import Position
 
 
 def get_all_trades(session, account=None):
@@ -8,6 +10,16 @@ def get_all_trades(session, account=None):
         return session.query(Trade).filter_by(account_id=account.id).order_by(Trade.date).all()
     else:
         return session.query(Trade).order_by(Trade.date).all()
+
+def get_trades_for_position_list(session: Session, position_ids: list[int]) -> list[Trade]:
+    
+    trades = (
+        session.query(Trade)
+        .join(Position, Trade.position_id == Position.id)
+        .filter(Position.id.in_(position_ids))
+        .all()
+    )
+    return trades
 
 def add_trade(session, account, instrument, date, trade_type, quantity, price, description=None):
     

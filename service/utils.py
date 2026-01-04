@@ -35,3 +35,8 @@ def to_local(dt):
     if dt is None:
         return None
     return dt.astimezone(get_timezone()).strftime(DEFAULT_DATETIME_FORMAT)
+
+def format_currency(amount, currency_symbol="€"):
+    if amount is None:
+        return "N/A"
+    return f"{amount:.2f} {currency_symbol}"

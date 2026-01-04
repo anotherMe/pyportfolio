@@ -3,10 +3,12 @@ import logging
 import pandas as pd
 import streamlit as st
 from lib.database import read_from_db, get_session
+from lib.enums import Currency
 from lib.models import Instrument, Position
 import lib.repo.positions_repository as repo
 from lib.utils import confirm_delete_dialog
-from service.utils import to_local
+from service import positions_service as service
+from service.utils import format_currency, to_local
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
@@ -27,13 +29,14 @@ def delete_position(item_id):
 
 
 st.title("Positions")
-st.subheader("Position Details")
 
 if not st.session_state.position_id:
     st.write("No Position selected")
     if st.button("Back to list"):
         st.switch_page("pages/positions_list.py")
     st.stop()
+
+st.subheader(f"Position {st.session_state.position_id} details")
 
 with get_session() as session, session.begin():
 
@@ -87,20 +90,39 @@ with get_session() as session, session.begin():
             if st.button("🗑️ Delete", key=f"delete_{position.id}"):
                 confirm_delete_dialog(f"Are you sure you want to delete Position {position.id} ?", position.id, delete_position)
 
+        # --- Row: Position details ---
+        st.divider()
+        st.subheader("Position details")
+        
+        position_summary = service.get_position_summary(session, position)
+        with st.container(horizontal=False):
+            st.write(f"**Position ID:** {position_summary.position_id}")
+            st.write(f"**Account:** {position.account.name}")
+            st.write(f"**Opening date:** {to_local(position_summary.opening_date)}")
+            st.write(f"**Closing date:** {to_local(position_summary.closing_date) if position_summary.closing_date else 'N/A'}")
+            st.write(f"**Remaining quantity:** {position_summary.remaining_quantity}")
+            st.write(f"**Average buy price:** {format_currency(position_summary.avg_buy_price, Currency.from_code(inst.currency).symbol)}")
+            st.write(f"**Total buy cost:** {format_currency(position_summary.total_buy_cost, Currency.from_code(inst.currency).symbol)}")
+            st.write(f"**Realized PnL:** {format_currency(position_summary.realized_pnl, Currency.from_code(inst.currency).symbol)}")
+            st.write(f"**Unrealized PnL:** {format_currency(position_summary.unrealized_pnl, Currency.from_code(inst.currency).symbol)}")
+            st.write(f"**Total PnL:** {format_currency(position_summary.pnl, Currency.from_code(inst.currency).symbol)}")
+            pnl_percent = position_summary.pnl_percent * 100 if position_summary.pnl_percent is not None else None
+            st.write(f"**Total PnL %:** {pnl_percent:.2f} %" if pnl_percent is not None else "N/A")
 
         # --- Related Trades ---
 
         st.divider()
         st.write("Trades:")
         if position.trades:
-            inst_trades = [{
+            position_trades = [{
                 "Account": trade.account.name,
                 "Type": "📥 Buy" if trade.type.lower() == "buy" else "📤 Sell" if trade.type.lower() == "sell" else trade.type,
                 "Date": to_local(trade.date),
                 "Qty": trade.quantity,
-                "Price": read_from_db(trade.price)
-            } for trade in inst.trades]
-            st.dataframe(data=pd.DataFrame(inst_trades), hide_index=True)
+                "Price": format_currency(read_from_db(trade.price), Currency.from_code(inst.currency).symbol),
+                "Total": format_currency(read_from_db(trade.price) * trade.quantity, Currency.from_code(inst.currency).symbol)
+            } for trade in position.trades]
+            st.dataframe(data=pd.DataFrame(position_trades), hide_index=True)
         else:
             st.info("No trades available")
         cols = st.columns([5,1])

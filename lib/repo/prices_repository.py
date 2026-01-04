@@ -3,8 +3,8 @@ from pandas import DataFrame
 import pytz
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased
-from lib.database import get_session, write_to_db
-from lib.models import Price, Instrument
+from lib.database import get_session, read_from_db, write_to_db
+from lib.models import Price, Instrument, UTCDateTime
 from service.myYahooFinanceService import YahooSymbol
 
 from logging_config import setup_logger
@@ -99,6 +99,31 @@ def load_prices_from_yfinance_dataframe(dataframe: DataFrame, granularity: str, 
 
     print(f"Inserted {inserted} new prices, skipped {skipped} duplicates.")
 
+
+def get_latest_prices_for_instrument_list(session, inst_ids: list[int]):
+    
+    subquery = (
+        select(
+            Price.instrument_id,
+            func.max(Price.date).label("latest_date")
+        )
+        .where(Price.instrument_id.in_(inst_ids))
+        .group_by(Price.instrument_id)
+        .subquery()
+    )
+
+    stmt = (
+        select(Price.instrument_id, Price.price)
+        .join(
+            subquery,
+            (Price.instrument_id == subquery.c.instrument_id) &
+            (Price.date == subquery.c.latest_date)
+        )
+    )
+
+    return session.execute(stmt).all()
+
+
 def get_latest_price(session, inst_id):
     """Return the latest market price for an instrument, or None."""
     
@@ -134,7 +159,14 @@ def get_latest_prices(session):
     return session.execute(stmt).mappings().all()
 
 
-def get_latest_prices_for_prices_list(session):
+class PriceDTO:
+    def __init__(self, instrument_id: int, price: float, date):
+        self.instrument_id = instrument_id
+        self.price = price
+        self.date = date
+
+# TODO: move to prices_service.py
+def get_latest_prices_for_prices_list(session) -> DataFrame:
         
     # Subquery: get latest timestamp for each instrument
     latest_ts_subq = (
@@ -152,10 +184,10 @@ def get_latest_prices_for_prices_list(session):
     # Main query: left join instruments with latest ohlcv data
     query = (
         select(
-            Instrument.name.label("instrument_name"),
-            Instrument.ticker.label("instrument_ticker"),
-            price_latest.price.label("last_close"),
-            price_latest.date.label("timestamp")
+            Instrument.name,
+            Instrument.ticker,
+            price_latest.price,
+            price_latest.date
         )
         .outerjoin(
             latest_ts_subq,
@@ -169,4 +201,8 @@ def get_latest_prices_for_prices_list(session):
         .order_by(Instrument.name)
     )
 
-    return session.execute(query).fetchall()
+    results = session.execute(query).fetchall()
+
+    # convert into a pandas DataFrame
+    df = DataFrame(results, columns=["instrument_name", "instrument_ticker", "last_close", "timestamp"])
+    return df

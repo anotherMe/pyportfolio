@@ -1,12 +1,11 @@
 
-
 from typing import Optional
 from attr import dataclass
 import pandas as pd
 from lib.database import read_from_db
-from lib.models import UTCDateTime
-from lib.repo.prices_repository import get_latest_prices
-from lib.repo.trades_repository import get_all_trades
+from lib.models import Position, UTCDateTime
+from lib.repo.prices_repository import get_latest_prices_for_instrument_list
+from lib.repo.trades_repository import get_trades_for_position_list
 from lib.repo.positions_repository import get_all_positions
 
 
@@ -40,7 +39,7 @@ class PositionDTO:
 # 🔹 Utility functions
 # ----------------------------
 
-def _apply_fifo(session, account):
+def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
     """
     Apply FIFO to trades of the same Instrument
     Returns:
@@ -48,12 +47,11 @@ def _apply_fifo(session, account):
         open_lots: remaining open lots (list of dicts)
     """
 
-    all_trades = get_all_trades(session, account)
-    latest_prices = get_latest_prices(session)
+    all_trades = get_trades_for_position_list(session, [position.id for position in positions])
+    latest_prices = get_latest_prices_for_instrument_list(session, [position.instrument.id for position in positions])
 
     positionDTOs = []
-
-    for position in get_all_positions(session, account):
+    for position in positions:
 
         positionDTO = PositionDTO(position.id)
         positionDTO.instrument_id = position.instrument.id
@@ -103,8 +101,8 @@ def _apply_fifo(session, account):
             if positionDTO.closing_date is not None:
                 raise PortfolioException(__name__, "Position with remaining quantity has a closing date.")
 
-            latest_price_entry = next((price for price in latest_prices if price['instrument_id'] == position.instrument.id), None)
-            latest_price = read_from_db(latest_price_entry['price']) if latest_price_entry else 0.0
+            latest_price_entry = next((priceDTO for priceDTO in latest_prices if priceDTO.instrument_id == position.instrument.id), None)
+            latest_price = latest_price_entry.price if latest_price_entry else 0.0
 
             positionDTO.unrealized_pnl = ( latest_price * positionDTO.remaining_quantity ) - ( positionDTO.avg_buy_price * positionDTO.remaining_quantity )
 
@@ -118,7 +116,8 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
         Retrieve positions summary as a pandas DataFrame.
     """
 
-    positionsDTO = _apply_fifo(session, account)
+    all_positions = get_all_positions(session, account)
+    positionsDTO = _apply_fifo(session, all_positions)
 
     filtered_position_DTOs = []
     for pos in positionsDTO:
@@ -143,3 +142,18 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
         df.reset_index(drop=True, inplace=True)
 
     return df
+
+
+def get_position_summary(session, position: Position):
+    """
+        Retrieve positions summary as a pandas DataFrame.
+    """
+
+    positionDTOs = _apply_fifo(session, [position])
+
+    p = positionDTOs[0]
+
+    p.pnl = p.realized_pnl + p.unrealized_pnl
+    p.pnl_percent = p.pnl / p.total_buy_cost
+
+    return p

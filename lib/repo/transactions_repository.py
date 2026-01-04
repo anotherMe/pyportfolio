@@ -1,6 +1,7 @@
 
 from datetime import datetime
-
+from sqlalchemy.orm import Session
+from lib.models import Position
 from lib.models import Transaction
 from lib.database import write_to_db
 
@@ -25,6 +26,16 @@ def get_all_transactions(session, account=None):
         return session.query(Transaction).filter_by(account_id=account.id).order_by(Transaction.date.desc()).all()
     else:
         return session.query(Transaction).all()
+
+def get_transactions_for_position_list(session: Session, position_ids: list[int]) -> list[Transaction]:
+    
+    trades = (
+        session.query(Transaction)
+        .join(Position, Transaction.position_id == Position.id)
+        .filter(Position.id.in_(position_ids))
+        .all()
+    )
+    return trades
 
 def delete_transaction(session, transaction_id):
     transaction = session.get(Transaction, transaction_id)
