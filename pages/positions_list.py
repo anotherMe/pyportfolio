@@ -137,9 +137,13 @@ with get_session() as session:
         selected_instrument_id = positions_df.iloc[dataframe_index].instrument_id.item()
         with st.container(horizontal=True):
             # st.space("stretch")
-            if st.button("Instrument details"):
+            # if st.button("Instrument details"):
+            #     st.session_state.instrument_id = selected_instrument_id
+            #     st.switch_page("pages/instruments_detail.py")
+            if st.button("Edit position"):
+                st.session_state.position_id = selected_position_id
                 st.session_state.instrument_id = selected_instrument_id
-                st.switch_page("pages/instruments_detail.py")
+                st.switch_page("pages/positions_edit.py")
             if st.button("Position details"):
                 st.session_state.position_id = selected_position_id
                 st.switch_page("pages/positions_detail.py")

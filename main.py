@@ -8,6 +8,7 @@ pages = {
     "📊 Positions": [
         st.Page("pages/positions_list.py", title="List"),
         st.Page("pages/positions_detail.py", title="Details"),
+        st.Page("pages/positions_edit.py", title="Add / Edit"),
     ],
     "🏦 Accounts": [
         st.Page("pages/accounts_list.py", title="List"),

@@ -39,14 +39,14 @@
 
 - Position refactoring
 
+    - [ ] show/calculate transactions amount in "Positions list"
     - [X] Transaction is no longer linked to Trade but to Position
     - [X] Trade is linked to Position as well
-    - [ ] when to add a new Position ? create explicitly or create when creating a buy trade ?
-    - [ ] show/calculate transactions amount in "Positions list"
     - [X] Positions list must be rewritten: now it's an actual list of Positions
-    - [ ] sum "Realized PnL" and "Unrealized PnL" in "Positions list" page ?
-    - [ ] Add a "Position detail" page
+    - [X] sum "Realized PnL" and "Unrealized PnL" in "Positions list" page ?
+    - [X] Add a "Position detail" page
     - [X] Add a "Position service" file
+    - [X] Add a "Position add / edit" page
 
 
 # Done
