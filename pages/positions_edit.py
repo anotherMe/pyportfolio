@@ -1,10 +1,9 @@
 
 import streamlit as st
 from lib.database import get_session
-from lib.models import Instrument, Position, Position
+from lib.models import Instrument, Position
 from lib.repo.accounts_repository import get_all_accounts
 from lib.repo.instruments_repository import get_all_instruments
-from lib.utils import is_valid_isin
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
