@@ -4,8 +4,7 @@ from datetime import datetime
 import streamlit as st
 from lib.repo.accounts_repository import get_all_accounts
 from lib.database import read_from_db, get_session, write_to_db
-from lib.models import Transaction
-from lib.models import Trade
+from lib.models import Transaction, Position
 from lib.settings_manager import get_timezone
 
 
@@ -13,8 +12,8 @@ print("Running transactions edit page...")
 
 if 'transaction_id' not in st.session_state:
     st.session_state.transaction_id = None
-if 'trade_id' not in st.session_state:
-    st.session_state.trade_id = None
+if 'position_id' not in st.session_state:
+    st.session_state.position_id = None
 
 
 st.title("💰 Transactions")
@@ -42,7 +41,7 @@ with get_session() as session, session.begin():
                 index=["div", "tax", "fee"].index(transaction.type),
                 disabled=False
             )
-            transaction_date = st.date_input("Transaction date", value=transaction.date)
+            transaction_datetime = st.date_input("Transaction date", value=transaction.date)
             transaction_time = st.time_input("Transaction time", value=transaction.date.time(), step=60)
             amount = st.number_input("Amount (€)", min_value=0.0, step=0.01, value=read_from_db(transaction.amount))
             submitted = st.form_submit_button("Save Transaction")
@@ -51,31 +50,32 @@ with get_session() as session, session.begin():
                 # TODO: add validation
                 transaction.account = accounts_map.get(selected_account)
                 transaction.type = transaction_type
-                transaction.date = datetime.combine(transaction_date, transaction_time).replace(tzinfo=get_timezone())
+                transaction.date = datetime.combine(transaction_datetime, transaction_time).replace(tzinfo=get_timezone())
                 transaction.amount = write_to_db(amount)
                 session.add(transaction)
                 st.success(f"Transaction for {transaction.id} updated successfully!")
 
     else:
 
-        st.subheader("Add new transaction")
-
-        # --- Manage default values if session_state contains trade_id
-        t = None
+        # --- Manage default values
+        position = None
         selected_account_index = 0
         transaction_date_default = datetime.now()
-        transaction_time_default = transaction_date_default.time()
-        if st.session_state.trade_id:  # trade ID coming from page trades_detail.py
-            t = session.get(Trade, st.session_state.trade_id)
-            selected_account_index = list(accounts_map.keys()).index(t.account.name)
-            transaction_date_default = t.date.date()
-            transaction_time_default = t.date.time()
+
+        if st.session_state.position_id:  # Position ID coming from positions list page
+            st.subheader(f"Add new transaction for position ID: {st.session_state.position_id}")
+            position = session.get(Position, st.session_state.position_id)
+            selected_account_index = list(accounts_map.keys()).index(position.account.name)
+            # transaction_date_default = position.date.date()
+            # transaction_time_default = position.date.time()
+        else:
+            st.subheader("Add new transaction")
 
         with st.form("add_transaction_form"):
 
             transaction = Transaction()
-            if t:
-                st.text_input(label="Trade", value=f"{t.type} {t.quantity} of {t.instrument.name} on {t.date}", disabled=True)
+            # if position:
+            #     st.text_input(label="Trade", value=f"{position.type} {position.quantity} of {position.instrument.name} on {position.date}", disabled=True)
             selected_account = st.selectbox(
                 "Account",
                 list(accounts_map.keys()),
@@ -85,8 +85,7 @@ with get_session() as session, session.begin():
                 "Transaction Type",
                 options=["fee", "div", "tax"],
             )
-            transaction_date = st.date_input("Transaction date", value=transaction_date_default)
-            transaction_time = st.time_input("Transaction time", value=transaction_time_default, step=60)
+            transaction_datetime = st.datetime_input("Transaction date", value=datetime.now())
             amount = st.number_input("Amount (€)", min_value=0.0, step=0.01)
             description = st.text_area("Description")
 
@@ -96,18 +95,16 @@ with get_session() as session, session.begin():
 
             if save:
                 # TODO: add validation
-                if not transaction_date:
+                if not transaction_datetime:
                     st.warning("Date cannot be empty.")
-                elif not transaction_time:
-                    st.warning("Time cannot be empty.")
                 elif amount <= 0:
                     st.warning("Amount must be greater than zero.")
                 else:
                     try:
                         transaction.account_id = accounts_map.get(selected_account).id
-                        if t:
-                            transaction.trade_id = t.id
-                        transaction.date = datetime.combine(transaction_date, transaction_time).replace(tzinfo=get_timezone())
+                        if position:
+                            transaction.position_id = position.id
+                        transaction.date = transaction_datetime.replace(tzinfo=get_timezone())
                         transaction.type = selected_type
                         transaction.amount = write_to_db(amount)
                         transaction.description = description
@@ -122,5 +119,5 @@ with get_session() as session, session.begin():
     with col2:
         if st.button("Back to list"):
             st.session_state.transaction_id = None
-            st.session_state.trade_id = None
+            st.session_state.position_id = None
             st.switch_page("pages/transactions_list.py")
