@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 
 from lib.database import get_session, read_from_db
 from lib.repo.prices_repository import get_latest_prices_for_prices_list

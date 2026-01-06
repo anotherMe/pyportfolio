@@ -40,3 +40,16 @@ def format_currency(amount, currency_symbol="€"):
     if amount is None:
         return "N/A"
     return f"{amount:.2f} {currency_symbol}"
+
+def format_currency_color(amount, currency_symbol="€"):
+
+    if amount < 0:
+        color = "red"
+    elif amount == 0:
+        color = "gray"
+    else:
+        color = "green"
+
+    if amount is None:
+        return "N/A"
+    return f":{color}-badge[{amount:.2f} {currency_symbol}]"

@@ -34,12 +34,18 @@
 
 - the "Add/Edit" page doesn't work as expected
 
+- remove "Instrument detail" page ? We already show them in "Position details" page
+
+- add fancy prices chart in "Position detail" page
+
+
 
 # Doing
 
 - Position refactoring
 
-    - [ ] show/calculate transactions amount in "Positions list"
+    - [ ] Add yearly PnL
+    - [X] show/calculate transactions amount in "Positions list"
     - [X] Transaction is no longer linked to Trade but to Position
     - [X] Trade is linked to Position as well
     - [X] Positions list must be rewritten: now it's an actual list of Positions
@@ -47,6 +53,6 @@
     - [X] Add a "Position detail" page
     - [X] Add a "Position service" file
     - [X] Add a "Position add / edit" page
-
+    - [ ] Tidy up "Position detail" page
 
 # Done

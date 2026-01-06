@@ -7,6 +7,7 @@ from lib.models import Position, UTCDateTime
 from lib.repo.trades_repository import get_trades_for_position_list
 from lib.repo.positions_repository import get_all_positions
 
+from lib.repo.transactions_repository import get_transactions_for_position_list
 from logging_config import setup_logger
 from service import prices_service
 from service.custom_exceptions import PortfolioException
@@ -27,7 +28,7 @@ class PositionDTO:
     instrument_name: str = ""
     opening_date: Optional[UTCDateTime] = None
     avg_buy_price: float = 0.00
-    total_buy_cost: float = 0.00
+    total_buy: float = 0.00
     realized_pnl: float = 0.00
     latest_price: float = 0.00
     latest_price_date: Optional[UTCDateTime] = None
@@ -50,6 +51,7 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
     """
 
     all_trades = get_trades_for_position_list(session, [position.id for position in positions])
+    all_transactions = get_transactions_for_position_list(session, [position.id for position in positions])
     latest_prices = prices_service.get_latest_prices_for_instrument_list(session, [position.instrument.id for position in positions])
 
     positionDTOs = []
@@ -64,8 +66,16 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
         positionDTO.latest_price = latest_price_entry.price if latest_price_entry else 0.0
         positionDTO.latest_price_date = latest_price_entry.date if latest_price_entry else None
 
-        # Get trades for this position
+        # Get Trades for this position
         trades = [trade for trade in all_trades if trade.position_id == position.id]
+
+        # compute transaction amount
+        for transaction in all_transactions: 
+            if transaction.position_id == position.id:
+                if transaction.type in ('div'):
+                    positionDTO.transactions_amount += read_from_db(transaction.amount)
+                else:
+                    positionDTO.transactions_amount -= read_from_db(transaction.amount)
 
         for current_trade in trades:
                 
@@ -83,7 +93,7 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
                     positionDTO.avg_buy_price = total_cost / positionDTO.remaining_quantity
                     
                 positionDTO.remaining_quantity += current_trade.quantity
-                positionDTO.total_buy_cost += read_from_db(current_trade.price) * current_trade.quantity
+                positionDTO.total_buy += read_from_db(current_trade.price) * current_trade.quantity
 
             elif current_trade.type == "sell":
 
@@ -135,14 +145,16 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
     ## Convert to pandas DataFrame ( for easy integration with Streamlit )
     df = pd.DataFrame([vars(p) for p in filtered_position_DTOs])
 
-    df["pnl"] = df["realized_pnl"] + df["unrealized_pnl"]
-    df["pnl_percent"] = df["pnl"] / df["total_buy_cost"]
-
-    # TODO: do we still need this?
-    # Sort by closing date
     if not df.empty:
+        df["position_closed"] = df["remaining_quantity"].apply(lambda x: str(x) if x > 0 else "Position closed")
+        # df["pnl"] = df["realized_pnl"] + df["unrealized_pnl"]
+        df["pnl"] = df["realized_pnl"] + df["unrealized_pnl"] + df["transactions_amount"]
+        df["pnl_percent"] = df["pnl"] / df["total_buy"]
+        # TODO: add yearly PnL
+
+        # TODO: do we still need sorting here ?
         # df = df.sort_values(by=["instrument_id", "closing_date"], ascending=[True, True, True])
-        df = df.sort_values(by=["closing_date"], ascending=[True])
+        df = df.sort_values(by=["opening_date"], ascending=[True])
         df.reset_index(drop=True, inplace=True)
 
     return df
@@ -157,7 +169,8 @@ def get_position_summary(session, position: Position):
 
     p = positionDTOs[0]
 
-    p.pnl = p.realized_pnl + p.unrealized_pnl
-    p.pnl_percent = p.pnl / p.total_buy_cost
+    # p.pnl = p.realized_pnl + p.unrealized_pnl
+    p.pnl = p.realized_pnl + p.unrealized_pnl + p.transactions_amount
+    p.pnl_percent = p.pnl / p.total_buy
 
     return p

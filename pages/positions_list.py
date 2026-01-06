@@ -16,23 +16,25 @@ def format_and_style_positions(df):
 
     # Create human-friendly display columns
     pnl_styled_col = df["pnl"]
+    transactions_amount_col = df["transactions_amount"]
     pnl_percent_styled_col = df["pnl_percent"]
     opening_date_styled_col = df["opening_date"]
     closing_date_styled_col = df["closing_date"]
 
     df.insert(len(df.columns), "pnl_styled", pnl_styled_col)
+    df.insert(len(df.columns), "transactions_amount_styled", transactions_amount_col)
     df.insert(len(df.columns), "pnl_percent_styled", pnl_percent_styled_col)
     df.insert(5, "opening_date_styled", opening_date_styled_col)
     df.insert(len(df.columns), "closing_date_styled", closing_date_styled_col)
 
-    def style_pnl(v):
+    def color_price(v):
         color = "green" if v > 0 else "red" if v < 0 else "gray"
         return f"color: {color}; font-weight: bold;"
 
-    def format_pnl(v):
-        return f"{v:,.2f} €"  # TODO: add currency ?
+    def format_price(v):
+        return f"{v:,.2f} €"  # TODO: manage currency dynamically ?
 
-    def format_pnl_percent(v):
+    def format_percent(v):
         return f"{v*100:,.2f} %"
 
     def format_date(v):
@@ -42,12 +44,13 @@ def format_and_style_positions(df):
     styled = (
         df.style
         .format({
-            "pnl_styled": format_pnl,
-            "pnl_percent_styled": format_pnl_percent,
+            "pnl_styled": format_price,
+            "pnl_percent_styled": format_percent,
+            "transactions_amount_styled": format_price,
             "closing_date_styled": format_date,
             "opening_date_styled": format_date,
         })
-        .map(style_pnl, subset=["pnl_styled", "pnl_percent_styled"])
+        .map(color_price, subset=["pnl_styled", "pnl_percent_styled"])
     )
 
     return styled
@@ -56,7 +59,6 @@ def format_and_style_positions(df):
 # --------------------------------------------------------------------------------
 # -- Streamlit page
 
-# Initialize the session state variable if it doesn't exist
 if "status_filter" not in st.session_state:
     st.session_state.status_filter = "all"
 
@@ -67,12 +69,12 @@ options = {
     "Show open positions": "open",
     "Show closed positions": "closed"
 }
-# Create the selectbox and bind it to the session state
-# Show the selectbox with display labels
+
 selected_label = st.selectbox(
     "Select status:",
     options=list(options.keys())
 )
+
 st.session_state.status_filter = options[selected_label]
 
 
@@ -93,6 +95,10 @@ with get_session() as session:
     
     positions_df = get_positions_summary(session, current_account, include_closed=include_closed, include_open=include_open)
 
+    if positions_df.empty:
+        st.write("No positions found.")
+        st.stop()
+
     # --- Show dataframe
 
     styled_positions = format_and_style_positions(positions_df)
@@ -101,14 +107,15 @@ with get_session() as session:
         column_config={
             "position_id": None,
             "opening_date": None,
-            "opening_date_styled": "Opened on",
+            "opening_date_styled": "First buy on",
             "instrument_id": None,
             "instrument_name": "Instrument",
-            "remaining_quantity": st.column_config.NumberColumn("Qty left"),
+            "remaining_quantity": None,
+            "position_closed": "Remaining Qty",
             # "avg_buy_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
             "avg_buy_price": None,
-            # "total_buy_cost": st.column_config.NumberColumn("Total buy cost", format="euro"),
-            "total_buy_cost": None,
+            # "total_buy": st.column_config.NumberColumn("Total buy cost", format="euro"),
+            "total_buy": None,
             "closing_price": st.column_config.NumberColumn("Market price", format="euro"),
             "realized_pnl": None,
             "latest_price": None,
@@ -116,9 +123,9 @@ with get_session() as session:
             "unrealized_pnl": None,
             "pnl": None,
             "pnl_styled": st.column_config.NumberColumn("PnL", format="euro"),
-            # FIXME: show this later
-            # "transactions_amount": st.column_config.NumberColumn("Transactions amount", format="euro"),
             "transactions_amount": None,
+            # "transactions_amount_styled": st.column_config.NumberColumn("Transactions amount", format="euro"),
+            "transactions_amount_styled": None,
             "pnl_percent": None,
             "pnl_percent_styled": st.column_config.NumberColumn("PnL %"),
             "closing_date": None,
@@ -151,7 +158,7 @@ with get_session() as session:
 
     # --- Totals --- 
 
-    total_buy_price = positions_df["avg_buy_price"].dot(positions_df["remaining_quantity"])  # FIXME: is this correct?
+    total_buy_price = positions_df["total_buy"].sum()
     total_pnl = (positions_df["realized_pnl"] + positions_df["unrealized_pnl"]).sum()
     total_percent_pnl = 0
 
@@ -159,7 +166,7 @@ with get_session() as session:
     col1, col2 = st.columns([2,1])
     with col2:
         st.markdown(
-            f"<h3>Total buy: <span style='color:{color}'>{total_buy_price:,.2f} €</span></h3>",
+            f"<h3>Total buy: <span>{total_buy_price:,.2f} €</span></h3>",
             unsafe_allow_html=True
         )
         st.markdown(
