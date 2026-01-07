@@ -123,7 +123,6 @@ class Instrument(Base):
 class Trade(Base):
     __tablename__ = "trades"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     position_id = Column(Integer, ForeignKey("positions.id"), nullable=False)
     date = Column(UTCDateTime, nullable=False)
     type = Column(String, nullable=False)  # 'buy' or 'sell'
@@ -131,7 +130,6 @@ class Trade(Base):
     price = Column(Integer, nullable=False)
     description = Column(Text)
 
-    account = relationship("Account", back_populates="trades")
     position = relationship("Position", back_populates="trades")
 
 
@@ -142,5 +140,4 @@ class Account(Base):
     description = Column(Text)
 
     transactions = relationship("Transaction", back_populates="account", cascade="all")
-    trades = relationship("Trade", back_populates="account", cascade="all")
     positions = relationship("Position", back_populates="account", cascade="all")

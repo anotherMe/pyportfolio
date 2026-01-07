@@ -1,7 +1,6 @@
 
 from datetime import datetime
 from datetime import date
-import dis
 
 import streamlit as st
 
@@ -46,10 +45,7 @@ with get_session() as session, session.begin():
                 selected_position_index = list(positions_map.keys()).index(work_on_position.id) # FIXME: still needed ?
 
             trade = Trade()
-            selected_account = st.selectbox(
-                "Account",
-                list(accounts_map.keys())
-            )
+
             selected_position = st.selectbox(
                 "Position",
                 list(positions_map.keys()),
@@ -77,7 +73,6 @@ with get_session() as session, session.begin():
                 else:
                     # TODO: add try / except here
                     position_id = positions_map.get(selected_position).id
-                    trade.account_id = accounts_map.get(selected_account).id
                     trade.position_id = position_id
                     trade.date = datetime.combine(trade_date, trade_time).replace(tzinfo=get_timezone())
                     trade.quantity = trade_quantity
@@ -87,7 +82,7 @@ with get_session() as session, session.begin():
                     # session.flush()
                     if trade_fee > 0:
                         fee_transaction = Transaction()
-                        fee_transaction.account_id = trade.account_id
+                        fee_transaction.account_id = trade.position.account_id
                         fee_transaction.trade_id = trade.id
                         fee_transaction.date = trade.date
                         fee_transaction.type = 'fee'
@@ -110,7 +105,8 @@ with get_session() as session, session.begin():
                 selected_account = st.selectbox(
                     "Account",
                     list(accounts_map.keys()),
-                    index=list(accounts_map.keys()).index(trade.account.name), 
+                    index=list(accounts_map.keys()).index(trade.position.account.name),
+                    disabled=True
                 )
                 selected_position = st.selectbox(
                     "Position",
@@ -135,10 +131,7 @@ with get_session() as session, session.begin():
 
                 if submitted:
                     try:
-                        account = accounts_map.get(selected_account)
                         position_id = positions_map.get(selected_position)
-
-                        trade.account_id = account.id
                         trade.position_id = position_id.id
                         trade.date = datetime.combine(trade_date, trade_time).replace(tzinfo=get_timezone())
                         trade.type = selected_type

@@ -5,11 +5,11 @@ from sqlalchemy.orm import Session
 from lib.models import Position
 
 
-def get_all_trades(session, account=None):
-    if account:
-        return session.query(Trade).filter_by(account_id=account.id).order_by(Trade.date).all()
-    else:
-        return session.query(Trade).order_by(Trade.date).all()
+def get_all_trades(session):
+    return session.query(Trade).order_by(Trade.date).all()
+    
+def get_all_trades_by_account(session, account):
+    return session.query(Trade).filter_by(account_id=account.id).order_by(Trade.date).all()
 
 def get_trades_for_position_list(session: Session, position_ids: list[int]) -> list[Trade]:
     

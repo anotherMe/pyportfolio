@@ -1,13 +1,12 @@
 
 import streamlit as st
 from lib.models import Trade
-from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
 from lib.database import read_from_db, get_session
 from lib.repo.instruments_repository import get_all_instruments
 import pandas as pd
 
 from lib.utils import confirm_delete_dialog
-from service.utils import account_selector, to_local
+from service.utils import to_local
 import lib.repo.trades_repository as trades_repo
 
 from logging_config import setup_logger
@@ -33,15 +32,10 @@ def delete_trade(item_id):
 
 with get_session() as session:
 
-    # --- Account selector ---
-    accounts = get_all_accounts(session)
-    account_selector(accounts) # Show sidebar account selector
-    current_account = get_account_by_name(session, st.session_state.account)
-
     # --- Fetch data ---
     instruments = get_all_instruments(session)
     instrument_map = {inst.name: inst for inst in instruments}
-    trades = trades_repo.get_all_trades(session, current_account)
+    trades = trades_repo.get_all_trades(session)
     # latest_trades = session.query(Trade).join(trade.position.instrument).order_by(Trade.date.desc()).limit(10).all()
 
     if not trades:
@@ -111,11 +105,11 @@ with get_session() as session:
         selected_trade: Trade = filtered_trades[dataframe_index]
         with st.container(horizontal=True):
             # st.space("stretch")
-            if st.button("Detail"):
-                st.session_state.trade_id = selected_trade.id
-                st.switch_page("pages/trades_detail.py")
+            if st.button("Delete", type="primary"):
+                confirm_delete_dialog(f"Are you sure you want to delete trade {selected_trade.id} ?", selected_trade.id, delete_trade)
             if st.button("Edit", type="secondary"):
                 st.session_state.trade_id = selected_trade.id
                 st.switch_page("pages/trades_edit.py")
-            if st.button("Delete", type="primary"):
-                confirm_delete_dialog(f"Are you sure you want to delete trade {selected_trade.id} ?", selected_trade.id, delete_trade)
+            if st.button("Detail"):
+                st.session_state.trade_id = selected_trade.id
+                st.switch_page("pages/trades_detail.py")

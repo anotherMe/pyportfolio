@@ -44,7 +44,7 @@ with get_session() as session:
         currency = Currency.from_code(trade.position.instrument.currency)
 
         col1, col2, col3 = st.columns([1,1,1])
-        col1.write(f"Account: {trade.account.name}")
+        col1.write(f"Account: {trade.position.account.name}")
         col2.write(f"Instrument: {trade.position.instrument.name}")
         col3.write(f"ISIN: {trade.position.instrument.isin}")
         
