@@ -23,36 +23,22 @@
 
 # Do
 
+- still missing the "Add new Position" function
 - add some other type of categorization in Instruments:
     - ETF vs stocks
     - Bond ETF vs Equity ETF vs ETC
-    
-
-- add all transactions (fee, div and taxes ) in totals ( eg: Portfolio overview )
-    - add a "transactions" column ?
-    - change sign of Transaction amount ( already existent and when adding )
-
-- the "Add/Edit" page doesn't work as expected
-
-- remove "Instrument detail" page ? We already show them in "Position details" page
-
 - add fancy prices chart in "Position detail" page
+- Add yearly PnL to "Position detail" page
+- set the default page to "Positions list"
+- add Instrument filtering to "Position list" page
 
+- remove "account_id" column from Trade table ( leave it in Transaction table for general expenses )
 
 
 # Doing
 
-- Position refactoring
-
-    - [ ] Add yearly PnL
-    - [X] show/calculate transactions amount in "Positions list"
-    - [X] Transaction is no longer linked to Trade but to Position
-    - [X] Trade is linked to Position as well
-    - [X] Positions list must be rewritten: now it's an actual list of Positions
-    - [X] sum "Realized PnL" and "Unrealized PnL" in "Positions list" page ?
-    - [X] Add a "Position detail" page
-    - [X] Add a "Position service" file
-    - [X] Add a "Position add / edit" page
-    - [ ] Tidy up "Position detail" page
+- Remove "instrument_id" from Trade
+- Remove "Trades list" and "Transaction list" pages ( I mean, move the st.dataframe code to the positions page, comprising of the selection mechanics )
+- Trades can no longer being added standalone ( it doesn't make sense to select a Position ); only adding Trades aftering selecting a Position should be allowed
 
 # Done

@@ -26,6 +26,8 @@ class PositionDTO:
     position_id: int
     instrument_id: int = 0
     instrument_name: str = ""
+    instrument_isin: str = ""
+    instrument_ticker: str = ""
     opening_date: Optional[UTCDateTime] = None
     avg_buy_price: float = 0.00
     total_buy: float = 0.00
@@ -60,6 +62,8 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
         positionDTO = PositionDTO(position.id)
         positionDTO.instrument_id = position.instrument.id
         positionDTO.instrument_name = position.instrument.name
+        positionDTO.instrument_isin = position.instrument.isin
+        positionDTO.instrument_ticker = position.instrument.ticker
 
         # Get latest price for this instrument
         latest_price_entry = next((priceDTO for priceDTO in latest_prices if priceDTO.instrument_id == position.instrument.id), None)

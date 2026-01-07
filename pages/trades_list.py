@@ -42,7 +42,7 @@ with get_session() as session:
     instruments = get_all_instruments(session)
     instrument_map = {inst.name: inst for inst in instruments}
     trades = trades_repo.get_all_trades(session, current_account)
-    # latest_trades = session.query(Trade).join(Trade.instrument).order_by(Trade.date.desc()).limit(10).all()
+    # latest_trades = session.query(Trade).join(trade.position.instrument).order_by(Trade.date.desc()).limit(10).all()
 
     if not trades:
         st.info("No trades found")
@@ -53,9 +53,9 @@ with get_session() as session:
     if search_term:
         filtered_trades = [
             trade for trade in trades
-            if search_term in (trade.instrument.isin or "").lower()
-            or search_term in (trade.instrument.ticker or "").lower()
-            or search_term in (trade.instrument.name or "").lower()
+            if search_term in (trade.position.instrument.isin or "").lower()
+            or search_term in (trade.position.instrument.ticker or "").lower()
+            or search_term in (trade.position.instrument.name or "").lower()
         ]
     else:
         filtered_trades = trades
@@ -69,8 +69,8 @@ with get_session() as session:
         
         latest_trade_detail = [{
             "trade_id": t.id,
-            "Instrument": t.instrument.name,
-            "ISIN": t.instrument.isin,
+            "Instrument": t.position.instrument.name,
+            "ISIN": t.position.instrument.isin,
             "Date": to_local(t.date),
             "Type": "➕ BUY" if t.type.lower() == "buy" else "➖ SELL",
             "Quantity": t.quantity,

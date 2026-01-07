@@ -41,12 +41,12 @@ with get_session() as session:
     trade = session.get(Trade, st.session_state.trade_id)
     with st.container(border=True):
 
-        currency = Currency.from_code(trade.instrument.currency)
+        currency = Currency.from_code(trade.position.instrument.currency)
 
         col1, col2, col3 = st.columns([1,1,1])
         col1.write(f"Account: {trade.account.name}")
-        col2.write(f"Instrument: {trade.instrument.name}")
-        col3.write(f"ISIN: {trade.instrument.isin}")
+        col2.write(f"Instrument: {trade.position.instrument.name}")
+        col3.write(f"ISIN: {trade.position.instrument.isin}")
         
         col1, col2, col3, col4 = st.columns([3,1,1,1])
         col1.write(f"Date: {to_local(trade.date)}")
@@ -66,12 +66,12 @@ with get_session() as session:
         # --- Related transactions ---
         st.divider()
         st.write("Transactions:")
-        if trade.transactions:                        
+        if trade.position.transactions:                        
             txn_detail = [{
                 "Type": txn.type,
                 "Amount (€)": f"{read_from_db(txn.amount):.2f}",
                 "Date": to_local(txn.date)
-            } for txn in trade.transactions]
+            } for txn in trade.position.transactions]
             st.dataframe(pd.DataFrame(txn_detail))
         else:
             st.info("No transactions available")

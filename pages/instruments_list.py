@@ -17,7 +17,7 @@ if 'instrument_id' not in st.session_state:
 
 
 def clear_search():
-    st.session_state.search_term = ""
+    st.session_state.instruments_list_search_term = ""
 
 def delete_instrument(item_id):
     with get_session() as session, session.begin():
@@ -49,7 +49,6 @@ with col2:
 
         
 if search_term:
-    st.session_state.instruments_list_search_term = search_term
     filtered_instruments = [
         instrument for instrument in instruments
         if search_term in (instrument.isin or "").lower()
@@ -106,12 +105,13 @@ if st_dataframe["selection"]["rows"]:
     selected_instrument: Instrument = filtered_instruments[dataframe_index]
     with st.container(horizontal=True):
         # st.space("stretch")
-        if st.button("Detail"):
-            st.session_state.instrument_id = selected_instrument.id
-            st.switch_page("pages/instruments_detail.py")
-        if st.button("Edit", type="secondary"):
-            st.session_state.instrument_id = selected_instrument.id
-            st.switch_page("pages/instruments_edit.py")
         if st.button("Delete", type="primary"):
             confirm_delete_dialog(f"Are you sure you want to delete trade {selected_instrument.id} ?", 
                                   selected_instrument.id, delete_instrument)
+        if st.button("Edit", type="secondary"):
+            st.session_state.instrument_id = selected_instrument.id
+            st.switch_page("pages/instruments_edit.py")
+        if st.button("Detail"):
+            st.session_state.instrument_id = selected_instrument.id
+            st.switch_page("pages/instruments_detail.py")
+

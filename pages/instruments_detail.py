@@ -82,27 +82,6 @@ with get_session() as session, session.begin():
             if st.button("🗑️ Delete", key=f"delete_{inst.id}"):
                 confirm_delete_dialog(f"Are you sure you want to delete instrument {inst.id} ?", inst.id, delete_instrument)
 
-        # --- Related trades ---
-        st.divider()
-        st.write("Trades:")
-        if inst.trades:
-            inst_trades = [{
-                "Account": trade.account.name,
-                "Type": "📥 Buy" if trade.type.lower() == "buy" else "📤 Sell" if trade.type.lower() == "sell" else trade.type,
-                "Date": to_local(trade.date),
-                "Qty": trade.quantity,
-                "Price": read_from_db(trade.price)
-            } for trade in inst.trades]
-            st.dataframe(data=pd.DataFrame(inst_trades), hide_index=True)
-        else:
-            st.info("No trades available")
-        cols = st.columns([5,1])
-        with cols[1]:
-            if st.button("Add new trade", key=f"add_trade_button_{inst.id}"):
-                st.session_state.trade_id = None
-                st.session_state.instrument_id = inst.id
-                st.switch_page("pages/trades_edit.py")
-
     with st.container(horizontal=True):
         st.space("stretch")
         if st.button("Back to list"):

@@ -55,6 +55,8 @@ def format_and_style_positions(df):
 
     return styled
 
+def clear_search():
+    st.session_state.search_term = ""
 
 # --------------------------------------------------------------------------------
 # -- Streamlit page
@@ -85,7 +87,8 @@ with get_session() as session:
     account_selector(accounts) # Show sidebar account selector
     current_account = get_account_by_name(session, st.session_state.account)
 
-    # --- Retrieve positions ---
+    # --- Retrieve Open/Closed positions ---
+
     include_closed = True
     include_open = True
     if st.session_state.status_filter == 'open':
@@ -99,9 +102,31 @@ with get_session() as session:
         st.write("No positions found.")
         st.stop()
 
+    # --- Filter positions by Instrument ---
+
+    col1, col2 = st.columns([5, 1], vertical_alignment="bottom")
+    with col1:
+        # st.space("stretch")
+        search_term = st.text_input("🔍 Search by Instrument ISIN, Ticker, or Name", key="search_term" ).strip().lower()
+    with col2:
+        st.button(label="", icon=":material/clear_all:", on_click=clear_search)
+
+    if search_term:
+        mask = (
+            positions_df['instrument_name'].str.contains(search_term, na=False, case=False) |
+            positions_df['instrument_isin'].str.contains(search_term, na=False, case=False) |
+            positions_df['instrument_ticker'].str.contains(search_term, na=False, case=False)
+        )
+
+        filtered_positions_df = positions_df[mask]
+    else:
+        filtered_positions_df = positions_df
+
+    st.space()
+
     # --- Show dataframe
 
-    styled_positions = format_and_style_positions(positions_df)
+    styled_positions = format_and_style_positions(filtered_positions_df)
     st_dataframe = st.dataframe(
         data=styled_positions,
         column_config={
@@ -110,6 +135,8 @@ with get_session() as session:
             "opening_date_styled": "First buy on",
             "instrument_id": None,
             "instrument_name": "Instrument",
+            "instrument_isin": None,
+            "instrument_ticker": None,
             "remaining_quantity": None,
             "position_closed": "Remaining Qty",
             # "avg_buy_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
@@ -140,8 +167,8 @@ with get_session() as session:
 
     if st_dataframe["selection"]["rows"]:
         dataframe_index = st_dataframe["selection"]["rows"][0]
-        selected_position_id = positions_df.iloc[dataframe_index].position_id.item()
-        selected_instrument_id = positions_df.iloc[dataframe_index].instrument_id.item()
+        selected_position_id = filtered_positions_df.iloc[dataframe_index].position_id.item()
+        selected_instrument_id = filtered_positions_df.iloc[dataframe_index].instrument_id.item()
         with st.container(horizontal=True):
             # st.space("stretch")
             # if st.button("Instrument details"):
@@ -158,8 +185,8 @@ with get_session() as session:
 
     # --- Totals --- 
 
-    total_buy_price = positions_df["total_buy"].sum()
-    total_pnl = (positions_df["realized_pnl"] + positions_df["unrealized_pnl"]).sum()
+    total_buy_price = filtered_positions_df["total_buy"].sum()
+    total_pnl = (filtered_positions_df["realized_pnl"] + filtered_positions_df["unrealized_pnl"]).sum()
     total_percent_pnl = 0
 
     color = "green" if total_pnl > 0 else "red"

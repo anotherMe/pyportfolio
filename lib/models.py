@@ -115,7 +115,6 @@ class Instrument(Base):
     description = Column(Text)
     currency = Column(String, nullable=False)
 
-    trades = relationship("Trade", back_populates="instrument", cascade="all")
     prices = relationship("Price", back_populates="instrument", cascade="all")
     ohlcvs = relationship("OHLCV", back_populates="instrument", cascade="all")
     positions = relationship("Position", back_populates="instrument", cascade="all")
@@ -126,7 +125,6 @@ class Trade(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     position_id = Column(Integer, ForeignKey("positions.id"), nullable=False)
-    instrument_id = Column(Integer, ForeignKey("instruments.id"), nullable=False)
     date = Column(UTCDateTime, nullable=False)
     type = Column(String, nullable=False)  # 'buy' or 'sell'
     quantity = Column(Integer, nullable=False)  # integer shares
@@ -135,7 +133,6 @@ class Trade(Base):
 
     account = relationship("Account", back_populates="trades")
     position = relationship("Position", back_populates="trades")
-    instrument = relationship("Instrument", back_populates="trades")
 
 
 class Account(Base):
