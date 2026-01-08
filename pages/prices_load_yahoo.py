@@ -5,7 +5,7 @@ import streamlit as st
 import time
 import math
 
-from lib.database import get_session
+from lib.database import get_session, read_from_db
 from lib.models import OHLCV
 from lib.repo.instruments_repository import get_all_instruments
 from lib.repo.ohlcvs_repository import get_latest_prices
@@ -40,7 +40,7 @@ else:
             # "open": o.open,
             # "high": o.high,
             # "low": o.low,
-            "close": o.close,
+            "close": read_from_db(o.close),
             # "volume": o.volume,
         } for o in ohlcvs
     ])
@@ -73,12 +73,12 @@ else:
         # --- Configure columns ---
         column_config = {
             "id": None,
-            "name": st.column_config.TextColumn(label="Name", width="medium"),
+            "name": st.column_config.TextColumn(label="Name"),
             "name_long": None,
             # "Descr": st.column_config.TextColumn(width="large"),
             "instrument_id": None,
-            "timestamp": st.column_config.DatetimeColumn(label="Latest price", width="large"),
-            "close": None,
+            "timestamp": st.column_config.DatetimeColumn(label="Updated", format="YYYY-MM-DD"),
+            "close": st.column_config.NumberColumn(label="Latest close", format="euro"), # FIXME: currency format should be dynamic
             "ticker": st.column_config.LinkColumn(
                 label="Ticker",
                 display_text=r"/quote/([^/?#]+)",

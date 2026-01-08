@@ -28,7 +28,7 @@ with get_session() as session:
                 display_text=r"/quote/([^/?#]+)"
             ),
             "last_close": st.column_config.NumberColumn(label="Last close", format="euro"), # FIXME: currency format should be dynamic
-            "timestamp": st.column_config.DatetimeColumn(label="Timestamp"),
+            "timestamp": st.column_config.DatetimeColumn(label="Timestamp", format="YYYY-MM-DD"),
         },
         hide_index=True
     )   
