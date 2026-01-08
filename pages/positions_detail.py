@@ -61,7 +61,12 @@ with get_session() as session, session.begin():
         
         # --- Row: Instrument details ---
 
-        st.subheader(inst.name)
+        with st.container(horizontal=True):
+            st.subheader(inst.name)
+            if st.button("Edit position"):
+                st.session_state.position_id = position.id
+                st.session_state.instrument_id = position.instrument.id
+                st.switch_page("pages/positions_edit.py")
 
         if inst.name_long:
             stripped = inst.name_long.strip()
