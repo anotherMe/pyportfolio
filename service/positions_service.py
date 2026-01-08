@@ -1,4 +1,5 @@
 
+from collections import deque
 from typing import Optional
 from attr import dataclass
 import pandas as pd
@@ -10,7 +11,6 @@ from lib.repo.positions_repository import get_all_positions
 from lib.repo.transactions_repository import get_transactions_for_position_list
 from logging_config import setup_logger
 from service import prices_service
-from service.custom_exceptions import PortfolioException
 
 log = setup_logger(__name__)
 
@@ -24,20 +24,30 @@ class PositionDTO:
     """Data Transfer Object for Position summary."""
 
     position_id: int
+    
     instrument_id: int = 0
     instrument_name: str = ""
     instrument_isin: str = ""
     instrument_ticker: str = ""
+
     opening_date: Optional[UTCDateTime] = None
-    avg_buy_price: float = 0.00
-    total_buy: float = 0.00
-    realized_pnl: float = 0.00
+
+    total_invested: float = 0.00
+    
     latest_price: float = 0.00
     latest_price_date: Optional[UTCDateTime] = None
-    unrealized_pnl: float = 0.00
+    
     transactions_amount: float = 0.00
     closing_date: Optional[UTCDateTime] = None
     remaining_quantity: int = 0
+    remaining_cost_basis: float = 0.00
+    
+    # avg_buy_price: float = 0.00
+
+    realized_pnl: float = 0.00
+    unrealized_pnl: float = 0.00
+    realized_pnl_percent: float = 0.00
+    unrealized_pnl_percent: float = 0.00
 
 
 # ----------------------------
@@ -65,15 +75,20 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
         positionDTO.instrument_isin = position.instrument.isin
         positionDTO.instrument_ticker = position.instrument.ticker
 
-        # Get latest price for this instrument
+        # --- Get latest price for this instrument --- 
+
         latest_price_entry = next((priceDTO for priceDTO in latest_prices if priceDTO.instrument_id == position.instrument.id), None)
         positionDTO.latest_price = latest_price_entry.price if latest_price_entry else 0.0
         positionDTO.latest_price_date = latest_price_entry.date if latest_price_entry else None
 
-        # Get Trades for this position
+
+        # --- Get Trades for this position ---
+
         trades = [trade for trade in all_trades if trade.position_id == position.id]
 
-        # compute transaction amount
+
+        # --- Compute transactions amount --- 
+
         for transaction in all_transactions: 
             if transaction.position_id == position.id:
                 if transaction.type in ('div'):
@@ -81,48 +96,62 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
                 else:
                     positionDTO.transactions_amount -= read_from_db(transaction.amount)
 
+
+        # --- Apply FIFO logic --- 
+
+        fifo_queue: deque = deque()
         for current_trade in trades:
-                
-            if positionDTO.remaining_quantity <= 0 and positionDTO.closing_date is not None:
-                raise PortfolioException(__name__, "Trade encountered after position was closed.")
-                
+
+            qty = current_trade.quantity
+            price = read_from_db(current_trade.price)
+
             if current_trade.type == "buy":
+                
+                fifo_queue.append({"qty": qty, "cost_per_unit": price})
+                positionDTO.total_invested += qty * price
 
-                if positionDTO.remaining_quantity == 0:  # first buy
+                if len(fifo_queue) == 1:  # First Buy trade sets the opening date
                     positionDTO.opening_date = current_trade.date
-                    positionDTO.avg_buy_price = read_from_db(current_trade.price)
-                    
-                else:
-                    total_cost = (positionDTO.avg_buy_price * (positionDTO.remaining_quantity - current_trade.quantity)) + (read_from_db(current_trade.price) * current_trade.quantity)
-                    positionDTO.avg_buy_price = total_cost / positionDTO.remaining_quantity
-                    
-                positionDTO.remaining_quantity += current_trade.quantity
-                positionDTO.total_buy += read_from_db(current_trade.price) * current_trade.quantity
 
-            elif current_trade.type == "sell":
+            else:  # Sell trade
 
-                if positionDTO.remaining_quantity == 0:
-                    raise PortfolioException(__name__, "Sell trade encountered without a preceding buy trade.")
+                sell_qty = qty
+                sell_price = price
 
-                positionDTO.realized_pnl += ( read_from_db(current_trade.price) - positionDTO.avg_buy_price ) * current_trade.quantity
+                while sell_qty > 0 and fifo_queue:
 
-                positionDTO.remaining_quantity -= current_trade.quantity
+                    oldest_lot = fifo_queue[0]
+                    matched_qty = min(oldest_lot["qty"], sell_qty)
 
-                if positionDTO.remaining_quantity < 0:
-                    raise PortfolioException(__name__, "Sell quantity exceeds available bought quantity in FIFO calculation.")
+                    # Realized PnL from this matched chunk
+                    positionDTO.realized_pnl += matched_qty * (sell_price - oldest_lot["cost_per_unit"])
 
-                # Check if position is now closed ( ie: all quantity sold)
-                if positionDTO.remaining_quantity == 0:
-                    positionDTO.closing_date = current_trade.date
-                    continue
+                    # Reduce quantities
+                    oldest_lot["qty"] -= matched_qty
+                    sell_qty -= matched_qty
 
-        # If current position is still open, calculate unrealized PnL on remaining quantity
-        if positionDTO.remaining_quantity > 0:
 
-            if positionDTO.closing_date is not None:
-                raise PortfolioException(__name__, "Position with remaining quantity has a closing date.")
+                    # Remove lot if fully consumed
+                    if oldest_lot["qty"] == 0:
+                        fifo_queue.popleft()
+                        positionDTO.closing_date = current_trade.date  # update closing date only when a lot is fully sold
 
-            positionDTO.unrealized_pnl = ( positionDTO.latest_price * positionDTO.remaining_quantity ) - ( positionDTO.avg_buy_price * positionDTO.remaining_quantity )
+
+        # --- Compute remaining quantity and cost basis ---
+
+        for lot in fifo_queue:
+            positionDTO.remaining_quantity += lot["qty"]
+            positionDTO.remaining_cost_basis += lot["qty"] * lot["cost_per_unit"]
+
+
+        # --- PnL Calculations ---
+
+        current_value = positionDTO.remaining_quantity * positionDTO.latest_price
+        positionDTO.unrealized_pnl = current_value - positionDTO.remaining_cost_basis
+
+        positionDTO.realized_pnl_percent = (positionDTO.realized_pnl / positionDTO.total_invested * 100) if positionDTO.total_invested > 0 else 0.0
+        positionDTO.unrealized_pnl_percent = (positionDTO.unrealized_pnl / positionDTO.remaining_cost_basis * 100) if positionDTO.remaining_cost_basis > 0 else 0.0
+
 
         positionDTOs.append(positionDTO)
 
@@ -151,11 +180,8 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
 
     if not df.empty:
         df["position_closed"] = df["remaining_quantity"].apply(lambda x: str(x) if x > 0 else "Position closed")
-        # df["pnl"] = df["realized_pnl"] + df["unrealized_pnl"]
         df["pnl"] = df["realized_pnl"] + df["unrealized_pnl"] + df["transactions_amount"]
-        df["pnl_percent"] = df["pnl"] / df["total_buy"]
-        # TODO: add yearly PnL
-
+        df["pnl_percent"] = df["pnl"] / df["total_invested"]
         # TODO: do we still need sorting here ?
         # df = df.sort_values(by=["instrument_id", "closing_date"], ascending=[True, True, True])
         df = df.sort_values(by=["opening_date"], ascending=[True])
@@ -175,6 +201,6 @@ def get_position_summary(session, position: Position):
 
     # p.pnl = p.realized_pnl + p.unrealized_pnl
     p.pnl = p.realized_pnl + p.unrealized_pnl + p.transactions_amount
-    p.pnl_percent = p.pnl / p.total_buy
+    p.pnl_percent = p.pnl / p.total_invested
 
     return p

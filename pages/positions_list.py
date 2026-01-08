@@ -138,16 +138,18 @@ with get_session() as session:
             "instrument_isin": None,
             "instrument_ticker": None,
             "remaining_quantity": None,
+            "remaining_cost_basis": None,
             "position_closed": "Remaining Qty",
-            # "avg_buy_price": st.column_config.NumberColumn("Avg buy price", format="euro"),
             "avg_buy_price": None,
-            # "total_buy": st.column_config.NumberColumn("Total buy cost", format="euro"),
-            "total_buy": None,
+            # "total_invested": st.column_config.NumberColumn("Total buy cost", format="euro"),
+            "total_invested": None,
             "closing_price": st.column_config.NumberColumn("Market price", format="euro"),
             "realized_pnl": None,
+            "realized_pnl_percent": None,
             "latest_price": None,
             "latest_price_date": None,
             "unrealized_pnl": None,
+            "unrealized_pnl_percent": None,
             "pnl": None,
             "pnl_styled": st.column_config.NumberColumn("PnL", format="euro"),
             "transactions_amount": None,
@@ -185,7 +187,7 @@ with get_session() as session:
 
     # --- Totals --- 
 
-    total_buy_price = filtered_positions_df["total_buy"].sum()
+    total_invested_sum = filtered_positions_df["total_invested"].sum()
     total_pnl = (filtered_positions_df["realized_pnl"] + filtered_positions_df["unrealized_pnl"]).sum()
     total_percent_pnl = 0
 
@@ -193,7 +195,7 @@ with get_session() as session:
     col1, col2 = st.columns([2,1])
     with col2:
         st.markdown(
-            f"<h3>Total buy: <span>{total_buy_price:,.2f} €</span></h3>",
+            f"<h3>Total buy: <span>{total_invested_sum:,.2f} €</span></h3>",
             unsafe_allow_html=True
         )
         st.markdown(
