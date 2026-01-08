@@ -17,6 +17,7 @@ def get_trades_for_position_list(session: Session, position_ids: list[int]) -> l
         session.query(Trade)
         .join(Position, Trade.position_id == Position.id)
         .filter(Position.id.in_(position_ids))
+        .order_by(Trade.date)
         .all()
     )
     return trades
