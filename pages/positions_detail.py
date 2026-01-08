@@ -116,7 +116,6 @@ with get_session() as session, session.begin():
         if position.trades:
 
             position_trades = [{
-                "Account": trade.account.name,
                 "Date": to_local(trade.date),
                 # "Type": "📥 Buy" if trade.type.lower() == "buy" else "📤 Sell" if trade.type.lower() == "sell" else trade.type,
                 "Type": "➕ BUY" if trade.type.lower() == "buy" else "➖ SELL",
