@@ -99,7 +99,13 @@ with get_session() as session, session.begin():
 
             trade = session.get(Trade, st.session_state.trade_id)
 
-            st.subheader(f"Editing Trade with ID: {trade.id}")
+            with st.container(horizontal=True):
+                st.subheader(f"Editing Trade with ID: {trade.id}")
+                if st.button("Clear selection"):
+                    st.session_state.trade_id = None
+                    st.session_state.position_id = None
+                    st.rerun()
+            
             with st.form("edit_trade"):
 
                 selected_account = st.selectbox(

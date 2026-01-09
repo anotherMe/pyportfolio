@@ -22,7 +22,12 @@ with get_session() as session, session.begin():
     position = None
     if st.session_state.position_id:
         position = session.get(Position, st.session_state.position_id)
-        st.subheader(f"Editing Position with ID: {position.id}")
+        with st.container(horizontal=True):
+            st.subheader(f"Editing Position with ID: {position.id}")
+            if st.button("Clear selection"):
+                st.session_state.position_id = None
+                st.session_state.instrument_id = None
+                st.rerun()
         if not position:
             st.error("Position not found.")
             st.stop()

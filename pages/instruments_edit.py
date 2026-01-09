@@ -20,10 +20,12 @@ with get_session() as session, session.begin():
     inst = None
     if st.session_state.instrument_id:
         inst = session.get(Instrument, st.session_state.instrument_id)
-        st.subheader(f"Editing Instrument with ID: {inst.id}")
-        if not inst:
-            st.error("Instrument not found.")
-            st.stop()
+        with st.container(horizontal=True):
+            st.subheader(f"Editing Instrument with ID: {inst.id}")
+            if st.button("Clear selection"):
+                st.session_state.instrument_id = None
+                st.rerun()
+
     else:
         st.subheader("Add new Instrument")
         inst = Instrument()

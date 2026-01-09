@@ -26,7 +26,13 @@ with get_session() as session, session.begin():
     if st.session_state.transaction_id:
 
         transaction = session.get(Transaction, st.session_state.transaction_id)
-        st.subheader(f"Editing Transaction with ID: {transaction.id}")
+
+        with st.container(horizontal=True):
+            st.subheader(f"Editing Transaction with ID: {transaction.id}")
+            if st.button("Clear selection"):
+                st.session_state.transaction_id = None
+                st.session_state.position_id = None
+                st.rerun()
     
         # --- Transaction form ---
         with st.form("dividend_form"):

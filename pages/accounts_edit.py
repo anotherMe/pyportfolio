@@ -14,25 +14,26 @@ with get_session() as session, session.begin():
     
     if st.session_state.account_id:
 
-        st.subheader("Edit Account")
+        account = session.get(Account, st.session_state.account_id)
 
-        acc = session.get(Account, st.session_state.account_id)
-        if not acc:
-            st.error("Account not found.")
-        else:
-            
-            # --- Account form ---
-            with st.form("account_form"):
-                acc.name = st.text_input("Name", value=acc.name or "")
-                acc.description = st.text_input("Description", value=acc.description or "") 
-                save = st.form_submit_button("💾 Save")
+        with st.container(horizontal=True):
+            st.subheader(f"Editing Account with ID: {st.session_state.account_id}")
+            if st.button("Clear selection"):
+                st.session_state.account_id = None
+                st.rerun()
+    
+        # --- Account form ---
+        with st.form("account_form"):
+            account.name = st.text_input("Name", value=account.name or "")
+            account.description = st.text_input("Description", value=account.description or "") 
+            save = st.form_submit_button("💾 Save")
 
-                if save:
-                    if not acc.name:
-                        st.warning("Name cannot be empty.")
-                    else:
-                        session.add(acc)
-                        st.success("✅ Account saved successfully!")
+            if save:
+                if not account.name:
+                    st.warning("Name cannot be empty.")
+                else:
+                    session.add(account)
+                    st.success("✅ Account saved successfully!")
 
     else:
 
@@ -40,19 +41,19 @@ with get_session() as session, session.begin():
         
         with st.form("account_form"):
 
-            acc = Account()
-            acc.name = st.text_input("Name")
-            acc.description = st.text_input("Description")
+            account = Account()
+            account.name = st.text_input("Name")
+            account.description = st.text_input("Description")
 
             col1, col2 = st.columns([7,1])
             with col2:
                 save = st.form_submit_button("💾 Save")
 
             if save:
-                if not acc.name:
+                if not account.name:
                     st.warning("Name cannot be empty.")
                 else:
-                    session.add(acc)
+                    session.add(account)
                     st.session_state.account_id = None
                     st.success("✅ Account saved successfully!")
     
