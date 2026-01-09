@@ -179,7 +179,15 @@ def get_positions_summary(session, account=None, include_closed=True, include_op
     df = pd.DataFrame([vars(p) for p in filtered_position_DTOs])
 
     if not df.empty:
-        df["position_closed"] = df["remaining_quantity"].apply(lambda x: str(x) if x > 0 else "Position closed")
+        # df["position_closed"] = df["remaining_quantity"].apply(lambda x: str(x) if x > 0 else "Position closed")
+        df["position_closed"] = df.apply(
+            lambda row: (
+                str(row["remaining_quantity"])
+                if row["remaining_quantity"] > 0
+                else "Closed on " + row["closing_date"].strftime("%Y-%m-%d")
+            ),
+            axis=1,
+        )
         df["pnl"] = df["realized_pnl"] + df["unrealized_pnl"] + df["transactions_amount"]
         df["pnl_percent"] = df["pnl"] / df["total_invested"]
         # TODO: do we still need sorting here ?
