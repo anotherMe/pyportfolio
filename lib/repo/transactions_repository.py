@@ -1,8 +1,8 @@
 
 from datetime import datetime
-
-from lib.models import Transaction
+from lib.models import Account, Trade, Transaction
 from lib.database import write_to_db
+from sqlalchemy.orm import Session
 
 
 def add_transaction(session, trans_type, amount, account, trade=None, description=None):
@@ -22,9 +22,21 @@ def add_transaction(session, trans_type, amount, account, trade=None, descriptio
 
 def get_all_transactions(session, account=None):
     if account:
-        return session.query(Transaction).filter_by(account_id=account.id).order_by(Transaction.date.desc()).all()
+        return session.query(Transaction).filter_by(account_id=account.id).order_by(Transaction.date).all()
     else:
-        return session.query(Transaction).all()
+        return session.query(Transaction).order_by(Transaction.date).all()
+
+def get_transactions_for_trade_list(session: Session, trade_ids: list[int], account: Account) -> list[Transaction]:
+    
+    trades = (
+        session.query(Transaction)
+        .join(Trade, Transaction.trade_id == Trade.id)
+        .filter(Trade.id.in_(trade_ids))
+        .filter(Transaction.account_id == account.id)
+        .order_by(Transaction.date)
+        .all()
+    )
+    return trades
 
 def delete_transaction(session, transaction_id):
     transaction = session.get(Transaction, transaction_id)

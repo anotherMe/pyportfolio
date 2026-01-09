@@ -23,18 +23,22 @@
 
 # Do
 
+- fix database & models ( missing FK )
+
+- add "Position" detail page
+
 - show instrument in transaction details / edit
 
 - add some other type of categorization in Instruments:
     - ETF vs stocks
     - Bond ETF vs Equity ETF vs ETC
     
-
 - add all transactions (fee, div and taxes ) in totals ( eg: Portfolio overview )
     - add a "transactions" column ?
     - change sign of Transaction amount ( already existent and when adding )
 
 # Doing
 
+- working on "Position" page
 
 # Done

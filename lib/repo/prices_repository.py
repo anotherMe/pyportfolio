@@ -146,3 +146,26 @@ def get_latest_prices(session):
     )
 
     return session.execute(query).fetchall()
+
+def get_latest_prices_for_instrument_list(session, inst_ids: list[int]):
+    
+    subquery = (
+        select(
+            Price.instrument_id,
+            func.max(Price.date).label("latest_date")
+        )
+        .where(Price.instrument_id.in_(inst_ids))
+        .group_by(Price.instrument_id)
+        .subquery()
+    )
+
+    stmt = (
+        select(Price.instrument_id, Price.price, subquery.c.latest_date.label("date"))
+        .join(
+            subquery,
+            (Price.instrument_id == subquery.c.instrument_id) &
+            (Price.date == subquery.c.latest_date)
+        )
+    )
+
+    return session.execute(stmt).all()
