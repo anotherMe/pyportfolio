@@ -38,11 +38,11 @@ with get_session() as session, session.begin():
 
         with st.form("add_trade"):
 
-            # if an instrument has been set from instrument_detail.py
+            # if a position has been set from positions_detail.py
             selected_position_index = None
             if st.session_state.position_id:
                 work_on_position = session.get(Position, st.session_state.position_id)
-                selected_position_index = list(positions_map.keys()).index(work_on_position.id) # FIXME: still needed ?
+                selected_position_index = list(positions_map.keys()).index(work_on_position.id)
 
             trade = Trade()
 
@@ -82,12 +82,12 @@ with get_session() as session, session.begin():
                     # session.flush()
                     if trade_fee > 0:
                         fee_transaction = Transaction()
-                        fee_transaction.account_id = trade.position.account_id
+                        fee_transaction.account_id = positions_map.get(selected_position).account_id
                         fee_transaction.trade_id = trade.id
                         fee_transaction.date = trade.date
                         fee_transaction.type = 'fee'
                         fee_transaction.amount = write_to_db(trade_fee)
-                        fee_transaction.description = f"Fee for {trade.type}ing {trade.quantity} of {selected_position.instrument.name}"
+                        fee_transaction.description = f"Fee for {trade.type}ing {trade.quantity} of {positions_map.get(selected_position).instrument.name}"
                         session.add(fee_transaction)
                     st.session_state.trade_id = None
                     st.session_state.position_id = position_id
@@ -137,8 +137,7 @@ with get_session() as session, session.begin():
 
                 if submitted:
                     try:
-                        position_id = positions_map.get(selected_position)
-                        trade.position_id = position_id.id
+                        trade.position_id = positions_map.get(selected_position).id
                         trade.date = datetime.combine(trade_date, trade_time).replace(tzinfo=get_timezone())
                         trade.type = selected_type
                         trade.quantity = qty
@@ -148,7 +147,7 @@ with get_session() as session, session.begin():
                         
                         st.success("Trade updated")
                         st.session_state.trade_id = trade.id
-                        st.session_state.position_id = position_id.id
+                        st.session_state.position_id = positions_map.get(selected_position).id
 
                     except Exception as e:
                         st.error(f"Error updating trade: {e}")

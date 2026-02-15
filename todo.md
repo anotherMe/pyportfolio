@@ -23,7 +23,6 @@
 
 # Do
 
-- still missing the "Add new Position" function
 - add some other type of categorization in Instruments:
     - ETF vs stocks
     - Bond ETF vs Equity ETF vs ETC

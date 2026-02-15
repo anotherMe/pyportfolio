@@ -130,7 +130,7 @@ with get_session() as session:
     st_dataframe = st.dataframe(
         data=styled_positions,
         column_config={
-            "position_id": None,
+            "position_id": st.column_config.NumberColumn("ID"),
             "opening_date": None,
             "opening_date_styled": "First buy on",
             "instrument_id": None,

@@ -34,6 +34,7 @@ with get_session() as session, session.begin():
     else:
         st.subheader("Add new Position")
         position = Position()
+        position.closed = False
 
     accounts = get_all_accounts(session)
     accounts_map = {account.name: account for account in accounts}

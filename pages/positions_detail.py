@@ -100,7 +100,7 @@ with get_session() as session, session.begin():
         col1.write(f"**Closing date:** {to_local(position_summary.closing_date) if position_summary.closing_date else 'N/A'}")
         col1.write(f"**Remaining quantity:** {position_summary.remaining_quantity}")
         # st.write(f"**Average buy price:** {format_currency(position_summary.avg_buy_price, Currency.from_code(inst.currency).symbol)}")
-        col1.write(f"**Total buy cost:** {format_currency(position_summary.total_invested, Currency.from_code(inst.currency).symbol)}")
+        col1.write(f"**Total invested:** {format_currency(position_summary.total_invested, Currency.from_code(inst.currency).symbol)}")
 
         col2.write(f"**Realized PnL:** {format_currency_color(position_summary.realized_pnl, Currency.from_code(inst.currency).symbol)}")
         col2.write(f"**Transactions amount:** {format_currency_color(position_summary.transactions_amount, Currency.from_code(inst.currency).symbol)}")
@@ -159,9 +159,9 @@ with get_session() as session, session.begin():
 
         cols = st.columns([5,1])
         with cols[1]:
-            if st.button("Add new trade", key=f"add_trade_button_{inst.id}"):
+            if st.button("Add new trade", key=f"add_trade_button_{position.id}"):
                 st.session_state.trade_id = None
-                st.session_state.position_id = inst.id
+                st.session_state.position_id = position.id
                 st.switch_page("pages/trades_edit.py")
 
         # -----------------------------------------------------------------------------
