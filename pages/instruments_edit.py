@@ -3,6 +3,7 @@ import streamlit as st
 from lib.database import get_session
 from lib.models import Instrument
 from lib.utils import is_valid_isin
+from lib.enums import Currency
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
@@ -37,7 +38,16 @@ with get_session() as session, session.begin():
         inst.description = st.text_area("Description", value=inst.description or "")
         inst.isin = st.text_input("ISIN", value=inst.isin or "")
         inst.ticker = st.text_input("Ticker", value=inst.ticker or "")
-        inst.currency = st.text_input("Currency", value=inst.currency or "EUR")
+        currency_options = list(Currency)
+        current_currency = inst.currency if isinstance(inst.currency, Currency) else Currency.EUR
+        currency_index = currency_options.index(current_currency)
+        selected_currency = st.selectbox(
+            "Currency",
+            options=currency_options,
+            format_func=lambda c: f"{c.name} – {c.full_name} ({c.symbol})",
+            index=currency_index,
+        )
+        inst.currency = selected_currency  # CurrencyType serialises to string on save
         inst.category = st.selectbox(label="Category", options=["acc", "dist"], index=(0 if not inst.category else ["acc", "dist"].index(inst.category)))
 
         col1, col2 = st.columns([7,1])

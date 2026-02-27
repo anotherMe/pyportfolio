@@ -1,47 +1,13 @@
 
-from datetime import timezone
-from sqlalchemy import Boolean, Column, DateTime, String, Integer, ForeignKey, Text, TypeDecorator, UniqueConstraint
+from sqlalchemy import Boolean, Column, DateTime, String, Integer, ForeignKey, Text, UniqueConstraint
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
+from lib.types import UTCDateTime, CurrencyType
+
 Base = declarative_base()
 
-
-# ==========================================================
-# Type decorators
-# ==========================================================
-
-
-class UTCDateTime(TypeDecorator):
-    """
-    Custom SQLAlchemy type that enforces UTC timestamps.
-    Guarantees all stored and loaded datetimes are timezone-aware and in UTC.
-    """
-    impl = DateTime(timezone=True)
-    cache_ok = True
-
-    def process_bind_param(self, value, dialect):
-        """
-        When writing to DB:
-            - Rejects naive datetimes.
-            - Converts aware datetimes to UTC.
-        """
-        if value is None:
-            return value
-        if value.tzinfo is None:
-            raise ValueError("naive datetime")
-        return value.astimezone(timezone.utc)
-
-    def process_result_value(self, value, dialect):
-        """
-        When reading from DB:
-            - Attaches UTC tzinfo to returned values.
-        """
-        if value is None:
-            return value
-        return value.replace(tzinfo=timezone.utc)
-    
 
 # ==========================================================
 #  Models
@@ -113,7 +79,7 @@ class Instrument(Base):
     name_long = Column(String)
     category = Column(String) # acc or dist
     description = Column(Text)
-    currency = Column(String, nullable=False)
+    currency = Column(CurrencyType, nullable=False)
 
     prices = relationship("Price", back_populates="instrument", cascade="all")
     ohlcvs = relationship("OHLCV", back_populates="instrument", cascade="all")
