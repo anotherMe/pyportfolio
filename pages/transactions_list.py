@@ -61,7 +61,7 @@ with get_session() as session:
             "Type": t.type,
             "Instrument": t.position.instrument.name if t.position else "",
             "Date": to_local(t.date),
-            "Amount (€)": read_from_db(t.amount),
+            "Amount": f"{read_from_db(t.amount):.2f} {t.position.instrument.currency.symbol if t.position and t.position.instrument and t.position.instrument.currency else '€'}",
             "Description": t.description or ""
         } for t in transactions
     ],

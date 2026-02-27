@@ -60,7 +60,7 @@ with get_session() as session, session.begin():
         # --- Row: Currency and Category ---
         col1, col2, col3 = st.columns([2,1,3])
         if inst.currency:
-            col1.write(f"**Currency:** {inst.currency or '-'}")
+            col1.write(f"**Currency:** {inst.currency.name} ({inst.currency.symbol})")
         if inst.ticker:
             col2.markdown(f"**Category**: {inst.category}")
 

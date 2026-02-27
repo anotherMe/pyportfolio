@@ -1,7 +1,6 @@
 
 import logging
 import streamlit as st
-from lib.enums import Currency
 import lib.repo.trades_repository as trades_repo
 from lib.database import read_from_db, get_session
 from lib.models import Trade
@@ -41,7 +40,7 @@ with get_session() as session:
     trade = session.get(Trade, st.session_state.trade_id)
     with st.container(border=True):
 
-        currency = Currency.from_code(trade.position.instrument.currency)
+        currency = trade.position.instrument.currency  # Currency enum member
 
         col1, col2, col3 = st.columns([1,1,1])
         col1.write(f"Account: {trade.position.account.name}")
@@ -52,7 +51,7 @@ with get_session() as session:
         col1.write(f"Date: {to_local(trade.date)}")
         col2.write(trade.type)
         col3.write(trade.quantity)
-        col4.write(f"{read_from_db(trade.price)} €")
+        col4.write(f"{read_from_db(trade.price)} {currency.symbol}")
 
         col1, col2, col3 = st.columns([7,1,1])
         with col2:
@@ -69,7 +68,7 @@ with get_session() as session:
         if trade.position.transactions:                        
             txn_detail = [{
                 "Type": txn.type,
-                "Amount (€)": f"{read_from_db(txn.amount):.2f}",
+                "Amount": f"{read_from_db(txn.amount):.2f} {currency.symbol}",
                 "Date": to_local(txn.date)
             } for txn in trade.position.transactions]
             st.dataframe(pd.DataFrame(txn_detail))

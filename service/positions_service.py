@@ -29,6 +29,8 @@ class PositionDTO:
     instrument_name: str = ""
     instrument_isin: str = ""
     instrument_ticker: str = ""
+    instrument_currency: str = ""
+    instrument_symbol: str = ""
 
     opening_date: Optional[UTCDateTime] = None
 
@@ -82,6 +84,8 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
         positionDTO.instrument_name = position.instrument.name
         positionDTO.instrument_isin = position.instrument.isin
         positionDTO.instrument_ticker = position.instrument.ticker
+        positionDTO.instrument_currency = position.instrument.currency.name
+        positionDTO.instrument_symbol = position.instrument.currency.symbol
 
         # --- Get latest price for this instrument --- 
 

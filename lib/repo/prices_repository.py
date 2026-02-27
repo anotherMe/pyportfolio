@@ -186,6 +186,7 @@ def get_latest_prices_for_prices_list(session) -> DataFrame:
         select(
             Instrument.name,
             Instrument.ticker,
+            Instrument.currency,
             price_latest.price,
             price_latest.date
         )
@@ -204,5 +205,9 @@ def get_latest_prices_for_prices_list(session) -> DataFrame:
     results = session.execute(query).fetchall()
 
     # convert into a pandas DataFrame
-    df = DataFrame(results, columns=["instrument_name", "instrument_ticker", "last_close", "timestamp"])
+    df = DataFrame(results, columns=["instrument_name", "instrument_ticker", "instrument_currency", "last_close", "timestamp"])
+    
+    # Extract the symbol from the Currency enum member
+    df["instrument_symbol"] = df["instrument_currency"].apply(lambda c: c.symbol if c else "")
+    
     return df

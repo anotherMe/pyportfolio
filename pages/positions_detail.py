@@ -2,7 +2,6 @@
 import pandas as pd
 import streamlit as st
 from lib.database import read_from_db, get_session
-from lib.enums import Currency
 from lib.models import Instrument, Position, Transaction
 from lib.models_ import Trade
 from lib.repo import trades_repository, transactions_repository
@@ -79,8 +78,10 @@ with get_session() as session, session.begin():
         if inst.ticker:
             col2.markdown(f"**Ticker**: [{inst.ticker}](https://finance.yahoo.com/quote/{inst.ticker})")
         if inst.currency:
-            col1.write(f"**Currency:** {inst.currency or '-'}")
+            col1.write(f"**Currency:** {inst.currency.name} ({inst.currency.symbol})")
         col2.markdown(f"**Category**: {inst.category}")
+
+        currency = inst.currency  # Currency enum member — sourced from CurrencyType
 
 
         if inst.description:
@@ -100,13 +101,13 @@ with get_session() as session, session.begin():
         col1.write(f"**Closing date:** {to_local(position_summary.closing_date) if position_summary.closing_date else 'N/A'}")
         col1.write(f"**Remaining quantity:** {position_summary.remaining_quantity}")
         # st.write(f"**Average buy price:** {format_currency(position_summary.avg_buy_price, Currency.from_code(inst.currency).symbol)}")
-        col1.write(f"**Total invested:** {format_currency(position_summary.total_invested, Currency.from_code(inst.currency).symbol)}")
+        col1.write(f"**Total invested:** {format_currency(position_summary.total_invested, currency.symbol)}")
 
-        col2.write(f"**Realized PnL:** {format_currency_color(position_summary.realized_pnl, Currency.from_code(inst.currency).symbol)}")
-        col2.write(f"**Transactions amount:** {format_currency_color(position_summary.transactions_amount, Currency.from_code(inst.currency).symbol)}")
-        col2.write(f"**Latest market price:** {format_currency(position_summary.latest_price, Currency.from_code(inst.currency).symbol)} ( as of {to_local(position_summary.latest_price_date) if position_summary.latest_price_date else 'N/A'} )")
-        col2.write(f"**Unrealized PnL:** {format_currency_color(position_summary.unrealized_pnl, Currency.from_code(inst.currency).symbol)}")
-        col2.write(f"**Total PnL:** {format_currency_color(position_summary.pnl, Currency.from_code(inst.currency).symbol)}")
+        col2.write(f"**Realized PnL:** {format_currency_color(position_summary.realized_pnl, currency.symbol)}")
+        col2.write(f"**Transactions amount:** {format_currency_color(position_summary.transactions_amount, currency.symbol)}")
+        col2.write(f"**Latest market price:** {format_currency(position_summary.latest_price, currency.symbol)} ( as of {to_local(position_summary.latest_price_date) if position_summary.latest_price_date else 'N/A'} )")
+        col2.write(f"**Unrealized PnL:** {format_currency_color(position_summary.unrealized_pnl, currency.symbol)}")
+        col2.write(f"**Total PnL:** {format_currency_color(position_summary.pnl, currency.symbol)}")
         pnl_percent = position_summary.pnl_percent * 100 if position_summary.pnl_percent is not None else None
         col2.write(f"**Total PnL:** {pnl_percent:.2f} %" if pnl_percent is not None else "N/A")
 
@@ -125,8 +126,8 @@ with get_session() as session, session.begin():
                 # "Type": "📥 Buy" if trade.type.lower() == "buy" else "📤 Sell" if trade.type.lower() == "sell" else trade.type,
                 "Type": "➕ BUY" if trade.type.lower() == "buy" else "➖ SELL",
                 "Qty": trade.quantity,
-                "Price": format_currency(read_from_db(trade.price), Currency.from_code(inst.currency).symbol),
-                "Total": format_currency(read_from_db(trade.price) * trade.quantity, Currency.from_code(inst.currency).symbol)
+                "Price": format_currency(read_from_db(trade.price), currency.symbol),
+                "Total": format_currency(read_from_db(trade.price) * trade.quantity, currency.symbol)
             } for trade in position.trades]
             trades_dataframe = st.dataframe(
                 data=pd.DataFrame(position_trades), 
@@ -174,7 +175,7 @@ with get_session() as session, session.begin():
 
             position_transactions = [{
                 "Type": txn.type,
-                "Amount (€)": f"{read_from_db(txn.amount):.2f}",
+                "Amount": f"{read_from_db(txn.amount):.2f} {currency.symbol}",
                 "Date": to_local(txn.date)
             } for txn in position.transactions]
 

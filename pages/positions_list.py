@@ -14,25 +14,25 @@ from service.utils import account_selector
 def format_and_style_positions(df):
     """Add formatted display columns and apply color styling with type icons."""
 
-    # Create human-friendly display columns
-    pnl_styled_col = df["pnl"]
-    transactions_amount_col = df["transactions_amount"]
-    pnl_percent_styled_col = df["pnl_percent"]
-    opening_date_styled_col = df["opening_date"]
-    closing_date_styled_col = df["closing_date"]
+    # Pre-format monetary columns as "1,234.56 $" using the per-row instrument_symbol.
+    # Done before Styler because format() callbacks receive a scalar with no row context.
+    def fmt_money(series):
+        return series.map(lambda v: f"{v:,.2f}") + " " + df["instrument_symbol"]
 
-    df.insert(len(df.columns), "pnl_styled", pnl_styled_col)
-    df.insert(len(df.columns), "transactions_amount_styled", transactions_amount_col)
-    df.insert(len(df.columns), "pnl_percent_styled", pnl_percent_styled_col)
-    df.insert(5, "opening_date_styled", opening_date_styled_col)
-    df.insert(len(df.columns), "closing_date_styled", closing_date_styled_col)
+    df.insert(len(df.columns), "pnl_styled", fmt_money(df["pnl"]))
+    df.insert(len(df.columns), "transactions_amount_styled", fmt_money(df["transactions_amount"]))
+    df.insert(len(df.columns), "pnl_percent_styled", df["pnl_percent"])
+    df.insert(5, "opening_date_styled", df["opening_date"])
+    df.insert(len(df.columns), "closing_date_styled", df["closing_date"])
 
     def color_price(v):
-        color = "green" if v > 0 else "red" if v < 0 else "gray"
+        # v is a pre-formatted string like "1,234.56 $"; parse the numeric part
+        try:
+            numeric = float(str(v).split()[0].replace(",", ""))
+        except (ValueError, IndexError):
+            numeric = 0
+        color = "green" if numeric > 0 else "red" if numeric < 0 else "gray"
         return f"color: {color}; font-weight: bold;"
-
-    def format_price(v):
-        return f"{v:,.2f} €"  # TODO: manage currency dynamically ?
 
     def format_percent(v):
         return f"{v*100:,.2f} %"
@@ -40,13 +40,13 @@ def format_and_style_positions(df):
     def format_date(v):
         return "" if pd.isna(v) else v.strftime('%Y-%m-%d %H:%M:%S')
 
-    # Apply styles
+    # Apply styles — pnl_styled / transactions_amount_styled are already strings, pass through
     styled = (
         df.style
         .format({
-            "pnl_styled": format_price,
+            "pnl_styled": lambda v: v,
             "pnl_percent_styled": format_percent,
-            "transactions_amount_styled": format_price,
+            "transactions_amount_styled": lambda v: v,
             "closing_date_styled": format_date,
             "opening_date_styled": format_date,
         })
@@ -137,13 +137,15 @@ with get_session() as session:
             "instrument_name": "Instrument",
             "instrument_isin": None,
             "instrument_ticker": None,
+            "instrument_currency": None,
+            "instrument_symbol": None,
             "remaining_quantity": None,
             "remaining_cost_basis": None,
             "position_closed": "Remaining Qty",
             "avg_buy_price": None,
             # "total_invested": st.column_config.NumberColumn("Total buy cost", format="euro"),
             "total_invested": None,
-            "closing_price": st.column_config.NumberColumn("Market price", format="euro"),
+            "closing_price": "Market price",
             "realized_pnl": None,
             "realized_pnl_percent": None,
             "latest_price": None,
@@ -151,7 +153,7 @@ with get_session() as session:
             "unrealized_pnl": None,
             "unrealized_pnl_percent": None,
             "pnl": None,
-            "pnl_styled": st.column_config.NumberColumn("PnL", format="euro"),
+            "pnl_styled": "PnL",
             "transactions_amount": None,
             # "transactions_amount_styled": st.column_config.NumberColumn("Transactions amount", format="euro"),
             "transactions_amount_styled": None,

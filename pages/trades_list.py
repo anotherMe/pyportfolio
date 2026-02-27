@@ -68,7 +68,7 @@ with get_session() as session:
             "Date": to_local(t.date),
             "Type": "➕ BUY" if t.type.lower() == "buy" else "➖ SELL",
             "Quantity": t.quantity,
-            "Price": f"{read_from_db(t.price)}"
+            "Price": f"{read_from_db(t.price)} {t.position.instrument.currency.symbol if t.position.instrument.currency else ''}"
         } for t in filtered_trades]
         
         df_latest = pd.DataFrame(latest_trade_detail)

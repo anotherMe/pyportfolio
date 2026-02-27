@@ -73,7 +73,7 @@ class OHLCV(Base):
 class Instrument(Base):
     __tablename__ = "instruments"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    isin = Column(String, unique=True)
+    isin = Column(String)
     ticker = Column(String)
     name = Column(String, nullable=False)
     name_long = Column(String)

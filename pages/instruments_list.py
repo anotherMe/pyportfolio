@@ -72,7 +72,7 @@ for inst in filtered_instruments:
         "Name": inst.name,
         "ISIN": f"https://www.justetf.com/en/etf-profile.html?isin={inst.isin}" if inst.isin else "",
         "Ticker": f"https://finance.yahoo.com/quote/{inst.ticker}" if inst.ticker else "",
-        "Currency": inst.currency or "",
+        "Currency": inst.currency.name if inst.currency else "",
         "Type": inst.category or "",
     })
 

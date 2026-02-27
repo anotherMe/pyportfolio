@@ -13,7 +13,12 @@ with get_session() as session:
 
     # Convert to DataFrame
     df = get_latest_prices_for_prices_list(session)
-    df["last_close"] = df["last_close"].apply(lambda x: read_from_db(x) if x else None)
+    
+    # Format the price with the dynamically queried currency symbol
+    df["last_close_styled"] = df.apply(
+        lambda row: f"{read_from_db(row['last_close']):,.2f} {row['instrument_symbol']}" if row['last_close'] else "", 
+        axis=1
+    )
     df["instrument_ticker"] = df["instrument_ticker"].apply(lambda x: f"https://finance.yahoo.com/quote/{x}" if x else "")
     df["timestamp"] = df["timestamp"].apply(lambda x: to_local(x))
 
@@ -27,7 +32,10 @@ with get_session() as session:
                 help="Lookup ticker on Yahoo Finance site",
                 display_text=r"/quote/([^/?#]+)"
             ),
-            "last_close": st.column_config.NumberColumn(label="Last close", format="euro"), # FIXME: currency format should be dynamic
+            "instrument_currency": None, # Hide intermediate data
+            "instrument_symbol": None,
+            "last_close": None, # Hide raw number column
+            "last_close_styled": "Last close",
             "timestamp": st.column_config.DatetimeColumn(label="Timestamp", format="YYYY-MM-DD"),
         },
         hide_index=True
