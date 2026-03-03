@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 from lib.database import read_from_db, get_session
 from lib.models import Instrument, Position, Transaction
-from lib.models_ import Trade
+from lib.models import Trade
 from lib.repo import trades_repository, transactions_repository
 from lib.utils import confirm_delete_dialog
 from service import positions_service as service
