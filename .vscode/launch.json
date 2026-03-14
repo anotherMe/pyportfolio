@@ -4,46 +4,10 @@
     {
       "type": "debugpy",
       "request": "launch",
-      "name": "Streamlit apps",
+      "name": "Streamlit app",
       "python": ".venv/bin/python",
       "module": "streamlit",
       "args": ["run", "main.py"]
-    },
-    {
-      "type": "debugpy",
-      "request": "launch",
-      "name": "Console - Load JSO data for IEGE.MI",
-      "program": "${workspaceFolder}/console.py",
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "args": ["load-json", "-f", "data/IEGE.MI.json"]
-    },
-    {
-      "type": "debugpy",
-      "request": "launch",
-      "name": "Console - Load JSON data for X13E.MI",
-      "program": "${workspaceFolder}/console.py",
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "args": ["load-json", "-f", "data/X13E.MI.json"]
-    },
-    {
-      "type": "debugpy",
-      "request": "launch",
-      "name": "Console - Load JSON data for SGLD.MI",
-      "program": "${workspaceFolder}/console.py",
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "args": ["load-json", "-f", "data/SGLD.MI.json"]
-    },
-    {
-      "type": "debugpy",
-      "request": "launch",
-      "name": "Console - Load 30 days data for ticker MONC.MI",
-      "program": "${workspaceFolder}/console.py",
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "args": ["load", "-t", "MONC.MI", "-d", "30"]
     }
   ]
 }
