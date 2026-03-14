@@ -66,6 +66,28 @@ def get_latest_prices(session):
 
     return session.scalars(stmt).all()
 
+def get_latest_prices_for_instrument_list(session, inst_ids: list[int]):
+    
+    subquery = (
+        select(
+            OHLCV.instrument_id,
+            func.max(OHLCV.timestamp).label("latest_date")
+        )
+        .where(OHLCV.instrument_id.in_(inst_ids))
+        .group_by(OHLCV.instrument_id)
+        .subquery()
+    )
+
+    stmt = (
+        select(OHLCV.instrument_id, OHLCV.close, subquery.c.latest_date.label("date"))
+        .join(
+            subquery,
+            (OHLCV.instrument_id == subquery.c.instrument_id) &
+            (OHLCV.timestamp == subquery.c.latest_date)
+        )
+    )
+
+    return session.execute(stmt).all()
 
 def get_latest_closing_price(session, instrument_id):
     

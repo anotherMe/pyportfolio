@@ -42,18 +42,6 @@ class Transaction(Base):
     position = relationship("Position", back_populates="transactions")
 
 
-class Price(Base):
-    __tablename__ = "prices"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    instrument_id = Column(Integer, ForeignKey("instruments.id"), nullable=False)
-    date = Column(UTCDateTime, nullable=False)
-    price = Column(Integer, nullable=False)
-    granularity = Column(String, nullable=False)
-
-    instrument = relationship("Instrument", back_populates="prices")
-    __table_args__ = (UniqueConstraint('instrument_id', 'date', 'granularity', name='_instrument_date_uc'),)
-
-
 class OHLCV(Base):
     __tablename__ = 'ohlcvs'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -81,7 +69,6 @@ class Instrument(Base):
     description = Column(Text)
     currency = Column(CurrencyType, nullable=False)
 
-    prices = relationship("Price", back_populates="instrument", cascade="all")
     ohlcvs = relationship("OHLCV", back_populates="instrument", cascade="all")
     positions = relationship("Position", back_populates="instrument", cascade="all")
 

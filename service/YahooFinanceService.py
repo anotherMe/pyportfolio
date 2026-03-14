@@ -9,7 +9,6 @@ from lib.database import get_session
 from lib.models import Instrument
 from lib.repo.instruments_repository import get_instrument_by_ticker
 from lib.repo.ohlcvs_repository import load_ohlcv_from_symbol, load_ohlcv_from_yfinance_dataframe
-from lib.repo.prices_repository import load_prices_from_symbol, load_prices_from_yfinance_dataframe
 from service.custom_exceptions import PortfolioException
 from service.myYahooFinanceService import YahooSymbolParser
 
@@ -25,7 +24,6 @@ def download_history(instrument: Instrument, start_date: datetime) -> Tuple[bool
         yf_symbol = yf.Ticker(instrument.ticker)
         df = yf_symbol.history(start=start_date, interval=DEFAULT_GRANULARITY)
         load_ohlcv_from_yfinance_dataframe(df, DEFAULT_GRANULARITY, instrument)
-        load_prices_from_yfinance_dataframe(df, DEFAULT_GRANULARITY, instrument)
         return True, f"Symbol {instrument.ticker} parsed correctly"
     
     except Exception:
@@ -91,8 +89,3 @@ def parse_file(parser: YahooSymbolParser, create_instrument: bool):
         logging.exception()
         raise PortfolioException("YahooFinanceService", "Can't load data into OHLCVs") from ex
     
-    try:
-        load_prices_from_symbol(parser.symbol, parser.symbol.data_granularity, instrument)
-    except Exception as ex:
-        logging.exception()
-        raise PortfolioException("YahooFinanceService", "Can't load data into Prices") from ex

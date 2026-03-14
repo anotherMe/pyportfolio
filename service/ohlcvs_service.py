@@ -1,5 +1,6 @@
 
-import lib.repo.prices_repository as repo
+
+import lib.repo.ohlcvs_repository as repo
 from lib.database import read_from_db
 
 
@@ -13,6 +14,6 @@ def get_latest_prices_for_instrument_list(session, inst_ids: list[int]) -> list[
 
     results = repo.get_latest_prices_for_instrument_list(session, inst_ids)
     price_dtos = []
-    for instrument_id, price, date in results:
-        price_dtos.append(PriceDTO(instrument_id, read_from_db(price), date))
+    for instrument_id, close, timestamp in results:
+        price_dtos.append(PriceDTO(instrument_id, read_from_db(close), timestamp))
     return price_dtos

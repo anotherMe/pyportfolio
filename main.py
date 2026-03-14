@@ -20,8 +20,7 @@ pages = {
         st.Page("pages/instruments_edit.py", title="Add / Edit"),
     ],
     "📈 Prices": [
-        st.Page("pages/prices_list.py", title="List"),
-        st.Page("pages/prices_load_yahoo.py", title="Load from Yahoo"),
+        st.Page("pages/prices_load_yahoo.py", title="List"),
     ],
     "💼 Trades": [
         st.Page("pages/trades_list.py", title="List"),

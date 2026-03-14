@@ -10,7 +10,7 @@ from lib.repo.positions_repository import get_all_positions
 
 from lib.repo.transactions_repository import get_transactions_for_position_list
 from logging_config import setup_logger
-from service import prices_service
+from service import ohlcvs_service
 
 log = setup_logger(__name__)
 
@@ -74,7 +74,7 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
 
     all_trades = get_trades_for_position_list(session, [position.id for position in positions])
     all_transactions = get_transactions_for_position_list(session, [position.id for position in positions])
-    latest_prices = prices_service.get_latest_prices_for_instrument_list(session, [position.instrument.id for position in positions])
+    latest_prices = ohlcvs_service.get_latest_prices_for_instrument_list(session, [position.instrument.id for position in positions])
 
     positionDTOs = []
     for position in positions:
