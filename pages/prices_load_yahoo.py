@@ -130,7 +130,7 @@ if btn_update_instruments:
                 st.success(message)
             else:
                 st.error(message)
-        time.sleep(5)
+        time.sleep(1) # Sleep for a while to avoid hitting Yahoo Finance too hard
     progress_bar.empty()
 
 

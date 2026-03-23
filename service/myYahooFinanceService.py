@@ -1,4 +1,11 @@
 
+"""
+
+Load and parse a Yahoo Finance JSON file
+
+"""
+
+
 import traceback
 import pandas as pd
 import logging

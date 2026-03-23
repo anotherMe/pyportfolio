@@ -4,3 +4,4 @@ streamlit>=1.52.0
 faker
 yfinance
 pytest
+
