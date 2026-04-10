@@ -1,12 +1,13 @@
 
 import pandas as pd
 import streamlit as st
-from lib.database import read_from_db, get_session
-from lib.models import Instrument, Position, Transaction
-from lib.models import Trade
-from lib.repo import trades_repository, transactions_repository
+
+from lib.database import get_session
 from lib.utils import confirm_delete_dialog
-from service import positions_service as service
+from service.instruments_service import InstrumentsService
+from service.positions_service import PositionsService
+from service.trades_service import TradesService
+from service.transactions_service import TransactionsService
 from service.utils import format_currency, format_currency_color, to_local
 
 from logging_config import setup_logger
@@ -14,24 +15,28 @@ log = setup_logger(__name__)
 
 log.debug("Running Positions details page...")
 
+positions_service = PositionsService()
+trades_service = TradesService()
+transactions_service = TransactionsService()
+instruments_service = InstrumentsService()
+
 
 def delete_trade(item_id):
-    with get_session() as session, session.begin():
+    with get_session() as session:
         try:
-            trades_repository.delete_trade(session, item_id)
-            session.commit()
+            trades_service.delete(session, item_id)
         except Exception:
             log.exception("")
-            st.error(f"Error while deleting item {item_id}")
+            st.error(f"Error while deleting trade {item_id}")
+
 
 def delete_transaction(item_id):
-    with get_session() as session, session.begin():
+    with get_session() as session:
         try:
-            transactions_repository.delete_transaction(session, item_id)
-            session.commit()
+            transactions_service.delete(session, item_id)
         except Exception:
             log.exception("")
-            st.error(f"Error while deleting item {item_id}")
+            st.error(f"Error while deleting transaction {item_id}")
 
 
 if "position_id" not in st.session_state:
@@ -51,96 +56,93 @@ if not st.session_state.position_id:
 
 st.subheader(f"Position {st.session_state.position_id} details")
 
-with get_session() as session, session.begin():
+with get_session() as session:
 
-    position = session.get(Position, st.session_state.position_id)
-    inst = session.get(Instrument, position.instrument_id)
+    # Resolve position and instrument via service layer
+    positions_basic = positions_service.get_all_basic(session)
+    position_basic = next((p for p in positions_basic if p.id == st.session_state.position_id), None)
+
+    if position_basic is None:
+        st.error("Position not found.")
+        st.stop()
+
+    instruments = instruments_service.get_all(session)
+    inst = next((i for i in instruments if i.id == position_basic.instrument_id), None)
+
+    position_summary = positions_service.get_position_summary(session, st.session_state.position_id)
+
+    currency_symbol = position_basic.instrument_symbol
 
     with st.container(border=True):
-        
-        # --- Row: Instrument details ---
 
+        # --- Instrument details ---
         with st.container(horizontal=True):
-            st.subheader(inst.name)
+            st.subheader(position_basic.instrument_name)
             if st.button("Edit position"):
-                st.session_state.position_id = position.id
-                st.session_state.instrument_id = position.instrument.id
+                st.session_state.position_id = position_basic.id
+                st.session_state.instrument_id = position_basic.instrument_id
                 st.switch_page("pages/positions_edit.py")
 
-        if inst.name_long:
-            stripped = inst.name_long.strip()
-            st.markdown(f"**{stripped}**")
+        if inst and inst.name_long:
+            st.markdown(f"**{inst.name_long.strip()}**")
 
-        col1, col2, col3 = st.columns([2,1,3])
-
-        if inst.isin:
+        col1, col2, col3 = st.columns([2, 1, 3])
+        if inst and inst.isin:
             col1.write(f"**ISIN:** [{inst.isin}](https://www.justetf.com/en/etf-profile.html?isin={inst.isin})")
-        if inst.ticker:
+        if inst and inst.ticker:
             col2.markdown(f"**Ticker**: [{inst.ticker}](https://finance.yahoo.com/quote/{inst.ticker})")
-        if inst.currency:
+        if inst and inst.currency:
             col1.write(f"**Currency:** {inst.currency.name} ({inst.currency.symbol})")
-        col2.markdown(f"**Category**: {inst.category}")
-
-        currency = inst.currency  # Currency enum member — sourced from CurrencyType
-
-
-        if inst.description:
+        if inst and inst.category:
+            col2.markdown(f"**Category**: {inst.category.value}")
+        if inst and inst.description:
             st.write(inst.description)
 
-        # -----------------------------------------------------------------------------
-        # --- Row: Position details ---
-        # -----------------------------------------------------------------------------
-
+        # --- Position summary ---
         st.divider()
-        
-        position_summary = service.get_position_summary(session, position)
-        col1, col2 = st.columns([1,1])
-        # st.write(f"**Position ID:** {position_summary.position_id}")
-        col1.write(f"**Account:** {position.account.name}")
+        col1, col2 = st.columns([1, 1])
+        col1.write(f"**Account:** {position_basic.account_name}")
         col1.write(f"**Opening date:** {to_local(position_summary.opening_date)}")
         col1.write(f"**Closing date:** {to_local(position_summary.closing_date) if position_summary.closing_date else 'N/A'}")
         col1.write(f"**Remaining quantity:** {position_summary.remaining_quantity}")
-        # st.write(f"**Average buy price:** {format_currency(position_summary.avg_buy_price, Currency.from_code(inst.currency).symbol)}")
-        col1.write(f"**Total invested:** {format_currency(position_summary.total_invested, currency.symbol)}")
+        col1.write(f"**Total invested:** {format_currency(position_summary.total_invested, currency_symbol)}")
 
-        col2.write(f"**Realized PnL:** {format_currency_color(position_summary.realized_pnl, currency.symbol)}")
-        col2.write(f"**Transactions amount:** {format_currency_color(position_summary.transactions_amount, currency.symbol)}")
-        col2.write(f"**Latest market price:** {format_currency(position_summary.latest_price, currency.symbol)} ( as of {to_local(position_summary.latest_price_date) if position_summary.latest_price_date else 'N/A'} )")
-        col2.write(f"**Unrealized PnL:** {format_currency_color(position_summary.unrealized_pnl, currency.symbol)}")
-        col2.write(f"**Total PnL:** {format_currency_color(position_summary.pnl, currency.symbol)}")
+        col2.write(f"**Realized PnL:** {format_currency_color(position_summary.realized_pnl, currency_symbol)}")
+        col2.write(f"**Transactions amount:** {format_currency_color(position_summary.transactions_amount, currency_symbol)}")
+        col2.write(f"**Latest market price:** {format_currency(position_summary.latest_price, currency_symbol)} ( as of {to_local(position_summary.latest_price_date) if position_summary.latest_price_date else 'N/A'} )")
+        col2.write(f"**Unrealized PnL:** {format_currency_color(position_summary.unrealized_pnl, currency_symbol)}")
+        col2.write(f"**Total PnL:** {format_currency_color(position_summary.pnl, currency_symbol)}")
         pnl_percent = position_summary.pnl_percent * 100 if position_summary.pnl_percent is not None else None
-        col2.write(f"**Total PnL:** {pnl_percent:.2f} %" if pnl_percent is not None else "N/A")
+        col2.write(f"**Total PnL %:** {pnl_percent:.2f} %" if pnl_percent is not None else "N/A")
 
-
-        # -----------------------------------------------------------------------------
-        # --- Trades list ---
-        # -----------------------------------------------------------------------------
-
+        # --- Trades ---
         st.divider()
         st.subheader("Trades:")
 
-        if position.trades:
+        position_trades = trades_service.get_by_position(session, st.session_state.position_id)
 
-            position_trades = [{
-                "Date": to_local(trade.date),
-                # "Type": "📥 Buy" if trade.type.lower() == "buy" else "📤 Sell" if trade.type.lower() == "sell" else trade.type,
-                "Type": "➕ BUY" if trade.type.lower() == "buy" else "➖ SELL",
-                "Qty": trade.quantity,
-                "Price": format_currency(read_from_db(trade.price), currency.symbol),
-                "Total": format_currency(read_from_db(trade.price) * trade.quantity, currency.symbol)
-            } for trade in position.trades]
+        if position_trades:
+            trades_df = pd.DataFrame([{
+                "trade_id": t.id,
+                "Date": to_local(t.date),
+                "Type": "➕ BUY" if t.type.value == "buy" else "➖ SELL",
+                "Qty": t.quantity,
+                "Price": format_currency(t.price, currency_symbol),
+                "Total": format_currency(t.price * t.quantity, currency_symbol),
+            } for t in position_trades])
+
             trades_dataframe = st.dataframe(
-                data=pd.DataFrame(position_trades), 
+                data=trades_df,
+                column_config={"trade_id": None},
                 hide_index=True,
-                on_select="rerun", 
-                selection_mode="single-row"
+                on_select="rerun",
+                selection_mode="single-row",
             )
 
             if trades_dataframe["selection"]["rows"]:
                 dataframe_index = trades_dataframe["selection"]["rows"][0]
-                selected_trade: Trade = position.trades[dataframe_index]
+                selected_trade = position_trades[dataframe_index]
                 with st.container(horizontal=True):
-                    # st.space("stretch")
                     if st.button("Detail", key="trade_detail_btn"):
                         st.session_state.trade_id = selected_trade.id
                         st.switch_page("pages/trades_detail.py")
@@ -148,49 +150,43 @@ with get_session() as session, session.begin():
                         st.session_state.trade_id = selected_trade.id
                         st.switch_page("pages/trades_edit.py")
                     if st.button("Delete", type="primary", key="trade_delete_btn"):
-                        confirm_delete_dialog(f"Are you sure you want to delete trade {selected_trade.id} ?", selected_trade.id, delete_trade)
-
-            # (col1, col2) = st.columns([5,2])
-            # with col2:
-            #     st.space("stretch")
-            #     st.write(f"##### Remaining quantity: {position_summary.remaining_quantity}")
-
+                        confirm_delete_dialog(f"Are you sure you want to delete trade {selected_trade.id}?", selected_trade.id, delete_trade)
         else:
             st.info("No trades available")
 
-        cols = st.columns([5,1])
+        cols = st.columns([5, 1])
         with cols[1]:
-            if st.button("Add new trade", key=f"add_trade_button_{position.id}"):
+            if st.button("Add new trade", key=f"add_trade_button_{position_basic.id}"):
                 st.session_state.trade_id = None
-                st.session_state.position_id = position.id
+                st.session_state.position_id = position_basic.id
                 st.switch_page("pages/trades_edit.py")
 
-        # -----------------------------------------------------------------------------
-        # --- Transactions list ---
-        # -----------------------------------------------------------------------------
-
+        # --- Transactions ---
         st.divider()
         st.write("Transactions:")
-        if position.transactions:
 
-            position_transactions = [{
-                "Type": txn.type,
-                "Amount": f"{read_from_db(txn.amount):.2f} {currency.symbol}",
-                "Date": to_local(txn.date)
-            } for txn in position.transactions]
+        position_transactions = transactions_service.get_by_position(session, st.session_state.position_id)
+
+        if position_transactions:
+            txn_df = pd.DataFrame([{
+                "txn_id": t.id,
+                "Type": t.type.value,
+                "Amount": f"{t.amount:.2f} {currency_symbol}",
+                "Date": to_local(t.date),
+            } for t in position_transactions])
 
             transactions_dataframe = st.dataframe(
-                data=pd.DataFrame(position_transactions),
+                data=txn_df,
+                column_config={"txn_id": None},
                 hide_index=True,
-                on_select="rerun", 
-                selection_mode="single-row"
+                on_select="rerun",
+                selection_mode="single-row",
             )
 
             if transactions_dataframe["selection"]["rows"]:
                 dataframe_index = transactions_dataframe["selection"]["rows"][0]
-                selected_transaction: Transaction = position.transactions[dataframe_index]
+                selected_transaction = position_transactions[dataframe_index]
                 with st.container(horizontal=True):
-                    # st.space("stretch")
                     if st.button("Detail", key="txn_detail_btn"):
                         st.session_state.transaction_id = selected_transaction.id
                         st.switch_page("pages/transactions_detail.py")
@@ -198,19 +194,15 @@ with get_session() as session, session.begin():
                         st.session_state.transaction_id = selected_transaction.id
                         st.switch_page("pages/transactions_edit.py")
                     if st.button("Delete", type="primary", key="txn_delete_btn"):
-                        confirm_delete_dialog(f"Are you sure you want to delete transaction {selected_transaction.id} ?", selected_transaction.id, delete_transaction)
-
+                        confirm_delete_dialog(f"Are you sure you want to delete transaction {selected_transaction.id}?", selected_transaction.id, delete_transaction)
         else:
             st.info("No transactions available")
 
-
-        cols = st.columns([5,1])
+        cols = st.columns([5, 1])
         with cols[1]:
-            if st.button("Add new transaction", key=f"add_trans_btn_{position.id}"):
-                st.session_state.position_id = position.id
+            if st.button("Add new transaction", key=f"add_trans_btn_{position_basic.id}"):
+                st.session_state.position_id = position_basic.id
                 st.switch_page("pages/transactions_edit.py")
-
-
 
     with st.container(horizontal=True):
         st.space("stretch")

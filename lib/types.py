@@ -2,7 +2,7 @@ from datetime import timezone
 
 from sqlalchemy import DateTime, String, TypeDecorator
 
-from lib.enums import Currency
+from lib.enums import Currency, TradeType, TransactionType, InstrumentCategory
 
 
 class UTCDateTime(TypeDecorator):
@@ -60,3 +60,67 @@ class CurrencyType(TypeDecorator):
         if value is None:
             return value
         return Currency.from_code(value)
+
+
+class TradeTypeColumn(TypeDecorator):
+    """Stores TradeType as its string value; returns a TradeType member on read."""
+    impl = String
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if isinstance(value, TradeType):
+            return value.value
+        # accept raw strings that match a valid value
+        valid = {m.value for m in TradeType}
+        if value not in valid:
+            raise ValueError(f"Invalid TradeType: {value!r}. Must be one of: {sorted(valid)}")
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        return TradeType(value)
+
+
+class TransactionTypeColumn(TypeDecorator):
+    """Stores TransactionType as its string value; returns a TransactionType member on read."""
+    impl = String
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if isinstance(value, TransactionType):
+            return value.value
+        valid = {m.value for m in TransactionType}
+        if value not in valid:
+            raise ValueError(f"Invalid TransactionType: {value!r}. Must be one of: {sorted(valid)}")
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        return TransactionType(value)
+
+
+class InstrumentCategoryColumn(TypeDecorator):
+    """Stores InstrumentCategory as its string value; returns an InstrumentCategory member on read."""
+    impl = String
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if isinstance(value, InstrumentCategory):
+            return value.value
+        valid = {m.value for m in InstrumentCategory}
+        if value not in valid:
+            raise ValueError(f"Invalid InstrumentCategory: {value!r}. Must be one of: {sorted(valid)}")
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        return InstrumentCategory(value)

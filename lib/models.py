@@ -4,7 +4,7 @@ from sqlalchemy import Boolean, Column, DateTime, String, Integer, ForeignKey, T
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-from lib.types import UTCDateTime, CurrencyType
+from lib.types import UTCDateTime, CurrencyType, TradeTypeColumn, TransactionTypeColumn, InstrumentCategoryColumn
 
 Base = declarative_base()
 
@@ -34,7 +34,7 @@ class Transaction(Base):
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     position_id = Column(Integer, ForeignKey("positions.id"), nullable=True)
     date = Column(UTCDateTime, nullable=False)
-    type = Column(String, nullable=False)  # 'div', 'tax', 'fee'
+    type = Column(TransactionTypeColumn, nullable=False)
     amount = Column(Integer, nullable=False)
     description = Column(Text)
 
@@ -65,7 +65,7 @@ class Instrument(Base):
     ticker = Column(String)
     name = Column(String, nullable=False)
     name_long = Column(String)
-    category = Column(String) # acc or dist
+    category = Column(InstrumentCategoryColumn, nullable=True)
     description = Column(Text)
     currency = Column(CurrencyType, nullable=False)
 
@@ -78,7 +78,7 @@ class Trade(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     position_id = Column(Integer, ForeignKey("positions.id"), nullable=False)
     date = Column(UTCDateTime, nullable=False)
-    type = Column(String, nullable=False)  # 'buy' or 'sell'
+    type = Column(TradeTypeColumn, nullable=False)
     quantity = Column(Integer, nullable=False)  # integer shares
     price = Column(Integer, nullable=False)
     description = Column(Text)

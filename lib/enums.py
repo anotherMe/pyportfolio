@@ -1,14 +1,17 @@
 
 from enum import Enum
 
+
 class TransactionType(Enum):
-    FEE = "fee",
-    DIVIDEND = "div",
+    FEE = "fee"
+    DIVIDEND = "div"
     TAXES = "tax"
+
 
 class TradeType(Enum):
     BUY = "buy"
     SELL = "sell"
+
 
 class Currency(Enum):
     EUR = ("Euro", "€")
@@ -26,3 +29,14 @@ class Currency(Enum):
             return cls[code]
         except KeyError:
             return None
+
+
+class InstrumentCategory(Enum):
+    ACCUMULATING = "acc"
+    DISTRIBUTING = "dist"
+
+
+class OHLCVGranularity(Enum):
+    DAY = "1d"
+    WEEK = "1wk"
+    MONTH = "1mo"

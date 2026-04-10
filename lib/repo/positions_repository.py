@@ -1,30 +1,32 @@
 
 from sqlalchemy import select
-from lib.models import Position
-from logging_config import setup_logger
-log = setup_logger(__name__)
+from lib.models import Position, Account, Instrument
 
 
-def get_all_positions(session, account=None):
+def add_position(session, account_id: int, instrument_id: int) -> Position:
+    position = Position(
+        account_id=account_id,
+        instrument_id=instrument_id,
+        closed=False,
+    )
+    session.add(position)
+    session.flush()
+    return position
 
+
+def get_all_positions(session, account=None, account_id: int = None) -> list[Position]:
+    """Accepts either an Account ORM object (legacy) or an account_id int."""
     stmt = select(Position)
-    if account:
-        stmt = stmt.filter_by(account_id=account.id)
+    resolved_id = account_id or (account.id if account else None)
+    if resolved_id:
+        stmt = stmt.filter_by(account_id=resolved_id)
     return session.scalars(stmt).all()
 
-def delete_position(session, position_id):
+
+def delete_position(session, position_id: int) -> bool:
     position = session.get(Position, position_id)
     if position:
-        try:
-            # Attempt to delete the Position
-            session.delete(position)
-            session.commit()
-            log.info(f"🗑️ Deleted Position ID {position_id}")
-        except Exception as e:
-            session.rollback()
-            log.error(f"⚠️ Cannot delete Position ID {position_id}: {e}")
-            return False    
+        session.delete(position)
+        session.flush()
         return True
-    else:
-        log.warning(f"⚠️ Position ID {position_id} not found.")
-        return False
+    return False

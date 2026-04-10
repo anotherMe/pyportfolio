@@ -1,9 +1,11 @@
 
 import streamlit as st
+
 from lib.database import get_session
-from lib.models import Instrument, Position
-from lib.repo.accounts_repository import get_all_accounts
-from lib.repo.instruments_repository import get_all_instruments
+from service.accounts_service import AccountsService
+from service.instruments_service import InstrumentsService
+from service.positions_service import PositionsService
+from service.dtos import PositionCreateDTO
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
@@ -17,65 +19,84 @@ if 'position_id' not in st.session_state:
 if 'instrument_id' not in st.session_state:
     st.session_state.instrument_id = None
 
-with get_session() as session, session.begin():
+accounts_service = AccountsService()
+instruments_service = InstrumentsService()
+positions_service = PositionsService()
 
-    position = None
-    if st.session_state.position_id:
-        position = session.get(Position, st.session_state.position_id)
+with get_session() as session:
+
+    accounts = accounts_service.get_all(session)
+    accounts_map = {acc.name: acc for acc in accounts}
+    instruments = instruments_service.get_all(session)
+    instrument_map = {inst.name: inst for inst in instruments}
+
+    is_editing = bool(st.session_state.position_id)
+
+    if is_editing:
+        positions = positions_service.get_all_basic(session)
+        position = next((p for p in positions if p.id == st.session_state.position_id), None)
+        if position is None:
+            st.error("Position not found.")
+            st.stop()
         with st.container(horizontal=True):
             st.subheader(f"Editing Position with ID: {position.id}")
             if st.button("Clear selection"):
                 st.session_state.position_id = None
                 st.session_state.instrument_id = None
                 st.rerun()
-        if not position:
-            st.error("Position not found.")
-            st.stop()
     else:
         st.subheader("Add new Position")
-        position = Position()
-        position.closed = False
-
-    accounts = get_all_accounts(session)
-    accounts_map = {account.name: account for account in accounts}
-    instruments = get_all_instruments(session)
-    instrument_map = {inst.name: inst for inst in instruments}
+        position = None
 
     with st.form("position_form"):
 
-        # if an instrument has been set from instrument_detail.py
+        # Pre-select instrument if coming from instruments page
         selected_instrument_index = None
         if st.session_state.instrument_id:
-            work_on_instrument = session.get(Instrument, st.session_state.instrument_id)
-            selected_instrument_index = list(instrument_map.keys()).index(work_on_instrument.name)
+            target = next((inst for inst in instruments if inst.id == st.session_state.instrument_id), None)
+            if target:
+                selected_instrument_index = list(instrument_map.keys()).index(target.name)
 
-        selected_account = st.selectbox(
-            "Account",
-            list(accounts_map.keys())
-        )
-        selected_instrument = st.selectbox(
-            "Instrument",
-            list(instrument_map.keys()),
-            index=selected_instrument_index
-        )
+        # Pre-select account/instrument when editing
+        account_index = 0
+        if is_editing and position:
+            if position.account_name in accounts_map:
+                account_index = list(accounts_map.keys()).index(position.account_name)
+            if position.instrument_name in instrument_map:
+                selected_instrument_index = list(instrument_map.keys()).index(position.instrument_name)
 
-        col1, col2 = st.columns([7,1])
+        selected_account = st.selectbox("Account", list(accounts_map.keys()), index=account_index)
+        selected_instrument = st.selectbox("Instrument", list(instrument_map.keys()), index=selected_instrument_index)
+
+        col1, col2 = st.columns([7, 1])
         with col2:
             save = st.form_submit_button("💾 Save")
+
         if save:
             if not selected_instrument:
                 st.warning("Instrument must be selected.")
             else:
-                instrument_id = instrument_map.get(selected_instrument).id
-                position.account_id = accounts_map.get(selected_account).id
-                position.instrument_id = instrument_id
-                session.add(position)
-                st.session_state.position_id = None
-                st.session_state.instrument_id = instrument_id
-                st.success("✅ Position saved successfully!")
-    
+                try:
+                    account_id = accounts_map[selected_account].id
+                    instrument_id = instrument_map[selected_instrument].id
+                    if is_editing and position:
+                        # Update: patch the model directly
+                        from lib.models import Position as PositionModel
+                        model = session.get(PositionModel, position.id)
+                        model.account_id = account_id
+                        model.instrument_id = instrument_id
+                        session.commit()
+                    else:
+                        dto = PositionCreateDTO(account_id=account_id, instrument_id=instrument_id)
+                        positions_service.create(session, dto)
+                    st.session_state.position_id = None
+                    st.session_state.instrument_id = instrument_id
+                    st.success("✅ Position saved successfully!")
+                except Exception as e:
+                    log.exception("")
+                    st.error(f"Error saving position: {e}")
+
     with st.container(horizontal=True):
         st.space("stretch")
         if st.button("Back to list"):
             st.switch_page("pages/positions_list.py")
-

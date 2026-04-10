@@ -2,9 +2,9 @@
 import pandas as pd
 import streamlit as st
 
-from lib.repo.accounts_repository import get_account_by_name
 from lib.database import get_session
-from service.positions_service import get_positions_summary
+from service.accounts_service import AccountsService
+from service.positions_service import PositionsService
 
 
 # --------------------------------------------------------------------------------
@@ -79,20 +79,22 @@ selected_label = st.selectbox(
 st.session_state.status_filter = options[selected_label]
 
 
+_accounts_service = AccountsService()
+_positions_service = PositionsService()
+
 with get_session() as session:
 
-    current_account = get_account_by_name(session, st.session_state.account)
-
-    # --- Retrieve Open/Closed positions ---
+    current_account = _accounts_service.get_by_name(session, st.session_state.account)
+    account_id = current_account.id if current_account else None
 
     include_closed = True
     include_open = True
     if st.session_state.status_filter == 'open':
-        include_closed=False
+        include_closed = False
     elif st.session_state.status_filter == 'closed':
-        include_open=False
-    
-    positions_df = get_positions_summary(session, current_account, include_closed=include_closed, include_open=include_open)
+        include_open = False
+
+    positions_df = _positions_service.get_summary(session, account_id=account_id, include_closed=include_closed, include_open=include_open)
 
     if positions_df.empty:
         st.write("No positions found.")

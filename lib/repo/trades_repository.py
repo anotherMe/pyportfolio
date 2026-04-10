@@ -1,32 +1,36 @@
 
 from lib.database import write_to_db
-from lib.models import Trade
+from lib.models import Trade, Position
+from lib.enums import TradeType
 from sqlalchemy.orm import Session
-from lib.models import Position
 
 
-def get_all_trades(session):
+def get_all_trades(session) -> list[Trade]:
     return session.query(Trade).order_by(Trade.date).all()
-    
-def get_all_trades_by_account(session, account):
-    return session.query(Trade).filter_by(account_id=account.id).order_by(Trade.date).all()
 
-def get_trades_for_position_list(session: Session, position_ids: list[int]) -> list[Trade]:
-    
-    trades = (
+
+def get_all_trades_by_account(session, account) -> list[Trade]:
+    return (
         session.query(Trade)
         .join(Position, Trade.position_id == Position.id)
-        .filter(Position.id.in_(position_ids))
+        .filter(Position.account_id == account.id)
         .order_by(Trade.date)
         .all()
     )
-    return trades
 
-def add_trade(session, account, instrument, date, trade_type, quantity, price, description=None):
-    
+
+def get_trades_for_position_list(session: Session, position_ids: list[int]) -> list[Trade]:
+    return (
+        session.query(Trade)
+        .filter(Trade.position_id.in_(position_ids))
+        .order_by(Trade.date)
+        .all()
+    )
+
+
+def add_trade(session, position_id: int, date, trade_type: TradeType, quantity: int, price: float, description: str = None) -> Trade:
     trade = Trade(
-        account_id=account.id,
-        instrument_id=instrument.id,
+        position_id=position_id,
         date=date,
         type=trade_type,
         quantity=int(quantity),
@@ -34,19 +38,14 @@ def add_trade(session, account, instrument, date, trade_type, quantity, price, d
         description=description,
     )
     session.add(trade)
-    session.flush()  # ensures IDs and defaults are populated
-
-    print(f"📈 Recorded trade: {trade_type.upper()} {quantity}x {instrument.ticker or instrument.name} @ {price:.2f}")
-
+    session.flush()
     return trade
 
-def delete_trade(session, trade_id):
+
+def delete_trade(session, trade_id: int) -> bool:
     trade = session.get(Trade, trade_id)
     if trade:
         session.delete(trade)
         session.flush()
-        print(f"🗑️ Deleted trade ID {trade_id}")
         return True
-    else:
-        print(f"❌ Trade ID {trade_id} not found.")
-        return False
+    return False

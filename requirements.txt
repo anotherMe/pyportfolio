@@ -1,7 +1,8 @@
 
 SQLAlchemy
-streamlit>=1.52.0
+streamlit
 faker
 yfinance
 pytest
+pydantic
 

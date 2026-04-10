@@ -4,16 +4,17 @@ from datetime import date
 
 import streamlit as st
 
-from lib.repo.accounts_repository import get_all_accounts
-from lib.database import read_from_db, get_session, write_to_db
-from lib.models import Position, Trade, Transaction
-from lib.repo.positions_repository import get_all_positions
+from lib.database import get_session
+from lib.enums import TradeType
 from lib.settings_manager import get_timezone
+from service.positions_service import PositionsService
+from service.trades_service import TradesService
+from service.dtos import TradeCreateDTO
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
 
-print("Running trades page...")
+log.debug("Running trades edit page...")
 
 st.title("💼 Trades")
 
@@ -22,41 +23,39 @@ if 'trade_id' not in st.session_state:
 if 'position_id' not in st.session_state:
     st.session_state.position_id = None
 
+trades_service = TradesService()
+positions_service = PositionsService()
 
-with get_session() as session, session.begin():
 
-    accounts = get_all_accounts(session)
-    accounts_map = {account.name: account for account in accounts}
-    # instruments = get_all_instruments(session)
-    # instrument_map = {inst.name: inst for inst in instruments}
-    positions = get_all_positions(session)
+with get_session() as session:
+
+    positions = positions_service.get_all_basic(session)
     positions_map = {pos.id: pos for pos in positions}
 
     if st.session_state.trade_id is None:
-    
+
         st.subheader("Add New Trade")
 
         with st.form("add_trade"):
 
-            # if a position has been set from positions_detail.py
             selected_position_index = None
-            currency_symbol = ""  # resolved once position is known
-            if st.session_state.position_id:
-                work_on_position = session.get(Position, st.session_state.position_id)
-                selected_position_index = list(positions_map.keys()).index(work_on_position.id)
-                currency_symbol = work_on_position.instrument.currency.symbol if work_on_position.instrument.currency else ""
+            currency_symbol = ""
+            if st.session_state.position_id and st.session_state.position_id in positions_map:
+                work_pos = positions_map[st.session_state.position_id]
+                selected_position_index = list(positions_map.keys()).index(work_pos.id)
+                currency_symbol = work_pos.instrument_symbol
 
-            trade = Trade()
-
-            selected_position = st.selectbox(
+            selected_position_id = st.selectbox(
                 "Position",
                 list(positions_map.keys()),
                 index=selected_position_index,
-                disabled=True
+                format_func=lambda pid: f"{positions_map[pid].instrument_name} ({positions_map[pid].account_name})" if pid in positions_map else str(pid),
+                disabled=True,
             )
             selected_type = st.selectbox(
                 "Type",
-                ["buy", "sell"]
+                options=list(TradeType),
+                format_func=lambda t: t.value.upper(),
             )
             trade_quantity = st.number_input("Quantity", min_value=1, step=1, value=1)
             trade_price = st.number_input(f"Price{' (' + currency_symbol + ')' if currency_symbol else ''}", min_value=0.0, value=1.0)
@@ -65,95 +64,93 @@ with get_session() as session, session.begin():
             trade_time = st.time_input("Transaction time", value="now", step=60)
             notes = st.text_area("Notes", value="")
 
-            col1, col2 = st.columns([7,1])
+            col1, col2 = st.columns([7, 1])
             with col2:
                 save = st.form_submit_button("💾 Save")
 
             if save:
-                if not selected_position:
+                if not selected_position_id:
                     st.warning("Position must be selected.")
                 else:
-                    # TODO: add try / except here
-                    position_id = positions_map.get(selected_position).id
-                    trade.position_id = position_id
-                    trade.date = datetime.combine(trade_date, trade_time).replace(tzinfo=get_timezone())
-                    trade.quantity = trade_quantity
-                    trade.price = write_to_db(trade_price)
-                    trade.type = selected_type
-                    session.add(trade)
-                    # session.flush()
-                    if trade_fee > 0:
-                        fee_transaction = Transaction()
-                        fee_transaction.account_id = positions_map.get(selected_position).account_id
-                        fee_transaction.trade_id = trade.id
-                        fee_transaction.date = trade.date
-                        fee_transaction.type = 'fee'
-                        fee_transaction.amount = write_to_db(trade_fee)
-                        fee_transaction.description = f"Fee for {trade.type}ing {trade.quantity} of {positions_map.get(selected_position).instrument.name}"
-                        session.add(fee_transaction)
-                    st.session_state.trade_id = None
-                    st.session_state.position_id = position_id
-                    st.success("✅ Trade saved successfully!")
+                    try:
+                        dto = TradeCreateDTO(
+                            position_id=selected_position_id,
+                            date=datetime.combine(trade_date, trade_time).replace(tzinfo=get_timezone()),
+                            type=selected_type,
+                            quantity=trade_quantity,
+                            price=trade_price,
+                            fee=trade_fee,
+                            description=notes or None,
+                        )
+                        trades_service.create(session, dto)
+                        st.session_state.trade_id = None
+                        st.session_state.position_id = selected_position_id
+                        st.success("✅ Trade saved successfully!")
+                    except Exception as e:
+                        log.exception("")
+                        st.error(f"Error saving trade: {e}")
 
     else:
 
-        with st.container():
+        trades = trades_service.get_all(session)
+        trade = next((t for t in trades if t.id == st.session_state.trade_id), None)
 
-            trade = session.get(Trade, st.session_state.trade_id)
+        if trade is None:
+            st.error("Trade not found.")
+            st.stop()
 
-            with st.container(horizontal=True):
-                st.subheader(f"Editing Trade with ID: {trade.id}")
-                if st.button("Clear selection"):
-                    st.session_state.trade_id = None
-                    st.session_state.position_id = None
-                    st.rerun()
-            
-            with st.form("edit_trade"):
+        with st.container(horizontal=True):
+            st.subheader(f"Editing Trade with ID: {trade.id}")
+            if st.button("Clear selection"):
+                st.session_state.trade_id = None
+                st.session_state.position_id = None
+                st.rerun()
 
-                selected_account = st.selectbox(
-                    "Account",
-                    list(accounts_map.keys()),
-                    index=list(accounts_map.keys()).index(trade.position.account.name),
-                    disabled=True
-                )
-                selected_position = st.selectbox(
-                    "Position",
-                    list(positions_map.keys()),
-                    index=list(positions_map.keys()).index(trade.position.id),
-                    disabled=True
-                )
-                selected_type = st.selectbox(
-                    "Type",
-                    ["buy", "sell"],
-                    index=["buy", "sell"].index(trade.type) if trade and trade.type in ["buy", "sell"] else 0
-                )
-                qty = st.number_input("Quantity", min_value=1, step=1, value=getattr(trade, "quantity", 1))
-                _currency_symbol = trade.position.instrument.currency.symbol if trade.position.instrument.currency else ""
-                price = st.number_input(f"Price{' (' + _currency_symbol + ')' if _currency_symbol else ''}", min_value=0.0, value=read_from_db(getattr(trade, "price", 1)))
-                trade_date = st.date_input("Date", value=getattr(trade, "date", datetime.today()))
-                trade_time = st.time_input("Time", value=getattr(trade, "date", datetime.now()).time())
-                notes = st.text_area("Notes", value=getattr(trade, "description", ""))
+        with st.form("edit_trade"):
 
-                col1, col2 = st.columns([9,1])
-                with col2:
-                    submitted = st.form_submit_button("Save")
+            selected_position_id = st.selectbox(
+                "Position",
+                list(positions_map.keys()),
+                index=list(positions_map.keys()).index(trade.position_id) if trade.position_id in positions_map else 0,
+                format_func=lambda pid: f"{positions_map[pid].instrument_name} ({positions_map[pid].account_name})" if pid in positions_map else str(pid),
+                disabled=True,
+            )
+            selected_type = st.selectbox(
+                "Type",
+                options=list(TradeType),
+                format_func=lambda t: t.value.upper(),
+                index=list(TradeType).index(trade.type),
+            )
+            qty = st.number_input("Quantity", min_value=1, step=1, value=trade.quantity)
+            price = st.number_input(
+                f"Price{' (' + trade.currency_symbol + ')' if trade.currency_symbol else ''}",
+                min_value=0.0,
+                value=trade.price,
+            )
+            trade_date = st.date_input("Date", value=trade.date)
+            trade_time = st.time_input("Time", value=trade.date.time())
+            notes = st.text_area("Notes", value=trade.description or "")
 
-                if submitted:
-                    try:
-                        trade.position_id = positions_map.get(selected_position).id
-                        trade.date = datetime.combine(trade_date, trade_time).replace(tzinfo=get_timezone())
-                        trade.type = selected_type
-                        trade.quantity = qty
-                        trade.price = write_to_db(price)
-                        trade.description = notes
-                        session.add(trade)
-                        
-                        st.success("Trade updated")
-                        st.session_state.trade_id = trade.id
-                        st.session_state.position_id = positions_map.get(selected_position).id
+            col1, col2 = st.columns([9, 1])
+            with col2:
+                submitted = st.form_submit_button("Save")
 
-                    except Exception as e:
-                        st.error(f"Error updating trade: {e}")
+            if submitted:
+                try:
+                    dto = TradeCreateDTO(
+                        position_id=selected_position_id,
+                        date=datetime.combine(trade_date, trade_time).replace(tzinfo=get_timezone()),
+                        type=selected_type,
+                        quantity=qty,
+                        price=price,
+                        description=notes or None,
+                    )
+                    trades_service.update(session, trade.id, dto)
+                    st.success("Trade updated")
+                    st.session_state.position_id = selected_position_id
+                except Exception as e:
+                    log.exception("")
+                    st.error(f"Error updating trade: {e}")
 
     with st.container(horizontal=True):
         st.space("stretch")

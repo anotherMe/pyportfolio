@@ -1,19 +1,32 @@
-
+from typing import Optional
 
 import lib.repo.ohlcvs_repository as repo
 from lib.database import read_from_db
+from service.dtos import PriceDTO
 
 
-class PriceDTO:
-    def __init__(self, instrument_id: int, price: float, date):
-        self.instrument_id = instrument_id
-        self.price = price
-        self.date = date
+class OhlcvsService:
 
-def get_latest_prices_for_instrument_list(session, inst_ids: list[int]) -> list[PriceDTO]:
+    def get_latest_prices_for_instrument_list(self, session, instrument_ids: list[int]) -> list[PriceDTO]:
+        results = repo.get_latest_prices_for_instrument_list(session, instrument_ids)
+        return [
+            PriceDTO(instrument_id=instrument_id, price=read_from_db(close), date=timestamp)
+            for instrument_id, close, timestamp in results
+        ]
 
-    results = repo.get_latest_prices_for_instrument_list(session, inst_ids)
-    price_dtos = []
-    for instrument_id, close, timestamp in results:
-        price_dtos.append(PriceDTO(instrument_id, read_from_db(close), timestamp))
-    return price_dtos
+    def get_latest_price(self, session, instrument_id: int) -> Optional[PriceDTO]:
+        result = repo.get_latest_price(session, instrument_id)
+        if result is None:
+            return None
+        return PriceDTO(instrument_id=instrument_id, price=read_from_db(result.close), date=result.timestamp)
+
+
+# -----------------------
+# Module-level alias (backwards compatibility)
+# -----------------------
+
+_service = OhlcvsService()
+
+
+def get_latest_prices_for_instrument_list(session, instrument_ids: list[int]) -> list[PriceDTO]:
+    return _service.get_latest_prices_for_instrument_list(session, instrument_ids)
