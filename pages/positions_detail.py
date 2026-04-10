@@ -93,8 +93,8 @@ with get_session() as session:
             col2.markdown(f"**Ticker**: [{inst.ticker}](https://finance.yahoo.com/quote/{inst.ticker})")
         if inst and inst.currency:
             col1.write(f"**Currency:** {inst.currency.name} ({inst.currency.symbol})")
-        if inst and inst.category:
-            col2.markdown(f"**Category**: {inst.category.value}")
+        if inst and inst.dist_policy:
+            col2.markdown(f"**Category**: {inst.dist_policy.value}")
         if inst and inst.description:
             st.write(inst.description)
 

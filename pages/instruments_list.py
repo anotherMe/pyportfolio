@@ -68,7 +68,7 @@ for inst in filtered_instruments:
         "ISIN": f"https://www.justetf.com/en/etf-profile.html?isin={inst.isin}" if inst.isin else "",
         "Ticker": f"https://finance.yahoo.com/quote/{inst.ticker}" if inst.ticker else "",
         "Currency": inst.currency.name if inst.currency else "",
-        "Type": inst.category.value if inst.category else "",
+        "Dist. policy": inst.dist_policy.value if inst.dist_policy else "",
     })
 
 df = pd.DataFrame(data)

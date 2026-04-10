@@ -16,7 +16,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from lib.database import read_from_db
-from lib.enums import Currency, InstrumentCategory, TradeType, TransactionType
+from lib.enums import Currency, DistributionPolicy, TradeType, TransactionType
 from lib.models import Trade, Transaction
 
 
@@ -47,7 +47,7 @@ class InstrumentDTO(BaseModel):
     isin: Optional[str] = None
     ticker: Optional[str] = None
     name_long: Optional[str] = None
-    category: Optional[InstrumentCategory] = None
+    dist_policy: Optional[DistributionPolicy] = None
     currency: Currency
     description: Optional[str] = None
 
@@ -60,7 +60,7 @@ class InstrumentCreateDTO(BaseModel):
     isin: Optional[str] = None
     ticker: Optional[str] = None
     name_long: Optional[str] = None
-    category: Optional[InstrumentCategory] = None
+    dist_policy: Optional[DistributionPolicy] = None
     description: Optional[str] = None
 
 

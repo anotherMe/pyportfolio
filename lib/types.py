@@ -2,7 +2,7 @@ from datetime import timezone
 
 from sqlalchemy import DateTime, String, TypeDecorator
 
-from lib.enums import Currency, TradeType, TransactionType, InstrumentCategory
+from lib.enums import Currency, TradeType, TransactionType, DistributionPolicy
 
 
 class UTCDateTime(TypeDecorator):
@@ -113,9 +113,9 @@ class InstrumentCategoryColumn(TypeDecorator):
     def process_bind_param(self, value, dialect):
         if value is None:
             return value
-        if isinstance(value, InstrumentCategory):
+        if isinstance(value, DistributionPolicy):
             return value.value
-        valid = {m.value for m in InstrumentCategory}
+        valid = {m.value for m in DistributionPolicy}
         if value not in valid:
             raise ValueError(f"Invalid InstrumentCategory: {value!r}. Must be one of: {sorted(valid)}")
         return value
@@ -123,4 +123,4 @@ class InstrumentCategoryColumn(TypeDecorator):
     def process_result_value(self, value, dialect):
         if value is None:
             return value
-        return InstrumentCategory(value)
+        return DistributionPolicy(value)

@@ -31,7 +31,7 @@ class Currency(Enum):
             return None
 
 
-class InstrumentCategory(Enum):
+class DistributionPolicy(Enum):
     ACCUMULATING = "acc"
     DISTRIBUTING = "dist"
 

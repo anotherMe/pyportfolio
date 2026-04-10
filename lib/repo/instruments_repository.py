@@ -1,15 +1,15 @@
 
 from lib.models import Instrument
-from lib.enums import Currency, InstrumentCategory
+from lib.enums import Currency, DistributionPolicy
 
 
-def add_instrument(session, name: str, currency: Currency, isin: str = None, ticker: str = None, name_long: str = None, category: InstrumentCategory = None, description: str = None) -> Instrument:
+def add_instrument(session, name: str, currency: Currency, isin: str = None, ticker: str = None, name_long: str = None, dist_policy: DistributionPolicy = None, description: str = None) -> Instrument:
     instrument = Instrument(
         isin=isin,
         ticker=ticker,
         name=name,
         name_long=name_long,
-        category=category,
+        dist_policy=dist_policy,
         currency=currency,
         description=description,
     )

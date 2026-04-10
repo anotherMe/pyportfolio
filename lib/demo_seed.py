@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from faker import Faker
 
 from lib.database import write_to_db
-from lib.enums import TradeType, TransactionType, InstrumentCategory, OHLCVGranularity
+from lib.enums import TradeType, TransactionType, DistributionPolicy, OHLCVGranularity
 from lib.models import Account, Instrument, Trade, Transaction, OHLCV, Position
 
 fake = Faker()
@@ -38,9 +38,9 @@ def seed_demo_data(session, reset=False):
 
     # --- Instruments ---
     instruments = [
-        Instrument(isin="US0378331005", ticker="AAPL", name="Apple Inc.", category=InstrumentCategory.DISTRIBUTING, currency="USD"),
-        Instrument(isin="US5949181045", ticker="MSFT", name="Microsoft Corp", category=InstrumentCategory.ACCUMULATING, currency="USD"),
-        Instrument(isin="LU1681046931", ticker="ETF-EM", name="Emerging Markets ETF", category=InstrumentCategory.ACCUMULATING, currency="EUR"),
+        Instrument(isin="US0378331005", ticker="AAPL", name="Apple Inc.", dist_policy=DistributionPolicy.DISTRIBUTING, currency="USD"),
+        Instrument(isin="US5949181045", ticker="MSFT", name="Microsoft Corp", dist_policy=DistributionPolicy.ACCUMULATING, currency="USD"),
+        Instrument(isin="LU1681046931", ticker="ETF-EM", name="Emerging Markets ETF", dist_policy=DistributionPolicy.ACCUMULATING, currency="EUR"),
     ]
     session.add_all(instruments)
     session.flush()

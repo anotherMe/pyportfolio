@@ -60,8 +60,8 @@ with get_session() as session:
         col1, col2, col3 = st.columns([2, 1, 3])
         if inst.currency:
             col1.write(f"**Currency:** {inst.currency.name} ({inst.currency.symbol})")
-        if inst.category:
-            col2.markdown(f"**Category**: {inst.category.value}")
+        if inst.dist_policy:
+            col2.markdown(f"**Dist. policy**: {inst.dist_policy.value}")
 
         if inst.description:
             st.write(inst.description)

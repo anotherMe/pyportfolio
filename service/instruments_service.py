@@ -31,7 +31,7 @@ class InstrumentsService:
             isin=dto.isin,
             ticker=dto.ticker,
             name_long=dto.name_long,
-            category=dto.category,
+            dist_policy=dto.dist_policy,
             description=dto.description,
         )
         session.commit()

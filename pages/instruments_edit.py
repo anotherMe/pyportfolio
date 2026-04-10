@@ -2,7 +2,7 @@
 import streamlit as st
 
 from lib.database import get_session
-from lib.enums import Currency, InstrumentCategory
+from lib.enums import Currency, DistributionPolicy
 from lib.utils import is_valid_isin
 from service.instruments_service import InstrumentsService
 from service.dtos import InstrumentCreateDTO
@@ -56,15 +56,15 @@ with get_session() as session:
             index=currency_index,
         )
 
-        category_options = list(InstrumentCategory)
-        category_labels = {c: c.value for c in category_options}
-        current_category = inst_dto.category if inst_dto else InstrumentCategory.ACCUMULATING
-        category_index = category_options.index(current_category) if current_category in category_options else 0
-        selected_category = st.selectbox(
-            "Category",
-            options=category_options,
+        dist_policy_options = list(DistributionPolicy)
+        dist_policy_labels = {c: c.value for c in dist_policy_options}
+        current_dist_policy = inst_dto.dist_policy if inst_dto else DistributionPolicy.ACCUMULATING
+        dist_policy_index = dist_policy_options.index(current_dist_policy) if current_dist_policy in dist_policy_options else 0
+        selected_dist_policy = st.selectbox(
+            "Distribution policy",
+            options=dist_policy_options,
             format_func=lambda c: c.value,
-            index=category_index,
+            index=dist_policy_index,
         )
 
         col1, col2 = st.columns([7, 1])
@@ -89,7 +89,7 @@ with get_session() as session:
                         model.isin = clean_isin or None
                         model.ticker = ticker or None
                         model.currency = selected_currency
-                        model.category = selected_category
+                        model.dist_policy = selected_dist_policy
                         session.commit()
                     else:
                         instruments_service.create(session, InstrumentCreateDTO(
@@ -98,7 +98,7 @@ with get_session() as session:
                             isin=clean_isin or None,
                             ticker=ticker or None,
                             name_long=name_long or None,
-                            category=selected_category,
+                            dist_policy=selected_dist_policy,
                             description=description or None,
                         ))
                     st.session_state.instrument_id = None

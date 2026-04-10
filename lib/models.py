@@ -65,7 +65,7 @@ class Instrument(Base):
     ticker = Column(String)
     name = Column(String, nullable=False)
     name_long = Column(String)
-    category = Column(InstrumentCategoryColumn, nullable=True)
+    dist_policy = Column(InstrumentCategoryColumn, nullable=True)
     description = Column(Text)
     currency = Column(CurrencyType, nullable=False)
 
