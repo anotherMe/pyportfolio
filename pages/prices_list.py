@@ -99,7 +99,7 @@ if not df_instruments.empty and not df_ohlcv.empty:
 
 st.subheader("Update prices data with yfinance")
 
-message_container = st.container()
+message_container = st.empty()
 progress_bar = st.progress(0, text="Idle")
 
 col1, col2 = st.columns([5,1])
