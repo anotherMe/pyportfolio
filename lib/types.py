@@ -2,7 +2,7 @@ from datetime import timezone
 
 from sqlalchemy import DateTime, String, TypeDecorator
 
-from lib.enums import Currency, TradeType, TransactionType, DistributionPolicy
+from lib.enums import Currency, TradeType, TransactionType, DistributionPolicy, AssetClass
 
 
 class UTCDateTime(TypeDecorator):
@@ -124,3 +124,24 @@ class InstrumentCategoryColumn(TypeDecorator):
         if value is None:
             return value
         return DistributionPolicy(value)
+
+
+class AssetClassColumn(TypeDecorator):
+    """Stores AssetClass as its string value; returns an AssetClass member on read."""
+    impl = String
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if isinstance(value, AssetClass):
+            return value.value
+        valid = {m.value for m in AssetClass}
+        if value not in valid:
+            raise ValueError(f"Invalid AssetClass: {value!r}. Must be one of: {sorted(valid)}")
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        return AssetClass(value)

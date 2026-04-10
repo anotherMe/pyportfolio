@@ -4,7 +4,7 @@ from sqlalchemy import Boolean, Column, DateTime, String, Integer, ForeignKey, T
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-from lib.types import UTCDateTime, CurrencyType, TradeTypeColumn, TransactionTypeColumn, InstrumentCategoryColumn
+from lib.types import UTCDateTime, CurrencyType, TradeTypeColumn, TransactionTypeColumn, InstrumentCategoryColumn, AssetClassColumn
 
 Base = declarative_base()
 
@@ -68,6 +68,7 @@ class Instrument(Base):
     dist_policy = Column(InstrumentCategoryColumn, nullable=True)
     description = Column(Text)
     currency = Column(CurrencyType, nullable=False)
+    asset_class = Column(AssetClassColumn, nullable=True)
 
     ohlcvs = relationship("OHLCV", back_populates="instrument", cascade="all")
     positions = relationship("Position", back_populates="instrument", cascade="all")

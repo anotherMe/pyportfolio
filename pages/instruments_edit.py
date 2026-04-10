@@ -2,7 +2,7 @@
 import streamlit as st
 
 from lib.database import get_session
-from lib.enums import Currency, DistributionPolicy
+from lib.enums import AssetClass, Currency, DistributionPolicy
 from lib.utils import is_valid_isin
 from service.instruments_service import InstrumentsService
 from service.dtos import InstrumentCreateDTO
@@ -56,15 +56,24 @@ with get_session() as session:
             index=currency_index,
         )
 
-        dist_policy_options = list(DistributionPolicy)
-        dist_policy_labels = {c: c.value for c in dist_policy_options}
-        current_dist_policy = inst_dto.dist_policy if inst_dto else DistributionPolicy.ACCUMULATING
-        dist_policy_index = dist_policy_options.index(current_dist_policy) if current_dist_policy in dist_policy_options else 0
+        dist_policy_options = [None] + list(DistributionPolicy)
+        current_dist_policy = inst_dto.dist_policy if inst_dto else None
+        dist_policy_index = dist_policy_options.index(current_dist_policy)
         selected_dist_policy = st.selectbox(
             "Distribution policy",
             options=dist_policy_options,
-            format_func=lambda c: c.value,
+            format_func=lambda c: "— none —" if c is None else c.value,
             index=dist_policy_index,
+        )
+
+        asset_class_options = [None] + list(AssetClass)
+        current_asset_class = inst_dto.asset_class if inst_dto else None
+        asset_class_index = asset_class_options.index(current_asset_class)
+        selected_asset_class = st.selectbox(
+            "Asset class",
+            options=asset_class_options,
+            format_func=lambda c: "— none —" if c is None else c.value,
+            index=asset_class_index,
         )
 
         col1, col2 = st.columns([7, 1])
@@ -90,6 +99,7 @@ with get_session() as session:
                         model.ticker = ticker or None
                         model.currency = selected_currency
                         model.dist_policy = selected_dist_policy
+                        model.asset_class = selected_asset_class
                         session.commit()
                     else:
                         instruments_service.create(session, InstrumentCreateDTO(
@@ -100,6 +110,7 @@ with get_session() as session:
                             name_long=name_long or None,
                             dist_policy=selected_dist_policy,
                             description=description or None,
+                            asset_class=selected_asset_class
                         ))
                     st.session_state.instrument_id = None
                     st.success("✅ Instrument saved successfully!")
