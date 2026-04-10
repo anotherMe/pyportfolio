@@ -17,7 +17,7 @@ from service.utils import to_local
 log = setup_logger(__name__)
 
 
-st.title("Load Yahoo Finance data")
+st.title("Prices")
 
 st.subheader("Instruments latest update")
 
@@ -31,67 +31,67 @@ with get_session() as session:
 
 if not instruments:
     st.info("No instruments found.")
-else:
+    st.stop()
 
-    df_ohlcv = pd.DataFrame([
-        {
-            "instrument_id": o.instrument_id,
-            "timestamp": to_local(o.timestamp),
-            # "open": o.open,
-            # "high": o.high,
-            # "low": o.low,
-            "close": read_from_db(o.close),
-            # "volume": o.volume,
-        } for o in ohlcvs
-    ])
+df_ohlcv = pd.DataFrame([
+    {
+        "instrument_id": o.instrument_id,
+        "timestamp": to_local(o.timestamp),
+        # "open": o.open,
+        # "high": o.high,
+        # "low": o.low,
+        "close": read_from_db(o.close),
+        # "volume": o.volume,
+    } for o in ohlcvs
+])
 
-    df_instruments = pd.DataFrame([
-        {
-            "id": i.id,
-            "ticker": i.ticker,
-            "name": i.name,
-            "name_long": i.currency,
-        } for i in instruments
-    ])
+df_instruments = pd.DataFrame([
+    {
+        "id": i.id,
+        "ticker": i.ticker,
+        "name": i.name,
+        "name_long": i.name_long
+    } for i in instruments
+])
 
-    if not df_instruments.empty and not df_ohlcv.empty:
+if not df_instruments.empty and not df_ohlcv.empty:
 
-        # merge dataframes
-        df = pd.merge(
-            df_instruments,
-            df_ohlcv,
-            how="left",
-            left_on="id",
-            right_on="instrument_id"
-        )
+    # merge dataframes
+    df = pd.merge(
+        df_instruments,
+        df_ohlcv,
+        how="left",
+        left_on="id",
+        right_on="instrument_id"
+    )
 
-        # Add Yahoo finance link to ticker column
-        df["ticker"] = df["ticker"].apply(
-            lambda t: "https://finance.yahoo.com/quote/" + t.strip().upper() if t else ""
-        )
+    # Add Yahoo finance link to ticker column
+    df["ticker"] = df["ticker"].apply(
+        lambda t: "https://finance.yahoo.com/quote/" + t.strip().upper() if t else ""
+    )
 
-        # --- Configure columns ---
-        column_config = {
-            "id": None,
-            "name": st.column_config.TextColumn(label="Name"),
-            "name_long": None,
-            # "Descr": st.column_config.TextColumn(width="large"),
-            "instrument_id": None,
-            "timestamp": st.column_config.DatetimeColumn(label="Updated", format="YYYY-MM-DD"),
-            "close": st.column_config.NumberColumn(label="Latest close", format="euro"), # FIXME: currency format should be dynamic
-            "ticker": st.column_config.LinkColumn(
-                label="Ticker",
-                display_text=r"/quote/([^/?#]+)",
-                width="small"
-            ),
-        }
+    # --- Configure columns ---
+    column_config = {
+        "id": None,
+        "name": st.column_config.TextColumn(label="Name"),
+        "name_long": None,
+        # "Descr": st.column_config.TextColumn(width="large"),
+        "instrument_id": None,
+        "timestamp": st.column_config.DatetimeColumn(label="Updated", format="YYYY-MM-DD"),
+        "close": st.column_config.NumberColumn(label="Latest close", format="euro"), # FIXME: currency format should be dynamic
+        "ticker": st.column_config.LinkColumn(
+            label="Ticker",
+            display_text=r"/quote/([^/?#]+)",
+            width="small"
+        ),
+    }
 
-        # --- Display table ---
-        st.dataframe(
-            data=df,
-            hide_index=True,
-            column_config=column_config,
-        )
+    # --- Display table ---
+    st.dataframe(
+        data=df,
+        hide_index=True,
+        column_config=column_config,
+    )
 
 
 # ----------------------------------------------------------------------------------------------------------------------------

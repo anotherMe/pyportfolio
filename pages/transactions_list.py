@@ -1,10 +1,10 @@
 
 import streamlit as st
-from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
+from lib.repo.accounts_repository import get_account_by_name
 from lib.database import get_session, read_from_db
 from lib.models import Transaction, Instrument
 from lib.utils import confirm_delete_dialog
-from service.utils import account_selector, to_local
+from service.utils import to_local
 import lib.repo.transactions_repository as transactions_repo
 
 from logging_config import setup_logger
@@ -25,9 +25,6 @@ st.title("💰 Transactions")
 
 with get_session() as session:
 
-    # --- Account selector ---
-    accounts = get_all_accounts(session)
-    account_selector(accounts) # Show sidebar account selector
     current_account = get_account_by_name(session, st.session_state.account)
 
     # --- Transaction type selector

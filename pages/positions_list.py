@@ -2,10 +2,9 @@
 import pandas as pd
 import streamlit as st
 
-from lib.repo.accounts_repository import get_account_by_name, get_all_accounts
+from lib.repo.accounts_repository import get_account_by_name
 from lib.database import get_session
 from service.positions_service import get_positions_summary
-from service.utils import account_selector
 
 
 # --------------------------------------------------------------------------------
@@ -82,9 +81,6 @@ st.session_state.status_filter = options[selected_label]
 
 with get_session() as session:
 
-    # --- Account selector ---
-    accounts = get_all_accounts(session)
-    account_selector(accounts) # Show sidebar account selector
     current_account = get_account_by_name(session, st.session_state.account)
 
     # --- Retrieve Open/Closed positions ---
