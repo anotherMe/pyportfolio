@@ -17,7 +17,7 @@ all_pages = [
     st.Page("pages/instruments_list.py",    title="Instruments"),
     st.Page("pages/instruments_detail.py",  title="Instrument Detail"),
     st.Page("pages/instruments_edit.py",    title="Instrument Edit"),
-    st.Page("pages/prices_load_yahoo.py",   title="Prices"),
+    st.Page("pages/prices_list.py",   title="Prices"),
     st.Page("pages/trades_list.py",         title="Trades"),
     st.Page("pages/trades_detail.py",       title="Trade Detail"),
     st.Page("pages/trades_edit.py",         title="Trade Edit"),
@@ -37,7 +37,7 @@ with st.sidebar:
     st.page_link("pages/trades_list.py",       label="💼 Trades")
     st.page_link("pages/transactions_list.py", label="💰 Transactions")
     st.page_link("pages/accounts_list.py",     label="🏦 Accounts")
-    st.page_link("pages/prices_load_yahoo.py", label="📈 Prices")
+    st.page_link("pages/prices_list.py", label="📈 Prices")
     st.divider()
     st.page_link("pages/backup.py",            label="💾 Backup")
     st.page_link("pages/demo_seed.py",         label="🌱 Seed database")
