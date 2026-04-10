@@ -79,8 +79,7 @@ st.subheader("Update prices data with yfinance")
 message_container = st.empty()
 progress_bar = st.progress(0, text="Idle")
 
-col1, col2 = st.columns([5, 1])
-with col2:
+with st.container(horizontal=True, horizontal_alignment="right"):
     btn_update_instruments = st.button(label="Download prices", type="primary")
 
 if btn_update_instruments:
@@ -121,11 +120,12 @@ st.subheader("Load data from local JSON")
 
 uploaded_files = st.file_uploader("Load one or more local Yahoo Finance JSON files", type="json", accept_multiple_files=True)
 
-col1, col2 = st.columns([5, 1])
+col1, col2 = st.columns([1, 1])
 with col1:
     create_instrument = st.checkbox("Create instrument if ticker does not exist")
 with col2:
-    btn_parse_files = st.button(label="Parse files", type="primary")
+    with st.container(horizontal=True, horizontal_alignment="right"):
+        btn_parse_files = st.button(label="Parse files", type="primary")
 
 if btn_parse_files:
     for uploaded_file in uploaded_files:

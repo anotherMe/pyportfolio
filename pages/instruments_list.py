@@ -97,15 +97,29 @@ st_dataframe = st.dataframe(
 if st_dataframe["selection"]["rows"]:
     dataframe_index = st_dataframe["selection"]["rows"][0]
     selected_instrument = filtered_instruments[dataframe_index]
-    with st.container(horizontal=True):
+    inst = selected_instrument
+    with st.container(border=True):
+        st.subheader(inst.name)
+        if inst.name_long:
+            st.markdown(f"**{inst.name_long.strip()}**")
+        col1, col2, col3 = st.columns([2, 1, 3])
+        if inst.isin:
+            col1.write(f"**ISIN:** [{inst.isin}](https://www.justetf.com/en/etf-profile.html?isin={inst.isin})")
+        if inst.ticker:
+            col2.markdown(f"**Ticker**: [{inst.ticker}](https://finance.yahoo.com/quote/{inst.ticker})")
+        col1, col2, col3 = st.columns([2, 1, 3])
+        if inst.currency:
+            col1.write(f"**Currency:** {inst.currency.name} ({inst.currency.symbol})")
+        if inst.dist_policy:
+            col2.markdown(f"**Dist. policy**: {inst.dist_policy.value}")
+        if inst.description:
+            st.write(inst.description)
+    with st.container(horizontal=True, horizontal_alignment="right"):
         if st.button("Delete", type="primary"):
             confirm_delete_dialog(f"Are you sure you want to delete instrument {selected_instrument.id}?", selected_instrument.id, delete_instrument)
         if st.button("Edit", type="secondary"):
             st.session_state.instrument_id = selected_instrument.id
             st.switch_page("pages/instruments_edit.py")
-        if st.button("Detail"):
-            st.session_state.instrument_id = selected_instrument.id
-            st.switch_page("pages/instruments_detail.py")
 
 st.divider()
 with st.container(horizontal=True, horizontal_alignment="right"):

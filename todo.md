@@ -5,6 +5,3 @@
 - add fancy prices chart in "Dashboard" page
 - add chart in "Dashboard" page that shows prices for the current instrument compared with another instrument selected as a benchmark; would be nice to add also buy and sell events to the timeline
 - Add yearly PnL to "Position detail" page
-- move "Details" under the st.dataframe, no need to show in separate page
-
-- missing "Asset class" selector in instrument edit

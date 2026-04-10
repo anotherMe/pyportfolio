@@ -6,6 +6,7 @@ from lib.database import get_session
 from lib.utils import confirm_delete_dialog
 from service.utils import to_local
 from service.trades_service import TradesService
+from service.transactions_service import TransactionsService
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
@@ -20,6 +21,7 @@ if 'trade_id' not in st.session_state:
     st.session_state.trade_id = None
 
 trades_service = TradesService()
+transactions_service = TransactionsService()
 
 
 def delete_trade(item_id):
@@ -86,15 +88,35 @@ with get_session() as session:
     if st_dataframe["selection"]["rows"]:
         dataframe_index = st_dataframe["selection"]["rows"][0]
         selected_trade = filtered_trades[dataframe_index]
-        with st.container(horizontal=True):
+        trade = selected_trade
+        with st.container(border=True):
+            col1, col2, col3 = st.columns([1, 1, 1])
+            col1.write(f"**Account:** {trade.account_name}")
+            col2.write(f"**Instrument:** {trade.instrument_name}")
+            col3.write(f"**ISIN:** {trade.instrument_isin}")
+            col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+            col1.write(f"**Date:** {to_local(trade.date)}")
+            col2.write(f"**Type:** {trade.type.value.upper()}")
+            col3.write(f"**Qty:** {trade.quantity}")
+            col4.write(f"**Price:** {trade.price:.2f} {trade.currency_symbol}")
+
+            st.divider()
+            st.write("**Transactions (for this position):**")
+            position_transactions = transactions_service.get_by_position(session, trade.position_id)
+            if position_transactions:
+                st.dataframe(pd.DataFrame([{
+                    "Type": t.type.value,
+                    "Amount": f"{t.amount:.2f} {t.currency_symbol}",
+                    "Date": to_local(t.date),
+                } for t in position_transactions]), hide_index=True)
+            else:
+                st.info("No transactions available")
+        with st.container(horizontal=True, horizontal_alignment="right"):
             if st.button("Delete", type="primary"):
                 confirm_delete_dialog(f"Are you sure you want to delete trade {selected_trade.id}?", selected_trade.id, delete_trade)
             if st.button("Edit", type="secondary"):
                 st.session_state.trade_id = selected_trade.id
                 st.switch_page("pages/trades_edit.py")
-            if st.button("Detail"):
-                st.session_state.trade_id = selected_trade.id
-                st.switch_page("pages/trades_detail.py")
 
     st.divider()
     with st.container(horizontal=True, horizontal_alignment="right"):

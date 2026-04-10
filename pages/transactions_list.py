@@ -65,10 +65,18 @@ with get_session() as session:
     if st_dataframe["selection"]["rows"]:
         dataframe_index = st_dataframe["selection"]["rows"][0]
         selected_transaction = transactions[dataframe_index]
-        with st.container(horizontal=True):
-            if st.button("Detail"):
-                st.session_state.transaction_id = selected_transaction.id
-                st.switch_page("pages/transactions_detail.py")
+        txn = selected_transaction
+        with st.container(border=True):
+            if txn.description:
+                st.subheader(txn.description)
+            col1, col2 = st.columns([2, 1])
+            if txn.instrument_name:
+                col1.markdown(f"**Instrument:** {txn.instrument_name}")
+            col2.markdown(f"**Type:** {txn.type.value}")
+            col1, col2 = st.columns([2, 1])
+            col1.markdown(f"**Date:** {to_local(txn.date)}")
+            col2.markdown(f"**Amount:** {txn.amount:.2f} {txn.currency_symbol}")
+        with st.container(horizontal=True, horizontal_alignment="right"):
             if st.button("Edit", type="secondary"):
                 st.session_state.transaction_id = selected_transaction.id
                 st.switch_page("pages/transactions_edit.py")
