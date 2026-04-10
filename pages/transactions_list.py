@@ -74,3 +74,9 @@ with get_session() as session:
                 st.switch_page("pages/transactions_edit.py")
             if st.button("Delete", type="primary"):
                 confirm_delete_dialog(f"Are you sure you want to delete transaction {selected_transaction.id}?", selected_transaction.id, delete_transaction)
+
+    st.divider()
+    with st.container(horizontal=True, horizontal_alignment="right"):
+        if st.button("➕ Add New"):
+            st.session_state["transaction_id"] = None
+            st.switch_page("pages/transactions_edit.py")

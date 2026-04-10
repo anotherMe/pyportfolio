@@ -1,4 +1,5 @@
 
+from click import style
 import streamlit as st
 import pandas as pd
 
@@ -105,3 +106,9 @@ if st_dataframe["selection"]["rows"]:
         if st.button("Detail"):
             st.session_state.instrument_id = selected_instrument.id
             st.switch_page("pages/instruments_detail.py")
+
+st.divider()
+with st.container(horizontal=True, horizontal_alignment="right"):
+    if st.button("➕ Add new", type="secondary"):
+        st.session_state["instrument_id"] = None
+        st.switch_page("pages/instruments_edit.py")

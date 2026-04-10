@@ -185,6 +185,15 @@ with get_session() as session:
                 st.switch_page("pages/positions_detail.py")
 
 
+    # --- Buttons --- 
+
+    st.divider()
+    with st.container(horizontal=True, horizontal_alignment="right"):
+        if st.button("➕ Add new", type="secondary"):
+            st.session_state["position_id"] = None
+            st.switch_page("pages/positions_edit.py")
+
+
     # --- Totals --- 
 
     total_invested_sum = filtered_positions_df["total_invested"].sum()

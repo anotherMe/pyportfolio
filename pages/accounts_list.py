@@ -60,8 +60,7 @@ with get_session() as session:
                         st.switch_page("pages/accounts_edit.py")
 
         st.divider()
-        col1, col2 = st.columns([4, 1])
-        with col2:
+        with st.container(horizontal=True, horizontal_alignment="right"):
             if st.button("➕ Add New"):
                 st.session_state["account_id"] = None
                 st.switch_page("pages/accounts_edit.py")

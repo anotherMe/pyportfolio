@@ -95,3 +95,9 @@ with get_session() as session:
             if st.button("Detail"):
                 st.session_state.trade_id = selected_trade.id
                 st.switch_page("pages/trades_detail.py")
+
+    st.divider()
+    with st.container(horizontal=True, horizontal_alignment="right"):
+        if st.button("➕ Add New"):
+            st.session_state["trade_id"] = None
+            st.switch_page("pages/trades_edit.py")
