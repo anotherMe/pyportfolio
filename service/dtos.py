@@ -194,6 +194,8 @@ class PositionDTO(BaseModel):
     remaining_quantity: int = 0
     remaining_cost_basis: float = 0.0
 
+    pnl: float = 0.0
+    pnl_percent: float = 0.0
     realized_pnl: float = 0.0
     unrealized_pnl: float = 0.0
     realized_pnl_percent: float = 0.0
