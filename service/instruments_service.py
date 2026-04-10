@@ -33,6 +33,7 @@ class InstrumentsService:
             name_long=dto.name_long,
             dist_policy=dto.dist_policy,
             description=dto.description,
+            asset_class=dto.asset_class,
         )
         session.commit()
         return InstrumentDTO.model_validate(instrument)

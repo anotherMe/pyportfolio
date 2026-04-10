@@ -36,6 +36,16 @@ class DistributionPolicy(Enum):
     DISTRIBUTING = "dist"
 
 
+class AssetClass(Enum):
+	EQUITY = "Equity"
+	BONDS = "Bonds"
+	PRECIOUS = "Precious metals"
+	COMMODITIES = "Commodities"
+	CRYPTO = "Cryptocurrencies"
+	RE = "Real estate"
+	MONEY = "Money market"
+
+
 class OHLCVGranularity(Enum):
     DAY = "1d"
     WEEK = "1wk"

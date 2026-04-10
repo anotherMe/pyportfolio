@@ -3,7 +3,8 @@ from lib.models import Instrument
 from lib.enums import Currency, DistributionPolicy
 
 
-def add_instrument(session, name: str, currency: Currency, isin: str = None, ticker: str = None, name_long: str = None, dist_policy: DistributionPolicy = None, description: str = None) -> Instrument:
+def add_instrument(session, name: str, currency: Currency, isin: str = None, ticker: str = None, name_long: str = None, 
+                   dist_policy: DistributionPolicy = None, description: str = None, asset_class: str = None) -> Instrument:
     instrument = Instrument(
         isin=isin,
         ticker=ticker,
@@ -12,6 +13,7 @@ def add_instrument(session, name: str, currency: Currency, isin: str = None, tic
         dist_policy=dist_policy,
         currency=currency,
         description=description,
+        asset_class=asset_class
     )
     session.add(instrument)
     session.flush()

@@ -16,7 +16,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from lib.database import read_from_db
-from lib.enums import Currency, DistributionPolicy, TradeType, TransactionType
+from lib.enums import AssetClass, Currency, DistributionPolicy, TradeType, TransactionType
 from lib.models import Trade, Transaction
 
 
@@ -50,6 +50,7 @@ class InstrumentDTO(BaseModel):
     dist_policy: Optional[DistributionPolicy] = None
     currency: Currency
     description: Optional[str] = None
+    asset_class: Optional[AssetClass] = None
 
     model_config = {"from_attributes": True}
 
@@ -62,6 +63,7 @@ class InstrumentCreateDTO(BaseModel):
     name_long: Optional[str] = None
     dist_policy: Optional[DistributionPolicy] = None
     description: Optional[str] = None
+    asset_class: Optional[AssetClass] = None
 
 
 # ------------------------------------------------------------------
