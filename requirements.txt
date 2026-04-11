@@ -1,6 +1,7 @@
 
 SQLAlchemy
 streamlit
+streamlit[charts]
 faker
 yfinance
 pytest

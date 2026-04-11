@@ -1,6 +1,6 @@
 
 from sqlalchemy import select
-from lib.models import Position, Account, Instrument
+from lib.models import Position
 
 
 def add_position(session, account_id: int, instrument_id: int) -> Position:
@@ -14,12 +14,10 @@ def add_position(session, account_id: int, instrument_id: int) -> Position:
     return position
 
 
-def get_all_positions(session, account=None, account_id: int = None) -> list[Position]:
-    """Accepts either an Account ORM object (legacy) or an account_id int."""
+def get_all_positions(session, account_id: int = 0) -> list[Position]:
     stmt = select(Position)
-    resolved_id = account_id or (account.id if account else None)
-    if resolved_id:
-        stmt = stmt.filter_by(account_id=resolved_id)
+    if account_id != 0:
+        stmt = stmt.filter_by(account_id=account_id)
     return session.scalars(stmt).all()
 
 

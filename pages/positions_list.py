@@ -109,7 +109,7 @@ def delete_transaction(item_id):
 with get_session() as session:
 
     current_account = _accounts_service.get_by_name(session, st.session_state.account)
-    account_id = current_account.id if current_account else None
+    account_id = current_account.id if current_account else 0
 
     include_closed = True
     include_open = True
@@ -334,10 +334,10 @@ with get_session() as session:
 
     color = "green" if total_pnl > 0 else "red"
     st.markdown(
-        f"<h3>Total buy:<span>{total_invested_sum:,.2f} €</span></h3>",
+        f"<h3>Total buy: <span>{total_invested_sum:,.2f} €</span></h3>",
         unsafe_allow_html=True
     )
     st.markdown(
-        f"<h3>Total PnL:<span style='color:{color}'>{total_pnl:,.2f} €</span></h3>",
+        f"<h3>Total PnL: <span style='color:{color}'>{total_pnl:,.2f} €</span></h3>",
         unsafe_allow_html=True
     )

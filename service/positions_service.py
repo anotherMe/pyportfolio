@@ -1,8 +1,8 @@
 
 from collections import deque
-from typing import Optional
 
 import pandas as pd
+from sqlalchemy.orm import Session
 
 from lib.database import read_from_db
 from lib.enums import TradeType, TransactionType
@@ -15,7 +15,6 @@ from service import ohlcvs_service
 from service.dtos import PositionDTO, PositionBasicDTO, PositionCreateDTO
 
 log = setup_logger(__name__)
-
 
 # -----------------------
 # Utility
@@ -30,7 +29,7 @@ def compute_position_closed(row):
         return "Closed on " + row["closing_date"].strftime("%Y-%m-%d")
 
 
-def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
+def _apply_fifo(session: Session, positions: list[Position]) -> list[PositionDTO]:
     """Apply FIFO cost-basis matching across buy/sell trades for each position."""
 
     all_trades = get_trades_for_position_list(session, [p.id for p in positions])
@@ -49,6 +48,7 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
         dto.instrument_ticker = position.instrument.ticker
         dto.instrument_currency = position.instrument.currency.name
         dto.instrument_symbol = position.instrument.currency.symbol
+        dto.instrument_asset_class = position.instrument.asset_class
 
         latest_price_entry = next(
             (p for p in latest_prices if p.instrument_id == position.instrument.id), None
@@ -98,6 +98,9 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
         dto.realized_pnl_percent = (dto.realized_pnl / dto.total_invested * 100) if dto.total_invested > 0 else 0.0
         dto.unrealized_pnl_percent = (dto.unrealized_pnl / dto.remaining_cost_basis * 100) if dto.remaining_cost_basis > 0 else 0.0
 
+        dto.pnl = dto.realized_pnl + dto.unrealized_pnl + dto.transactions_amount
+        dto.pnl_percent = (dto.pnl / dto.total_invested) if dto.total_invested > 0 else 0.0
+
         position_dtos.append(dto)
 
     return position_dtos
@@ -109,11 +112,12 @@ def _apply_fifo(session, positions: list[Position]) -> list[PositionDTO]:
 
 class PositionsService:
 
-    def get_summary(self, session, account=None, account_id: int = None, include_closed: bool = True, include_open: bool = True) -> pd.DataFrame:
+    def get_summary(self, session: Session, account_id: int = 0, include_closed: bool = True, include_open: bool = True) -> pd.DataFrame:
         """Return a pandas DataFrame with FIFO-computed position summaries.
         Accepts either an Account ORM object (legacy) or an account_id int.
         """
-        all_positions = get_all_positions(session, account, account_id=account_id)
+        
+        all_positions = get_all_positions(session, account_id=account_id)
         dtos = _apply_fifo(session, all_positions)
 
         filtered = [
@@ -125,27 +129,22 @@ class PositionsService:
 
         if not df.empty:
             df["position_closed"] = df.apply(compute_position_closed, axis=1)
-            df["pnl"] = df["realized_pnl"] + df["unrealized_pnl"] + df["transactions_amount"]
-            df["pnl_percent"] = df["pnl"] / df["total_invested"]
             df = df.sort_values(by=["opening_date"], ascending=[True])
             df.reset_index(drop=True, inplace=True)
 
         return df
 
-    def get_position_summary(self, session, position_id: int) -> PositionDTO:
+    def get_position_summary(self, session: Session, position_id: int) -> PositionDTO:
         """Return a single PositionDTO with computed P&L."""
         position = session.get(Position, position_id)
         if position is None:
             raise ValueError(f"Position {position_id} not found")
         dtos = _apply_fifo(session, [position])
-        p = dtos[0]
-        p.pnl = p.realized_pnl + p.unrealized_pnl + p.transactions_amount
-        p.pnl_percent = (p.pnl / p.total_invested) if p.total_invested > 0 else 0.0
-        return p
+        return dtos[0]
 
-    def get_all_basic(self, session, account=None, account_id: int = None) -> list[PositionBasicDTO]:
+    def get_all_basic(self, session: Session, account_id: int = 0) -> list[PositionBasicDTO]:
         """Return lightweight position info — no FIFO, suitable for dropdowns."""
-        positions = get_all_positions(session, account, account_id=account_id)
+        positions = get_all_positions(session, account_id=account_id)
         result = []
         for pos in positions:
             result.append(PositionBasicDTO(
@@ -160,7 +159,7 @@ class PositionsService:
             ))
         return result
 
-    def create(self, session, dto: PositionCreateDTO) -> PositionBasicDTO:
+    def create(self, session: Session, dto: PositionCreateDTO) -> PositionBasicDTO:
         position = add_position(session, dto.account_id, dto.instrument_id)
         session.commit()
         return PositionBasicDTO(
@@ -180,19 +179,28 @@ class PositionsService:
             session.commit()
         return result
 
-
+    # def get_percent_allocation_by_asset_class(self, session: Session, account_id: int = 0, include_closed: bool = True, include_open: bool = True) -> pd.DataFrame:
+    #     all_positions = get_all_positions(session, account_id=account_id)
+    #     dtos = _apply_fifo(session, all_positions)
+    #     filtered = [
+    #         p for p in dtos
+    #         if (p.closing_date and include_closed) or (not p.closing_date and include_open)
+    #     ]
+    #     df = pd.DataFrame([p.model_dump() for p in filtered])
+    #     return df
+    
 # -----------------------
 # Module-level aliases (backwards compatibility for existing callers)
 # -----------------------
 
-_service = PositionsService()
+# _service = PositionsService()
 
 
-def get_positions_summary(session, account=None, include_closed=True, include_open=True) -> pd.DataFrame:
-    return _service.get_summary(session, account, include_closed, include_open)
+# def get_positions_summary(session, account=None, include_closed=True, include_open=True) -> pd.DataFrame:
+#     return _service.get_summary(session, account, include_closed, include_open)
 
 
-def get_position_summary(session, position) -> PositionDTO:
-    """Backward-compatible alias. Accepts a Position model instance or position_id int."""
-    position_id = position if isinstance(position, int) else position.id
-    return _service.get_position_summary(session, position_id)
+# def get_position_summary(session, position) -> PositionDTO:
+#     """Backward-compatible alias. Accepts a Position model instance or position_id int."""
+#     position_id = position if isinstance(position, int) else position.id
+#     return _service.get_position_summary(session, position_id)

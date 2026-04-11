@@ -21,6 +21,14 @@ from lib.models import Trade, Transaction
 
 
 # ------------------------------------------------------------------
+# Dashboard
+# ------------------------------------------------------------------
+
+class PortfolioAssetClassAllocationDTO(BaseModel):
+    asset_class_name: str
+    percent_allocation: float
+
+# ------------------------------------------------------------------
 # Account
 # ------------------------------------------------------------------
 
@@ -181,6 +189,7 @@ class PositionDTO(BaseModel):
     instrument_ticker: str = ""
     instrument_currency: str = ""
     instrument_symbol: str = ""
+    instrument_asset_class: str = ""
 
     opening_date: Optional[datetime] = None
 
