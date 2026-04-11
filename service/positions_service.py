@@ -1,5 +1,6 @@
 
 from collections import deque
+import datetime as dt
 
 import pandas as pd
 from sqlalchemy.orm import Session
@@ -26,7 +27,7 @@ def compute_position_closed(row):
     elif row["remaining_quantity"] == 0 and pd.isna(row["closing_date"]):
         return "No open quantity"
     else:
-        return "Closed on " + row["closing_date"].strftime("%Y-%m-%d")
+        return "Closed on " + dt.datetime.fromisoformat("2022-03-11T16:27:00Z").strftime("%Y-%m-%d")
 
 
 def _apply_fifo(session: Session, positions: list[Position]) -> list[PositionDTO]:
@@ -53,7 +54,7 @@ def _apply_fifo(session: Session, positions: list[Position]) -> list[PositionDTO
         latest_price_entry = next(
             (p for p in latest_prices if p.instrument_id == position.instrument.id), None
         )
-        dto.latest_price = latest_price_entry.price if latest_price_entry else 0.0
+        dto.latest_price = latest_price_entry.close if latest_price_entry else 0.0
         dto.latest_price_date = latest_price_entry.date if latest_price_entry else None
 
         trades = [t for t in all_trades if t.position_id == position.id]
@@ -112,7 +113,8 @@ def _apply_fifo(session: Session, positions: list[Position]) -> list[PositionDTO
 
 class PositionsService:
 
-    def get_summary(self, session: Session, account_id: int = 0, include_closed: bool = True, include_open: bool = True) -> pd.DataFrame:
+    def get_summary(self, session: Session, account_id: int = 0, include_closed: bool = True, 
+                    include_open: bool = True) -> pd.DataFrame:
         """Return a pandas DataFrame with FIFO-computed position summaries.
         Accepts either an Account ORM object (legacy) or an account_id int.
         """
@@ -125,7 +127,7 @@ class PositionsService:
             if (p.closing_date and include_closed) or (not p.closing_date and include_open)
         ]
 
-        df = pd.DataFrame([p.model_dump() for p in filtered])
+        df = pd.DataFrame([p.model_dump(mode="json") for p in filtered])
 
         if not df.empty:
             df["position_closed"] = df.apply(compute_position_closed, axis=1)

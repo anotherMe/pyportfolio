@@ -189,7 +189,7 @@ class PositionDTO(BaseModel):
     instrument_ticker: str = ""
     instrument_currency: str = ""
     instrument_symbol: str = ""
-    instrument_asset_class: str = ""
+    instrument_asset_class: Optional[AssetClass] = None
 
     opening_date: Optional[datetime] = None
 
@@ -238,7 +238,12 @@ class PositionCreateDTO(BaseModel):
 
 class PriceDTO(BaseModel):
     instrument_id: int
-    price: float
     date: Optional[datetime] = None
+    granularity: str
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
 
     model_config = {"arbitrary_types_allowed": True}

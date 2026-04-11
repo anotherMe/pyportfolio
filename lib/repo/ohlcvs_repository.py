@@ -2,7 +2,7 @@
 from pandas import DataFrame
 import pytz
 from sqlalchemy import desc, select, func
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased, Session
 from lib.database import get_session, write_to_db, read_from_db
 from lib.models import OHLCV, Instrument
 from service.myYahooFinanceService import YahooSymbol
@@ -13,7 +13,7 @@ log = setup_logger(__name__)
 DEFAULT_TIMEZONE = "Europe/Rome"
 
 
-def add_price(session, instrument, timestamp, granularity, open, close, high=0.0, low=0.0, volume=0.0):
+def add_price(session: Session, instrument, timestamp, granularity, open, close, high=0.0, low=0.0, volume=0.0):
 
     ohlcv = OHLCV(
         instrument_id=instrument.id, 
@@ -27,10 +27,10 @@ def add_price(session, instrument, timestamp, granularity, open, close, high=0.0
     )
     session.add(ohlcv)
     session.flush() # ensures IDs and defaults are populated
-    print(f"💰 Added OHLCV for {instrument.name}")
+    print(f"Added OHLCV for {instrument.name}")
     return ohlcv
 
-def get_latest_price(session, inst_id):
+def get_latest_price(session: Session, inst_id):
     """Return the latest market price for an instrument, or None."""
     
     stmt = (
@@ -41,7 +41,16 @@ def get_latest_price(session, inst_id):
     )
     return session.scalar(stmt)
 
-def get_latest_prices(session):
+def get_prices_for_instrument(session: Session, instrument_id: int, granularity: str):
+
+    stmt = (
+        select(OHLCV)
+        .where((OHLCV.instrument_id == instrument_id) & (OHLCV.granularity == granularity))
+    )
+
+    return session.scalars(stmt).all()
+
+def get_prices(session: Session):
 
     ohlcv_alias = aliased(OHLCV)
 
@@ -66,7 +75,32 @@ def get_latest_prices(session):
 
     return session.scalars(stmt).all()
 
-def get_latest_prices_for_instrument_list(session, inst_ids: list[int]):
+def get_latest_prices(session: Session):
+
+    ohlcv_alias = aliased(OHLCV)
+
+    subq = (
+        select(
+            ohlcv_alias.id,
+            ohlcv_alias.instrument_id,
+            ohlcv_alias.timestamp,
+            func.row_number().over(
+                partition_by=ohlcv_alias.instrument_id,
+                order_by=ohlcv_alias.timestamp.desc()
+            ).label("rnk")
+        )
+        .subquery()
+    )
+
+    stmt = (
+        select(OHLCV)
+        .join(subq, OHLCV.id == subq.c.id)
+        .where(subq.c.rnk == 1)
+    )
+
+    return session.scalars(stmt).all()
+
+def get_latest_prices_for_instrument_list(session: Session, inst_ids: list[int]):
     
     subquery = (
         select(
@@ -79,7 +113,7 @@ def get_latest_prices_for_instrument_list(session, inst_ids: list[int]):
     )
 
     stmt = (
-        select(OHLCV.instrument_id, OHLCV.close, subquery.c.latest_date.label("date"))
+        select(OHLCV)
         .join(
             subquery,
             (OHLCV.instrument_id == subquery.c.instrument_id) &
@@ -87,9 +121,9 @@ def get_latest_prices_for_instrument_list(session, inst_ids: list[int]):
         )
     )
 
-    return session.execute(stmt).all()
+    return session.scalars(stmt).all()
 
-def get_latest_closing_price(session, instrument_id):
+def get_latest_closing_price(session: Session, instrument_id):
     
     last_price_row = (
         session.query(OHLCV)

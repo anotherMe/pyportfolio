@@ -1,6 +1,7 @@
 
 import pandas as pd
 import streamlit as st
+import datetime as dt
 
 from lib.database import get_session
 from lib.utils import confirm_delete_dialog
@@ -42,7 +43,7 @@ def format_and_style_positions(df):
         return f"{v*100:,.2f} %"
 
     def format_date(v):
-        return "" if pd.isna(v) else v.strftime('%Y-%m-%d %H:%M:%S')
+        return "" if pd.isna(v) else dt.datetime.fromisoformat(v).strftime("%Y-%m-%d %H:%M:%S")
 
     # Apply styles — pnl_styled / transactions_amount_styled are already strings, pass through
     styled = (
@@ -118,7 +119,8 @@ with get_session() as session:
     elif st.session_state.status_filter == 'closed':
         include_open = False
 
-    positions_df = _positions_service.get_summary(session, account_id=account_id, include_closed=include_closed, include_open=include_open)
+    positions_df = _positions_service.get_summary(session, account_id=account_id, include_closed=include_closed, 
+                                                  include_open=include_open)
 
     if positions_df.empty:
         st.write("No positions found.")

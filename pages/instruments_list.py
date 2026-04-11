@@ -18,6 +18,9 @@ if 'instrument_id' not in st.session_state:
 instruments_service = InstrumentsService()
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# utility functions 
+
 def clear_search():
     st.session_state.instruments_list_search_term = ""
 
@@ -31,6 +34,9 @@ def delete_instrument(item_id):
             st.error(f"Error while deleting instrument {item_id}")
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# page layout
+
 st.title("🔧 Instruments")
 st.subheader("Instruments list")
 
@@ -40,6 +46,9 @@ with get_session() as session:
 if not instruments:
     st.info("No instruments found.")
     st.stop()
+
+# ----------------------------------------------------------------------------------------------------------------------
+# instruments filter
 
 col1, col2 = st.columns([5, 1], vertical_alignment="bottom")
 with col1:
@@ -60,6 +69,9 @@ else:
 if not filtered_instruments:
     st.info("No Instruments corresponding to the current search")
     st.stop()
+
+# ----------------------------------------------------------------------------------------------------------------------
+# data frame
 
 data = []
 for inst in filtered_instruments:
@@ -94,12 +106,16 @@ st_dataframe = st.dataframe(
     selection_mode="single-row",
 )
 
+# ----------------------------------------------------------------------------------------------------------------------
+# instrument details
+
 if st_dataframe["selection"]["rows"]:
     dataframe_index = st_dataframe["selection"]["rows"][0]
     selected_instrument = filtered_instruments[dataframe_index]
     inst = selected_instrument
     with st.container(border=True):
         st.subheader(inst.name)
+        st.write(f"ID: {inst.id}")
         if inst.name_long:
             st.markdown(f"**{inst.name_long.strip()}**")
         col1, col2, col3 = st.columns([2, 1, 3])
@@ -114,6 +130,10 @@ if st_dataframe["selection"]["rows"]:
             col2.markdown(f"**Dist. policy**: {inst.dist_policy.value}")
         if inst.description:
             st.write(inst.description)
+
+# ----------------------------------------------------------------------------------------------------------------------
+# buttons
+
     with st.container(horizontal=True, horizontal_alignment="right"):
         if st.button("Delete", type="primary"):
             confirm_delete_dialog(f"Are you sure you want to delete instrument {selected_instrument.id}?", selected_instrument.id, delete_instrument)
