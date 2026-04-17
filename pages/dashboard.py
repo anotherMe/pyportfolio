@@ -22,16 +22,20 @@ with get_session() as session:
     positions_df = _positions_service.get_summary(session, account_id=account_id, include_closed=False, include_open=True)
     prices_list = _ohlcvs_service.get_prices_for_instrument(session, 12)
 
-total_portfolio = (positions_df["latest_price"] * positions_df["remaining_quantity"]).sum()
-positions_df["percent"] = total_portfolio / ( positions_df["latest_price"] * positions_df["remaining_quantity"] )
-prices_df = pd.DataFrame([p.model_dump(mode="json") for p in prices_list])
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 # page layout
 
 st.set_page_config(page_title="Dashboard")
 st.title("Dashboard")
+
+if positions_df.empty:
+    st.write("No positions found.")
+    st.stop()
+
+total_portfolio = (positions_df["latest_price"] * positions_df["remaining_quantity"]).sum()
+positions_df["percent"] = total_portfolio / ( positions_df["latest_price"] * positions_df["remaining_quantity"] )
+prices_df = pd.DataFrame([p.model_dump(mode="json") for p in prices_list])
 
 tab1, tab2 = st.tabs(["one", "two"])
 
