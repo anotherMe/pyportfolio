@@ -1,11 +1,12 @@
 
-from click import style
 import streamlit as st
 import pandas as pd
+import plotly.graph_objects as go
 
 from lib.database import get_session
 from lib.utils import confirm_delete_dialog
 from service.instruments_service import InstrumentsService
+from service.ohlcvs_service import OhlcvsService
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
@@ -16,6 +17,7 @@ if 'instrument_id' not in st.session_state:
     st.session_state.instrument_id = None
 
 instruments_service = InstrumentsService()
+ohlcvs_service = OhlcvsService()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -107,12 +109,17 @@ st_dataframe = st.dataframe(
 )
 
 # ----------------------------------------------------------------------------------------------------------------------
-# instrument details
+# manage instrument selection
 
-if st_dataframe["selection"]["rows"]:
-    dataframe_index = st_dataframe["selection"]["rows"][0]
-    selected_instrument = filtered_instruments[dataframe_index]
-    inst = selected_instrument
+selected_rows = st_dataframe.selection.rows  # type: ignore[union-attr]
+if selected_rows:
+    selected_id = df.iloc[selected_rows[0]]["inst_id"]
+    inst = next(i for i in filtered_instruments if i.id == selected_id)
+    selected_instrument = inst
+
+    # ----------------------------------------------------------------------------------------------------------------------
+    # instrument details
+
     with st.container(border=True):
         st.subheader(inst.name)
         st.write(f"ID: {inst.id}")
@@ -130,6 +137,28 @@ if st_dataframe["selection"]["rows"]:
             col2.markdown(f"**Dist. policy**: {inst.dist_policy.value}")
         if inst.description:
             st.write(inst.description)
+
+        # --------------------------------------------------------------------------------------------------------------
+        # price chart
+
+        st.divider()
+
+        with get_session() as session:
+            prices_list = ohlcvs_service.get_prices_for_instrument(session, inst.id)
+
+        if prices_list:
+            prices_df = pd.DataFrame([p.model_dump(mode="json") for p in prices_list])
+            fig = go.Figure(data=go.Ohlc(
+                x=prices_df['date'],
+                open=prices_df['open'],
+                high=prices_df['high'],
+                low=prices_df['low'],
+                close=prices_df['close'],
+            ))
+            fig.update_layout(title=f"{inst.name} — Price History", xaxis_title="Date", yaxis_title="Price", height=800)
+            st.plotly_chart(fig, key="instrument_ohlc_chart")
+        else:
+            st.info("No price data available for this instrument.")
 
 # ----------------------------------------------------------------------------------------------------------------------
 # buttons
