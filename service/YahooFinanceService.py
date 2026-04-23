@@ -31,6 +31,17 @@ def download_history(instrument: Instrument, start_date: datetime) -> Tuple[bool
         return(False, f"Failed to parse symbol: {instrument.ticker}")
 
 
+def download_history_with_period(instrument: Instrument, period: str, interval: str) -> Tuple[bool, str]:
+    try:
+        yf_symbol = yf.Ticker(instrument.ticker)
+        df = yf_symbol.history(period=period, interval=interval)
+        load_ohlcv_from_yfinance_dataframe(df, interval, instrument)
+        return True, f"Symbol {instrument.ticker} downloaded ({period} / {interval})"
+    except Exception:
+        logging.exception("")
+        return False, f"Failed to download symbol: {instrument.ticker}"
+
+
 def parse_json_file_into_yahoo_symbol(uploaded_file: Any) -> YahooSymbolParser:
     try:
         data = json.load(uploaded_file)

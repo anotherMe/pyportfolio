@@ -8,6 +8,7 @@ import math
 from lib.database import get_session
 from lib.repo.ohlcvs_repository import get_latest_prices
 from service.instruments_service import InstrumentsService
+from service.ohlcvs_service import OhlcvsService
 import service.YahooFinanceService as yfs
 from service.custom_exceptions import PortfolioException
 from service.utils import to_local
@@ -16,6 +17,8 @@ from logging_config import setup_logger
 log = setup_logger(__name__)
 
 instruments_service = InstrumentsService()
+ohlcvs_service = OhlcvsService()
+
 
 st.title("Prices")
 st.subheader("Instruments latest update")
@@ -69,11 +72,89 @@ if not df_instruments.empty and not df_ohlcv.empty:
         ),
     }
 
-    st.dataframe(data=df, hide_index=True, column_config=column_config)
+    st_dataframe = st.dataframe(
+        data=df,
+        hide_index=True,
+        column_config=column_config,
+        on_select="rerun",
+        selection_mode="single-row",
+        key="prices_dataframe",
+    )
 
+    selected_rows = st_dataframe.selection.rows  # type: ignore[union-attr]
+    if selected_rows:
+        selected_row = df.iloc[selected_rows[0]]
+        selected_inst = next(i for i in instruments if i.id == selected_row["id"])
 
-# --- Download from Yahoo Finance ---
+        with st.container(border=True):
+            st.subheader(selected_inst.name)
+            if selected_inst.name_long:
+                st.markdown(f"**{selected_inst.name_long.strip()}**")
+            col1, col2 = st.columns([2, 1])
+            if selected_inst.isin:
+                col1.write(f"**ISIN:** [{selected_inst.isin}](https://www.justetf.com/en/etf-profile.html?isin={selected_inst.isin})")
+                col1.write(f"**Last updated :** {pd.Timestamp(selected_row['timestamp']).strftime('%Y-%m-%d')}")
+            if selected_inst.ticker:
+                col2.write(f"**Ticker:** [{selected_inst.ticker}](https://finance.yahoo.com/quote/{selected_inst.ticker})")
 
+            st.space()
+            col1, col2, col3 = st.columns([2, 2, 1], vertical_alignment="bottom")
+            period = col1.selectbox(
+                "Period",
+                options=["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
+                index=4,
+                key="dl_period",
+            )
+            interval = col2.selectbox(
+                "Interval",
+                options=["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"],
+                index=8,
+                key="dl_interval",
+            )
+            if col3.button("Download", type="primary", key="dl_button"):
+                with st.spinner(f"Downloading {selected_inst.ticker}…"):
+                    from lib.repo.instruments_repository import get_instrument_by_ticker as _get_by_ticker
+                    with get_session() as session:
+                        orm_inst = _get_by_ticker(session, selected_inst.ticker) if selected_inst.ticker else None
+                    if orm_inst:
+                        success, message = yfs.download_history_with_period(orm_inst, period, interval)
+                        if success:
+                            st.success(message)
+                        else:
+                            st.error(message)
+
+        st.space()
+        with st.container(border=True):
+            with get_session() as session:
+                prices_list = ohlcvs_service.get_prices_for_instrument(session, selected_inst.id)
+
+            if prices_list:
+                import plotly.graph_objects as go
+                prices_df = pd.DataFrame([p.model_dump(mode="json") for p in prices_list])
+                fig = go.Figure(data=go.Ohlc(
+                    x=prices_df['date'],
+                    open=prices_df['open'],
+                    high=prices_df['high'],
+                    low=prices_df['low'],
+                    close=prices_df['close'],
+                ))
+                fig.update_layout(
+                    title=f"{selected_inst.name} — Price History",
+                    xaxis_title="Date",
+                    yaxis_title="Price",
+                    height=800,
+                    hovermode="x unified",
+                    xaxis=dict(showspikes=True, spikemode="across", spikesnap="cursor", spikecolor="gray", spikethickness=1),
+                )
+                st.plotly_chart(fig, key="instrument_ohlc_chart")
+            else:
+                st.info("No price data available for this instrument.")
+
+        st.stop()
+
+# --- Download from Yahoo Finance --------------------------------------------------------------------------------------
+
+st.divider()
 st.subheader("Update prices data with yfinance")
 
 message_container = st.empty()
@@ -114,7 +195,7 @@ if btn_update_instruments:
     progress_bar.empty()
 
 
-# --- Load local JSON ---
+# --- Load local JSON --------------------------------------------------------------------------------------------------
 
 st.subheader("Load data from local JSON")
 
