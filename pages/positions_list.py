@@ -2,11 +2,13 @@
 import pandas as pd
 import streamlit as st
 import datetime as dt
+import plotly.graph_objects as go
 
 from lib.database import get_session
 from lib.utils import confirm_delete_dialog
 from service.accounts_service import AccountsService
 from service.instruments_service import InstrumentsService
+from service.ohlcvs_service import OhlcvsService
 from service.positions_service import PositionsService
 from service.trades_service import TradesService
 from service.transactions_service import TransactionsService
@@ -88,6 +90,7 @@ st.session_state.status_filter = options[selected_label]
 _accounts_service = AccountsService()
 _positions_service = PositionsService()
 _instruments_service = InstrumentsService()
+_ohlcvs_service = OhlcvsService()
 _trades_service = TradesService()
 _transactions_service = TransactionsService()
 
@@ -355,3 +358,54 @@ with get_session() as session:
                 if st.button("Add new transaction", key=f"add_trans_btn_{selected_position_id}"):
                     st.session_state.position_id = selected_position_id
                     st.switch_page("pages/transactions_edit.py")
+
+        # --- Price chart ------------------------------------------------------------------------------------------
+
+        st.space()
+        with st.container(border=True):
+            with get_session() as price_session:
+                prices_list = _ohlcvs_service.get_prices_for_instrument(price_session, position_basic.instrument_id)
+
+            if prices_list:
+                prices_df = pd.DataFrame([p.model_dump(mode="json") for p in prices_list])
+                fig = go.Figure(data=go.Ohlc(
+                    x=prices_df['date'],
+                    open=prices_df['open'],
+                    high=prices_df['high'],
+                    low=prices_df['low'],
+                    close=prices_df['close'],
+                ))
+
+                if position_trades:
+                    buy_trades = [t for t in position_trades if t.type.value == "buy"]
+                    sell_trades = [t for t in position_trades if t.type.value == "sell"]
+                    if buy_trades:
+                        fig.add_trace(go.Scatter(
+                            x=[t.date for t in buy_trades],
+                            y=[t.price for t in buy_trades],
+                            mode='markers',
+                            name='BUY',
+                            marker=dict(symbol='triangle-up', color='green', size=14, line=dict(width=1, color='darkgreen')),
+                            hovertemplate='BUY<br>Price: %{y}<extra></extra>',
+                        ))
+                    if sell_trades:
+                        fig.add_trace(go.Scatter(
+                            x=[t.date for t in sell_trades],
+                            y=[t.price for t in sell_trades],
+                            mode='markers',
+                            name='SELL',
+                            marker=dict(symbol='triangle-down', color='red', size=14, line=dict(width=1, color='darkred')),
+                            hovertemplate='SELL<br>Price: %{y}<extra></extra>',
+                        ))
+
+                fig.update_layout(
+                    title=f"{position_basic.instrument_name} — Price History",
+                    xaxis_title="Date",
+                    yaxis_title="Price",
+                    height=800,
+                    hovermode="x unified",
+                    xaxis=dict(showspikes=True, spikemode="across", spikesnap="cursor", spikecolor="gray", spikethickness=1),
+                )
+                st.plotly_chart(fig, key="position_ohlc_chart")
+            else:
+                st.info("No price data available for this instrument.")
