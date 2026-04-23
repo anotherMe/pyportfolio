@@ -40,24 +40,18 @@ with get_session() as session:
             st.stop()
         with st.container(horizontal=True):
             st.subheader(f"Editing Position with ID: {position.id}")
-            if st.button("Clear selection"):
-                st.session_state.position_id = None
-                st.session_state.instrument_id = None
-                st.rerun()
     else:
         st.subheader("Add new Position")
         position = None
 
     with st.form("position_form"):
 
-        # Pre-select instrument if coming from instruments page
         selected_instrument_index = None
         if st.session_state.instrument_id:
             target = next((inst for inst in instruments if inst.id == st.session_state.instrument_id), None)
             if target:
                 selected_instrument_index = list(instrument_map.keys()).index(target.name)
 
-        # Pre-select account/instrument when editing
         account_index = 0
         if is_editing and position:
             if position.account_name in accounts_map:
@@ -68,8 +62,7 @@ with get_session() as session:
         selected_account = st.selectbox("Account", list(accounts_map.keys()), index=account_index)
         selected_instrument = st.selectbox("Instrument", list(instrument_map.keys()), index=selected_instrument_index)
 
-        col1, col2 = st.columns([7, 1])
-        with col2:
+        with st.container(horizontal=True, horizontal_alignment="right"):
             save = st.form_submit_button("💾 Save")
 
         if save:

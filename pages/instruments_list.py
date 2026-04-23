@@ -108,6 +108,13 @@ st_dataframe = st.dataframe(
     selection_mode="single-row",
 )
 
+with st.container(horizontal=True, horizontal_alignment="right"):
+    if st.button("➕ Add new", type="secondary"):
+        st.session_state["instrument_id"] = None
+        st.switch_page("pages/instruments_edit.py")
+
+st.space()
+
 # ----------------------------------------------------------------------------------------------------------------------
 # manage instrument selection
 
@@ -139,10 +146,21 @@ if selected_rows:
             st.write(inst.description)
 
         # --------------------------------------------------------------------------------------------------------------
-        # price chart
+        # buttons
 
-        st.divider()
+        with st.container(horizontal=True, horizontal_alignment="right"):
+            if st.button("Delete", type="primary"):
+                confirm_delete_dialog(f"Are you sure you want to delete instrument {selected_instrument.id}?", selected_instrument.id, delete_instrument)
+            if st.button("Edit", type="secondary"):
+                st.session_state.instrument_id = selected_instrument.id
+                st.switch_page("pages/instruments_edit.py")
 
+
+# --------------------------------------------------------------------------------------------------------------
+# price chart
+
+    st.space()
+    with st.container(border=True):
         with get_session() as session:
             prices_list = ohlcvs_service.get_prices_for_instrument(session, inst.id)
 
@@ -155,23 +173,15 @@ if selected_rows:
                 low=prices_df['low'],
                 close=prices_df['close'],
             ))
-            fig.update_layout(title=f"{inst.name} — Price History", xaxis_title="Date", yaxis_title="Price", height=800)
+            fig.update_layout(
+                title=f"{inst.name} — Price History",
+                xaxis_title="Date",
+                yaxis_title="Price",
+                height=800,
+                hovermode="x unified",
+                xaxis=dict(showspikes=True, spikemode="across", spikesnap="cursor", spikecolor="gray", spikethickness=1),
+            )
             st.plotly_chart(fig, key="instrument_ohlc_chart")
         else:
             st.info("No price data available for this instrument.")
 
-# ----------------------------------------------------------------------------------------------------------------------
-# buttons
-
-    with st.container(horizontal=True, horizontal_alignment="right"):
-        if st.button("Delete", type="primary"):
-            confirm_delete_dialog(f"Are you sure you want to delete instrument {selected_instrument.id}?", selected_instrument.id, delete_instrument)
-        if st.button("Edit", type="secondary"):
-            st.session_state.instrument_id = selected_instrument.id
-            st.switch_page("pages/instruments_edit.py")
-
-st.divider()
-with st.container(horizontal=True, horizontal_alignment="right"):
-    if st.button("➕ Add new", type="secondary"):
-        st.session_state["instrument_id"] = None
-        st.switch_page("pages/instruments_edit.py")

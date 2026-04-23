@@ -208,7 +208,8 @@ with get_session() as session:
 
             with st.container(border=True):
 
-                # --- Instrument details ---
+                # --- Instrument details -------------------------------------------------------------------------------
+                
                 st.subheader(position_basic.instrument_name)
                 if inst and inst.name_long:
                     st.markdown(f"**{inst.name_long.strip()}**")
@@ -224,7 +225,8 @@ with get_session() as session:
                 if inst and inst.description:
                     st.write(inst.description)
 
-                # --- Position summary ---
+                # --- Position summary ---------------------------------------------------------------------------------
+
                 st.divider()
                 col1, col2 = st.columns([1, 1])
                 col1.write(f"**Account:** {position_basic.account_name}")
@@ -240,7 +242,8 @@ with get_session() as session:
                 pnl_percent = position_summary.pnl_percent * 100 if position_summary.pnl_percent is not None else None
                 col2.write(f"**Total PnL %:** {pnl_percent:.2f} %" if pnl_percent is not None else "N/A")
 
-                # --- Trades ---
+                # --- Trades -------------------------------------------------------------------------------------------
+
                 st.divider()
                 st.subheader("Trades:")
                 position_trades = _trades_service.get_by_position(session, selected_position_id)
@@ -278,7 +281,8 @@ with get_session() as session:
                         st.session_state.position_id = selected_position_id
                         st.switch_page("pages/trades_edit.py")
 
-                # --- Transactions ---
+                # --- Transactions -------------------------------------------------------------------------------------
+
                 st.divider()
                 st.subheader("Transactions:")
                 position_transactions = _transactions_service.get_by_position(session, selected_position_id)
