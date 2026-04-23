@@ -37,22 +37,11 @@ total_portfolio = (positions_df["latest_price"] * positions_df["remaining_quanti
 positions_df["percent"] = total_portfolio / ( positions_df["latest_price"] * positions_df["remaining_quantity"] )
 prices_df = pd.DataFrame([p.model_dump(mode="json") for p in prices_list])
 
-tab1, tab2 = st.tabs(["one", "two"])
-
-with tab1:
-    col1, col2 = st.columns(2)
-    with col1:
-        fig = px.pie(positions_df, values="percent", names="instrument_asset_class")
-        st.plotly_chart(fig, key="asset_pie_chart", config = {'scrollZoom': False})
-    with col2:
-        fig = px.pie(positions_df, values="percent", names="instrument_name")
-        st.plotly_chart(fig, key="instrument_pie_chart", config = {'scrollZoom': False})
+col1, col2 = st.columns(2)
+with col1:
+    fig = px.pie(positions_df, values="percent", names="instrument_asset_class")
+    st.plotly_chart(fig, key="asset_pie_chart", config = {'scrollZoom': False})
+with col2:
+    fig = px.pie(positions_df, values="percent", names="instrument_name")
+    st.plotly_chart(fig, key="instrument_pie_chart", config = {'scrollZoom': False})
             
-with tab2:
-    fig = go.Figure(data=go.Ohlc(x=prices_df['date'],
-                    open=prices_df['open'],
-                    high=prices_df['high'],
-                    low=prices_df['low'],
-                    close=prices_df['close']))
-    st.plotly_chart(fig, key="instrument_line_chart")
-    st.empty()
