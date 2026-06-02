@@ -163,7 +163,7 @@ with get_session() as session:
             "instrument_id": None,
             "instrument_name": "Instrument",
             "instrument_isin": None,
-            "instrument_ticker": None,
+            "instrument_ticker": "Ticker",
             "instrument_currency": None,
             "instrument_symbol": None,
             "remaining_quantity": None,
