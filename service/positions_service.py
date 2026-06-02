@@ -27,7 +27,7 @@ def compute_position_closed(row):
     elif row["remaining_quantity"] == 0 and pd.isna(row["closing_date"]):
         return "No open quantity"
     else:
-        return "Closed on " + dt.datetime.fromisoformat("2022-03-11T16:27:00Z").strftime("%Y-%m-%d")
+        return "Closed on " + dt.datetime.fromisoformat(row["closing_date"]).strftime("%Y-%m-%d")
 
 
 def _apply_fifo(session: Session, positions: list[Position]) -> list[PositionDTO]:
