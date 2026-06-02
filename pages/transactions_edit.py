@@ -15,7 +15,7 @@ log = setup_logger(__name__)
 
 log.debug("Running transactions edit page...")
 
-st.title("💰 Transactions")
+st.title("Transactions")
 
 if 'transaction_id' not in st.session_state:
     st.session_state.transaction_id = None

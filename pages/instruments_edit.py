@@ -12,7 +12,7 @@ log = setup_logger(__name__)
 
 log.debug("Running instruments edit page...")
 
-st.title("🔧 Instruments")
+st.title("Instruments")
 
 if 'instrument_id' not in st.session_state:
     st.session_state.instrument_id = None

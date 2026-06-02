@@ -16,7 +16,7 @@ log = setup_logger(__name__)
 
 log.debug("Running trades edit page...")
 
-st.title("💼 Trades")
+st.title("Trades")
 
 if 'trade_id' not in st.session_state:
     st.session_state.trade_id = None

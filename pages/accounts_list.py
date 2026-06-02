@@ -22,7 +22,7 @@ def delete_account(item_id):
             st.error(f"Error while deleting account {item_id}")
 
 
-st.title("🏦 Accounts")
+st.title("Accounts")
 
 with get_session() as session:
 

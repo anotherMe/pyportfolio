@@ -39,7 +39,7 @@ def delete_instrument(item_id):
 # ----------------------------------------------------------------------------------------------------------------------
 # page layout
 
-st.title("🔧 Instruments")
+st.title("Instruments")
 st.subheader("Instruments list")
 
 with get_session() as session:

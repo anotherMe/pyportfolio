@@ -13,7 +13,7 @@ log = setup_logger(__name__)
 
 log.debug("Running trades list page...")
 
-st.title("💼 Trades")
+st.title("Trades")
 
 if 'show_editor' not in st.session_state:
     st.session_state.show_editor = False

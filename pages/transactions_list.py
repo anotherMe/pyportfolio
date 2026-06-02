@@ -26,7 +26,7 @@ def delete_transaction(item_id):
             st.error(f"Error while deleting transaction {item_id}")
 
 
-st.title("💰 Transactions")
+st.title("Transactions")
 
 with get_session() as session:
 

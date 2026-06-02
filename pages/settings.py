@@ -2,7 +2,7 @@ import streamlit as st
 from lib.settings_manager import load_settings, save_settings
 from lib.database import init_engine
 
-st.title("⚙️ Settings")
+st.title("Settings")
 
 settings = load_settings()
 

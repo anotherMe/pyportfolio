@@ -13,7 +13,7 @@ log.debug("Running accounts edit page...")
 if 'account_id' not in st.session_state:
     st.session_state.account_id = None
 
-st.title("🔧 Accounts")
+st.title("Accounts")
 
 accounts_service = AccountsService()
 

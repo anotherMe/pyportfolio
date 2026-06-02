@@ -6,7 +6,7 @@ from lib.demo_seed import seed_demo_data
 
 st.set_page_config(page_title="Seed Demo Data", page_icon="🌱")
 
-st.title("🌱 Seed Demo Database")
+st.title("Seed Demo Database")
 
 st.markdown("""
 Use this page to populate the database with **fake demo data**.

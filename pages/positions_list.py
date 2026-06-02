@@ -71,7 +71,7 @@ def clear_search():
 if "status_filter" not in st.session_state:
     st.session_state.status_filter = "all"
 
-st.title("📈 Current market positions")
+st.title("Current market positions")
 
 options = {
     "Show all positions": "all",
