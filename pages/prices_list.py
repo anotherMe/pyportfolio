@@ -102,7 +102,7 @@ if not df_instruments.empty and not df_ohlcv.empty:
             period = col1.selectbox(
                 "Period",
                 options=["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
-                index=4,
+                index=10,
                 key="dl_period",
             )
             interval = col2.selectbox(
