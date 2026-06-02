@@ -214,8 +214,7 @@ with get_session() as session:
         # --- Totals --- 
 
         total_invested_sum = filtered_positions_df["total_invested"].sum()
-        total_pnl = (filtered_positions_df["realized_pnl"] + filtered_positions_df["unrealized_pnl"]).sum()
-        total_percent_pnl = 0
+        total_pnl = (filtered_positions_df["pnl"]).sum()
 
         color = "green" if total_pnl > 0 else "red"
         st.markdown(
