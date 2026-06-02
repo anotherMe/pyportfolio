@@ -6,12 +6,16 @@ import time
 import math
 
 from lib.database import get_session
-from lib.repo.ohlcvs_repository import get_latest_prices
+from lib.database import read_from_db
 from service.instruments_service import InstrumentsService
 from service.ohlcvs_service import OhlcvsService
 import service.YahooFinanceService as yfs
 from service.custom_exceptions import PortfolioException
 from service.utils import to_local
+from lib.repo.instruments_repository import get_instrument_by_ticker
+from lib.repo.instruments_repository import get_all_instruments as _get_all_instruments
+from lib.models import OHLCV
+import plotly.graph_objects as go
 
 from logging_config import setup_logger
 log = setup_logger(__name__)
@@ -25,7 +29,7 @@ st.subheader("Instruments latest update")
 
 with get_session() as session:
     instruments = instruments_service.get_all(session)
-    ohlcvs = get_latest_prices(session)
+    ohlcvs = ohlcvs_service.get_latest_prices(session)
 
 if not instruments:
     st.info("No instruments found.")
@@ -34,7 +38,7 @@ if not instruments:
 df_ohlcv = pd.DataFrame([
     {
         "instrument_id": o.instrument_id,
-        "timestamp": to_local(o.timestamp),
+        "timestamp": to_local(o.date),
         "close": o.close,  # raw int — converted below after merge
     } for o in ohlcvs
 ])
@@ -49,7 +53,7 @@ df_instruments = pd.DataFrame([
 ])
 
 if not df_instruments.empty and not df_ohlcv.empty:
-    from lib.database import read_from_db
+    
     df_ohlcv["close"] = df_ohlcv["close"].apply(read_from_db)
 
     df = pd.merge(df_instruments, df_ohlcv, how="left", left_on="id", right_on="instrument_id")
@@ -113,9 +117,8 @@ if not df_instruments.empty and not df_ohlcv.empty:
             )
             if col3.button("Download", type="primary", key="dl_button"):
                 with st.spinner(f"Downloading {selected_inst.ticker}…"):
-                    from lib.repo.instruments_repository import get_instrument_by_ticker as _get_by_ticker
                     with get_session() as session:
-                        orm_inst = _get_by_ticker(session, selected_inst.ticker) if selected_inst.ticker else None
+                        orm_inst = get_instrument_by_ticker(session, selected_inst.ticker) if selected_inst.ticker else None
                     if orm_inst:
                         success, message = yfs.download_history_with_period(orm_inst, period, interval)
                         if success:
@@ -129,7 +132,7 @@ if not df_instruments.empty and not df_ohlcv.empty:
                 prices_list = ohlcvs_service.get_prices_for_instrument(session, selected_inst.id)
 
             if prices_list:
-                import plotly.graph_objects as go
+                
                 prices_df = pd.DataFrame([p.model_dump(mode="json") for p in prices_list])
                 fig = go.Figure(data=go.Ohlc(
                     x=prices_df['date'],
@@ -164,19 +167,17 @@ with st.container(horizontal=True, horizontal_alignment="right"):
     btn_update_instruments = st.button(label="Download prices", type="primary")
 
 if btn_update_instruments:
-    # Need ORM objects for yfinance service (it reads .ticker attribute)
+    
     with get_session() as session:
-        from lib.repo.instruments_repository import get_all_instruments as _get_all_instruments
-        from lib.repo.ohlcvs_repository import get_latest_prices as _get_latest_prices
-        from lib.models import OHLCV
+
         orm_instruments = _get_all_instruments(session)
-        orm_ohlcvs = _get_latest_prices(session)
+        orm_ohlcvs = ohlcvs_service.get_latest_prices(session)
 
         step = math.floor(100 / len(orm_instruments)) if orm_instruments else 100
         progress = 0
         for instrument in orm_instruments:
             latest_ohlcv = OHLCV()
-            latest_ohlcv.timestamp = datetime.now() - timedelta(days=365)
+            latest_ohlcv.date = datetime.now() - timedelta(days=365)
             try:
                 filtered = [o for o in orm_ohlcvs if o.instrument_id == instrument.id]
                 latest_ohlcv = filtered[0]

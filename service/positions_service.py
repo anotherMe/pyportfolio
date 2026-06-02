@@ -11,11 +11,12 @@ from lib.models import Position
 from lib.repo.positions_repository import get_all_positions, add_position, delete_position
 from lib.repo.trades_repository import get_trades_for_position_list
 from lib.repo.transactions_repository import get_transactions_for_position_list
-from logging_config import setup_logger
-from service import ohlcvs_service
+from lib.repo.ohlcvs_repository import get_latest_prices_for_instrument_list
 from service.dtos import PositionDTO, PositionBasicDTO, PositionCreateDTO
 
+from logging_config import setup_logger
 log = setup_logger(__name__)
+
 
 # -----------------------
 # Utility
@@ -35,7 +36,7 @@ def _apply_fifo(session: Session, positions: list[Position]) -> list[PositionDTO
 
     all_trades = get_trades_for_position_list(session, [p.id for p in positions])
     all_transactions = get_transactions_for_position_list(session, [p.id for p in positions])
-    latest_prices = ohlcvs_service.get_latest_prices_for_instrument_list(
+    latest_prices = get_latest_prices_for_instrument_list(
         session, [p.instrument.id for p in positions]
     )
 
@@ -55,7 +56,7 @@ def _apply_fifo(session: Session, positions: list[Position]) -> list[PositionDTO
             (p for p in latest_prices if p.instrument_id == position.instrument.id), None
         )
         dto.latest_price = latest_price_entry.close if latest_price_entry else 0.0
-        dto.latest_price_date = latest_price_entry.date if latest_price_entry else None
+        dto.latest_price_date = latest_price_entry.timestamp if latest_price_entry else None
 
         trades = [t for t in all_trades if t.position_id == position.id]
 

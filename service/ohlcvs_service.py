@@ -6,8 +6,19 @@ import lib.repo.ohlcvs_repository as repo
 from lib.database import read_from_db
 from service.dtos import PriceDTO
 
+from logging_config import setup_logger
+log = setup_logger(__name__)
+
 
 class OhlcvsService:
+
+    def get_latest_prices(self, session) -> list[PriceDTO]:
+        results = repo.get_latest_prices(session)
+        return [
+            PriceDTO(instrument_id=r.instrument_id, date=r.timestamp, granularity=r.granularity, open=read_from_db(r.open),
+                     high=read_from_db(r.high), low=read_from_db(r.low), close=read_from_db(r.close), volume=read_from_db(r.volume))
+            for r in results
+        ]
 
     def get_latest_prices_for_instrument_list(self, session, instrument_ids: list[int]) -> list[PriceDTO]:
         results = repo.get_latest_prices_for_instrument_list(session, instrument_ids)
@@ -32,13 +43,3 @@ class OhlcvsService:
                      high=read_from_db(r.high), low=read_from_db(r.low), close=read_from_db(r.close), volume=read_from_db(r.volume))
             for r in results
         ]
-
-# -----------------------
-# Module-level alias (backwards compatibility)
-# -----------------------
-
-_service = OhlcvsService()
-
-
-def get_latest_prices_for_instrument_list(session, instrument_ids: list[int]) -> list[PriceDTO]:
-    return _service.get_latest_prices_for_instrument_list(session, instrument_ids)
