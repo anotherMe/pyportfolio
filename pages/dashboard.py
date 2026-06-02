@@ -30,11 +30,11 @@ st.set_page_config(page_title="Dashboard")
 st.title("Dashboard")
 
 if positions_df.empty:
-    st.write("No positions found.")
+    st.write("No open positions found.")
     st.stop()
 
 total_portfolio = (positions_df["latest_price"] * positions_df["remaining_quantity"]).sum()
-positions_df["percent"] = total_portfolio / ( positions_df["latest_price"] * positions_df["remaining_quantity"] )
+positions_df["percent"] = ( positions_df["latest_price"] * positions_df["remaining_quantity"] ) / total_portfolio
 prices_df = pd.DataFrame([p.model_dump(mode="json") for p in prices_list])
 
 col1, col2 = st.columns(2)
