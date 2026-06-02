@@ -131,8 +131,7 @@ with get_session() as session:
             trade_time = st.time_input("Time", value=trade.date.time())
             notes = st.text_area("Notes", value=trade.description or "")
 
-            col1, col2 = st.columns([9, 1])
-            with col2:
+            with st.container(horizontal=True, horizontal_alignment="right"):
                 submitted = st.form_submit_button("Save")
 
             if submitted:
@@ -154,7 +153,11 @@ with get_session() as session:
 
     with st.container(horizontal=True):
         st.space("stretch")
-        if st.button("⬅️ Back to list"):
+        if st.button("⬅️ Positions list"):
+            st.session_state.trade_id = None
+            st.session_state.position_id = None
+            st.switch_page("pages/positions_list.py")
+        if st.button("⬅️ Trades list"):
             st.session_state.trade_id = None
             st.session_state.position_id = None
             st.switch_page("pages/trades_list.py")
