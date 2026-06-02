@@ -12,8 +12,6 @@ from service.ohlcvs_service import OhlcvsService
 import service.YahooFinanceService as yfs
 from service.custom_exceptions import PortfolioException
 from service.utils import to_local
-from lib.repo.instruments_repository import get_instrument_by_ticker
-from lib.repo.instruments_repository import get_all_instruments as _get_all_instruments
 from lib.models import OHLCV
 import plotly.graph_objects as go
 
@@ -118,7 +116,7 @@ if not df_instruments.empty and not df_ohlcv.empty:
             if col3.button("Download", type="primary", key="dl_button"):
                 with st.spinner(f"Downloading {selected_inst.ticker}…"):
                     with get_session() as session:
-                        orm_inst = get_instrument_by_ticker(session, selected_inst.ticker) if selected_inst.ticker else None
+                        orm_inst = instruments_service.get_by_ticker(session, selected_inst.ticker) if selected_inst.ticker else None
                     if orm_inst:
                         success, message = yfs.download_history_with_period(orm_inst, period, interval)
                         if success:
@@ -170,7 +168,7 @@ if btn_update_instruments:
     
     with get_session() as session:
 
-        orm_instruments = _get_all_instruments(session)
+        orm_instruments = instruments_service.get_all(session)
         orm_ohlcvs = ohlcvs_service.get_latest_prices(session)
 
         step = math.floor(100 / len(orm_instruments)) if orm_instruments else 100
