@@ -24,7 +24,7 @@ ohlcvs_service = OhlcvsService()
 # utility functions 
 
 def clear_search():
-    st.session_state.instruments_list_search_term = ""
+    st.session_state.search_term = ""
 
 
 def delete_instrument(item_id):
