@@ -184,7 +184,7 @@ if btn_update_instruments:
 
             progress += step
             progress_bar.progress(min(progress, 100), text="Operation in progress. Please wait.")
-            success, message = yfs.download_history(instrument, latest_ohlcv.timestamp)
+            success, message = yfs.download_history(instrument, latest_ohlcv.date)
             with message_container:
                 if success:
                     st.success(message)
