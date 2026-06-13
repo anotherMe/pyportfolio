@@ -1,4 +1,5 @@
 
+from sqlalchemy import false, true
 import streamlit as st
 
 from lib.database import get_session
@@ -46,15 +47,11 @@ with get_session() as session:
         st.info("No accounts found.")
     else:
         for acc in filtered_accounts:
-            with st.container(border=True):
-                col1, col2 = st.columns([3, 2])
-                col1.markdown(f"**{acc.name}**: {acc.description}")
-
-                col1, col2, col3 = st.columns([5, 1, 1])
-                with col2:
+            with st.container(horizontal=False, border=True):
+                st.markdown(f"🏦 **{acc.name}**: {acc.description}")
+                with st.container(horizontal=True, horizontal_alignment="right"):
                     if st.button("🗑️ Delete", key=f"delete_{acc.id}"):
                         confirm_delete_dialog(f"Are you sure you want to delete account {acc.name}?", acc.id, delete_account)
-                with col3:
                     if st.button("✏️ Edit", key=f"edit_{acc.id}"):
                         st.session_state["account_id"] = acc.id
                         st.switch_page("pages/accounts_edit.py")
