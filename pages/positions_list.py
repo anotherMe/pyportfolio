@@ -217,10 +217,10 @@ with get_session() as session:
         total_pnl = (filtered_positions_df["pnl"]).sum()
 
         color = "green" if total_pnl > 0 else "red"
-        st.markdown(
-            f"<h3>Total buy: <span>{total_invested_sum:,.2f} €</span></h3>",
-            unsafe_allow_html=True
-        )
+        # st.markdown(
+        #     f"<h3>Total buy: <span>{total_invested_sum:,.2f} €</span></h3>",
+        #     unsafe_allow_html=True
+        # )
         st.markdown(
             f"<h3>Total PnL: <span style='color:{color}'>{total_pnl:,.2f} €</span></h3>",
             unsafe_allow_html=True

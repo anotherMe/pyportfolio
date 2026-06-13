@@ -51,8 +51,6 @@ df_instruments = pd.DataFrame([
 ])
 
 if not df_instruments.empty and not df_ohlcv.empty:
-    
-    df_ohlcv["close"] = df_ohlcv["close"].apply(read_from_db)
 
     df = pd.merge(df_instruments, df_ohlcv, how="left", left_on="id", right_on="instrument_id")
 
