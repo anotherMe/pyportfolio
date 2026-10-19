@@ -7,6 +7,7 @@ from lib.database import get_session
 from service.accounts_service import AccountsService
 from service.ohlcvs_service import OhlcvsService
 from service.positions_service import PositionsService
+from service.utils import format_currency
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -44,4 +45,7 @@ with col1:
 with col2:
     fig = px.pie(positions_df, values="percent", names="instrument_name")
     st.plotly_chart(fig, key="instrument_pie_chart", config = {'scrollZoom': False})
-            
+
+with st.container(horizontal=True):
+    st.markdown(f"<h3>Current market value: <span style='color:green'>{total_portfolio:,.2f} €</span></h3>", unsafe_allow_html=True)
+    

@@ -154,7 +154,7 @@ if not df_instruments.empty and not df_ohlcv.empty:
 # --- Download from Yahoo Finance --------------------------------------------------------------------------------------
 
 st.divider()
-st.subheader("Update prices data with yfinance")
+st.subheader("Update all prices ( yfinance )")
 
 message_container = st.empty()
 progress_bar = st.progress(0, text="Idle")

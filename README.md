@@ -6,7 +6,8 @@ Python - Streamlit app to manage your personal portfolio
 
 ## Install
 
-To support latest Streamlit version ( eg: 1.52.0 ), you'll need a quite recent version of Python. Let's say 3.14 should do:
+To support latest Streamlit version ( eg: 1.52.0 ), you'll need a quite recent version of Python. 
+Let's say 3.14 should do:
 
 ```sh
 brew install python@3.14
@@ -34,7 +35,8 @@ streamlit run main.py
 
 ## st.tabs
 
-Tabs are a pain in the ass. One of the major drawbacks from using them is that, at the moment, there's no way to programmatically set the active tab.
+Tabs are a pain in the ass. One of the major drawbacks from using them is that, at the moment, there's no way to 
+programmatically set the active tab.
 
 
 # Database
