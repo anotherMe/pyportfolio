@@ -10,8 +10,8 @@ To support latest Streamlit version ( eg: 1.52.0 ), you'll need a quite recent v
 Let's say 3.14 should do:
 
 ```sh
-brew install python@3.14
-/opt/homebrew/opt/python@3.14/bin/python3 -m venv .venv
+brew install python@3.15
+/opt/homebrew/opt/python@3.15/bin/python3 -m venv .venv
 ```
 
 Then you can install dependencies:
